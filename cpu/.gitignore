@@ -2,6 +2,7 @@
 bin/
 obj/
 *.log
+tp-2023.code-workspace
 
 # Eclipse files
 RemoteSystemsTempFiles/
