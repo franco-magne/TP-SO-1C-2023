@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "utils/include/conexiones.h"
+#include "conexiones.h"
 
 int main() {
    // printf() displays the string inside quotation

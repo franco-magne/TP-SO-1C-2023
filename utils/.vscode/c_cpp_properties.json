@@ -5,7 +5,7 @@
     {
       "name": "Linux",
       "includePath": [
-        "${workspaceFolder}/include"
+        "${workspaceFolder}/src"
         // TODO: Agregar los directorios de las bibliotecas a utilizar
       ],
       "defines": [],
