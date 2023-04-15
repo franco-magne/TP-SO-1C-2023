@@ -1,5 +1,7 @@
 #include <stdio.h>
-#include "conexiones.h"
+#include "../../utils/src/utils/conexiones.h"
+
+int conectar_a_servidor(char * , char*);
 
 int main() {
    // printf() displays the string inside quotation

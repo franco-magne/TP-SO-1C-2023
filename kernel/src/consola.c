@@ -3,42 +3,70 @@
 #include <stdnoreturn.h>
 #include <string.h>
 #include <sys/socket.h>
+#include "../../utils/src/utils/conexiones.h"
+
 
 //include "common_flags.h"
 //#include "connections.h"
 //#include "kernel_config.h"
 //#include "scheduler.h"
 //#include "stream.h"
-//#include <stdio.h>
+#include <stdio.h>
+
+
+int iniciar_servidor(char* ip, char* port)
+{
+
+	int socket_servidor;
+
+	struct addrinfo hints, *servinfo, *p;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+
+	getaddrinfo("127.0.0.1", "8000", &hints, &servinfo);
+
+	socket_servidor = socket(servinfo->ai_family,
+                    servinfo->ai_socktype,
+                    servinfo->ai_protocol);
+
+
+    bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen);
+
+    listen(socket_servidor, SOMAXCONN);
+
+	freeaddrinfo(servinfo);
+	printf("Listo para escuchar a mi cliente");
+
+	return socket_servidor;
+}
+
+int esperar_cliente(int socket_servidor)
+{
+
+
+	// Aceptamos un nuevo cliente
+	int socket_cliente;
+    socket_cliente = accept(socket_servidor, NULL, NULL);
+	printf("Se conecto un cliente!");
+
+	return socket_cliente;
+}
+
+
+
 int main() {
    // printf() displays the string inside quotation
 
-   int socketEscucha = iniciar_servidor("127.0.0.1" , "8000");
-    if (socketEscucha == -1) {
-       // log_error(kernelLogger, "Error al intentar iniciar servidor");
-       // __kernel_destroy(kernelConfig, kernelLogger);
-       printf("No pudo contectarse consola");
-       return -1;
-        // exit(-1);
-    }
-
-   struct sockaddr cliente = {0};
-    socklen_t len = sizeof(cliente);
-   // log_info(kernelLogger, "A la escucha de nuevas conexiones en puerto %d", socketEscucha);
-    for (;;) {
-        int clienteAceptado = accept(socketEscucha, &cliente, &len);
-        if (clienteAceptado > -1) {
-            int* socketCliente = malloc(sizeof(*socketCliente));
-            *socketCliente = clienteAceptado;
-            printf("Cliente aceptado");
-            //__crear_hilo_handler_conexion_entrante(socketCliente);
-        } else {
-            //log_error(kernelLogger, "Error al aceptar conexión: %s", strerror(errno));
-            printf("No pudo conectarse al cliente");
-             return 0;
-        }
-    }
+    int server_fd = iniciar_servidor("8000", "127");
+	printf("Servidor listo para recibir al cliente");
+	int cliente_fd = esperar_cliente(server_fd);
 
 
    return 0;
 }
+
+
+

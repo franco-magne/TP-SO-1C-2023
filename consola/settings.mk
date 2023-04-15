@@ -1,9 +1,9 @@
 # Libraries
-LIBS= commons
+LIBS=  commons
 
 # Custom libraries' paths
-SHARED_LIBPATHS= /utils/src
-STATIC_LIBPATHS= 
+SHARED_LIBPATHS= 
+STATIC_LIBPATHS= ../utils
 
 # Compiler flags
 CDEBUG=-g -Wall -DDEBUG
@@ -17,4 +17,4 @@ MEMCHECK_FLAGS=--track-origins=yes
 HELGRIND_FLAGS=
 
 # Source files (*.c) to be excluded from tests compilation
-TEST_EXCLUDE=src/main.c
+TEST_EXCLUDE=src/consola.c
