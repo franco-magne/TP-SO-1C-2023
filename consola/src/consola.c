@@ -1,18 +1,25 @@
-#include <stdio.h>
-#include "../../utils/src/utils/conexiones.h"
+#include <../include/consola.h>
 
-int conectar_a_servidor(char * , char*);
+t_log* consolaLogger;
+t_config* consolaConfig;
 
-int main() {
-   // printf() displays the string inside quotation
-  
-   char *kernelIP = "127.0.0.1";
-    char *kernelPort = "8000";
+
+
+int main() { 
+    
+    consolaLogger = log_create(CONSOLA_LOG_UBICACION,CONSOLA_PROCESS_NAME,true,LOG_LEVEL_INFO);
+    consolaConfig = config_create(MEMORIA_CONFIG_UBICACION);
+
+
+    char *kernelIP = config_get_string_value(consolaConfig, "IP");
+    char *kernelPort = config_get_string_value(consolaConfig,"PUERTO");
+    
     const int kernelSocket = conectar_a_servidor(kernelIP, kernelPort);
     if (kernelSocket == -1) {
-        //log_error(consolaLogger, "Error al intentar establecer conexión inicial con módulo Kernel");
+        log_error(consolaLogger, "Error al intentar establecer conexión inicial con módulo Kernel");
         //consola_destroy(consolaConfig, consolaLogger);
-        printf("No se pudo conectar al kernel");
+        
+        log_destroy(consolaLogger);
         return -1;
     }
 

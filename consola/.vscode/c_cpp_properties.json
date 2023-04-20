@@ -5,7 +5,8 @@
       "name": "Linux",
       "includePath": [
         "${workspaceFolder}/../utils/src",
-        "${workspaceFolder}/src"
+        "${workspaceFolder}/src",
+        "${workspaceFolder}/include"
        
         
       ],

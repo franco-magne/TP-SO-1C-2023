@@ -18,5 +18,16 @@
 		{
 			"path": "utils"
 		}
-	]
+	],
+	"settings": {
+		"files.associations": {
+			"socket.h": "c",
+			"string.h": "c",
+			"conexiones.h": "c",
+			"errno.h": "c",
+			"stdio.h": "c",
+			"log.h": "c",
+			"stdnoreturn.h": "c"
+		}
+	}
 }

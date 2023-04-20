@@ -1,7 +1,7 @@
 # Generated files
 bin/
 obj/
-*.log
+logs/
 tp-2023.code-workspace
 
 # Eclipse files

@@ -48,7 +48,7 @@ typedef enum {
 
 int conectar_a_servidor(char* ip, char* puerto);
 int iniciar_servidor(char* ip, char* puerto);
-
+int esperar_cliente(int socket_servidor);
 
 
 
