@@ -14,7 +14,18 @@ int main() {
 
     int kernelSocketCPU = conectar_a_servidor(kernelIP, "8001");
     if (kernelSocketCPU == -1) {
-        log_error(kernelLogger, "Error al intentar establecer conexión inicial con módulo Memoria");
+        log_error(kernelLogger, "Error al intentar establecer conexión inicial con módulo CPU");
+
+        log_destroy(kernelLogger);
+
+    return -2;
+    }
+
+    /////////////////////////////// CONEXION CON FILE_SYSTEM /////////////////////////////
+
+    int kernelSocketFS = conectar_a_servidor(kernelIP, "8003");
+    if (kernelSocketFS == -1) {
+        log_error(kernelLogger, "Error al intentar establecer conexión inicial con módulo FILE_SYSTEM");
 
         log_destroy(kernelLogger);
 

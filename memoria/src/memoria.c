@@ -13,7 +13,7 @@ int main() {
 
 
    int serverMemoria = iniciar_servidor(memoriaIP, memoriaPort);
-   log_info(memoriaLogger,"Servidor memoria listo para recibir al modulo CPU\n");
+   log_info(memoriaLogger,"Servidor memoria listo para recibir al modulo\n");
    aceptar_conexiones_memoria(serverMemoria);
    
 
@@ -28,7 +28,7 @@ void aceptar_conexiones_memoria(const int socketEscucha)
     
     log_info(memoriaLogger, "A la escucha de nuevas conexiones en puerto %d", socketEscucha);
     
-    for (int i =0 ;i<2 ;i++) { // PONEMOS 2 PORQUE PARA TESTEAR QUE SE CONECTE PRIMERO CPU Y DESPUES KERNEL
+    for (int i =0 ;i<3 ;i++) { // PONEMOS 2 PORQUE PARA TESTEAR QUE SE CONECTE PRIMERO CPU Y DESPUES KERNEL
         
         const int clienteAceptado = accept(socketEscucha, &cliente, &len);
         

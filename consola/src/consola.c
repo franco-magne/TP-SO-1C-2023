@@ -8,7 +8,7 @@ t_config* consolaConfig;
 int main() { 
     
     consolaLogger = log_create(CONSOLA_LOG_UBICACION,CONSOLA_PROCESS_NAME,true,LOG_LEVEL_INFO);
-    consolaConfig = config_create(MEMORIA_CONFIG_UBICACION);
+    consolaConfig = config_create(CONSOLA_CONFIG_UBICACION);
 
 
     char *kernelIP = config_get_string_value(consolaConfig, "IP");
