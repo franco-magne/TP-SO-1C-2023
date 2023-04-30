@@ -27,7 +27,9 @@
 			"errno.h": "c",
 			"stdio.h": "c",
 			"log.h": "c",
-			"stdnoreturn.h": "c"
+			"stdnoreturn.h": "c",
+			"consola.h": "c",
+			"consola_config.h": "c"
 		}
 	}
 }
