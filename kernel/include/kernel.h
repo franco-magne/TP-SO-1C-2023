@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <utils/conexiones.h>
+#include "utils/serializacion.h"
 #include <commons/log.h>
 #include <commons/config.h>
 #include <pthread.h>

@@ -11,7 +11,7 @@ int main() {
     char *kernelPort = config_get_string_value(kernelConfig,"PUERTO");
 
    /////////////////////////////// CONEXION CON CPU /////////////////////////////
-
+/*
     int kernelSocketCPU = conectar_a_servidor(kernelIP, "8001");
     if (kernelSocketCPU == -1) {
         log_error(kernelLogger, "Error al intentar establecer conexión inicial con módulo CPU");
@@ -42,7 +42,7 @@ int main() {
 
         return -2;
       }
-
+    */
    ////////////////////////////// CONEXION CON CONSOLA //////////////////////////////
     
 
@@ -71,7 +71,10 @@ void aceptar_conexiones_kernel(const int socketEscucha)
             
             int* socketCliente = malloc(sizeof(*socketCliente));
             *socketCliente = clienteAceptado;
-            crear_hilo_cliente_conexion_entrante(socketCliente);
+              
+            crear_hilo_cliente_conexion_entrante(clienteAceptado);
+            
+           
         } 
         else {
 
@@ -80,9 +83,21 @@ void aceptar_conexiones_kernel(const int socketEscucha)
     }
 }
 
-void encolar_en_new_a_nuevo_cliente(){
+void encolar_en_new_a_nuevo_cliente(int cliente){
 
    log_info(kernelLogger, "Nuevo cliente en la cola de new \n");
+    
+    t_buffer* testing = buffer_create();
+   
+    
+    //stream_send_empty_buffer(cliente, HANDSHAKE_ok_continue);
+    uint8_t test = stream_recv_header(cliente);
+    log_info(kernelLogger, "%i", test);
+    stream_recv_buffer(cliente, testing);
+    int* prueba;
+    buffer_unpack(testing, &prueba, sizeof(int));
+    log_info(kernelLogger,"%i", prueba);
+
 
 }
 
@@ -90,7 +105,7 @@ void encolar_en_new_a_nuevo_cliente(){
 void crear_hilo_cliente_conexion_entrante(int* socket) 
 {
     pthread_t threadSuscripcion;
-    pthread_create(&threadSuscripcion, NULL, encolar_en_new_a_nuevo_cliente, NULL);
+    pthread_create(&threadSuscripcion, NULL, encolar_en_new_a_nuevo_cliente, socket);
     pthread_detach(threadSuscripcion);
 }
 

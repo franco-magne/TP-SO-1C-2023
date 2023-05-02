@@ -1,9 +1,9 @@
 #include <../include/consola_config.h>
 
-#include <stdlib.h>
-#include <string.h>
+
 
 t_consola_config *configDeKernel;
+
 
 static void inicializar_config(t_config* tempCfg) {
     configDeKernel = malloc(sizeof(t_consola_config));

@@ -2,10 +2,12 @@
 
 t_log* consolaLogger;
 t_config* consolaConfig;
-t_consola_config *configDeKernel;
+extern t_consola_config *configDeKernel;
 
 
 void check_arguments(int , t_log* );
+
+
 int main(int argc, char *argv[]) { 
     
     consolaLogger = log_create(CONSOLA_LOG_UBICACION,CONSOLA_PROCESS_NAME,true,LOG_LEVEL_INFO);
@@ -26,17 +28,25 @@ int main(int argc, char *argv[]) {
     }
 
     t_buffer *buffer = buffer_create();
-    inicializar_config( argv[1] );
-    buffer_pack(buffer, &configDeKernel, sizeof(t_consola_config));
-    stream_send_buffer(kernelSocket, HANDSHAKE_consola, buffer);
-    buffer_destroy(buffer);
-
+    //inicializar_config( argv[1] );
+   
+    //stream_send_empty_buffer(kernelSocket, HANDSHAKE_kernel);
     uint8_t kernelResponse = stream_recv_header(kernelSocket);
-    stream_recv_empty_buffer(kernelSocket);
+    //stream_recv_empty_buffer(kernelSocket);
+    /*
     if (kernelResponse != HANDSHAKE_ok_continue) {
         log_error(consolaLogger, "Error al intentar establecer Handshake inicial con módulo Kernel");
         return -1;
-    }
+    } 
+    */
+    int* testing = 2;
+
+    buffer_pack(buffer, &testing, sizeof(int));
+    stream_send_buffer(kernelSocket, HANDSHAKE_kernel, buffer);
+    buffer_destroy(buffer);
+    
+
+
  
 
    return 0;
@@ -44,7 +54,7 @@ int main(int argc, char *argv[]) {
 
 void check_arguments(int argc, t_log* consolaLogger)
 {
-    if (argc != 3) { 
+    if (argc != 1) { 
         
         log_error(consolaLogger, "Cantidad de argumentos inválida.\nArgumentos: <pathArchivoConfiguracion> <pathInstrucciones>");
         log_destroy(consolaLogger);
