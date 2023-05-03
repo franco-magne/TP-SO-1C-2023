@@ -86,17 +86,12 @@ void aceptar_conexiones_kernel(const int socketEscucha)
 void encolar_en_new_a_nuevo_cliente(int cliente){
 
    log_info(kernelLogger, "Nuevo cliente en la cola de new \n");
-    
     t_buffer* testing = buffer_create();
-   
-    
-    //stream_send_empty_buffer(cliente, HANDSHAKE_ok_continue);
     uint8_t test = stream_recv_header(cliente);
-    log_info(kernelLogger, "%i", test);
     stream_recv_buffer(cliente, testing);
-    int* prueba;
-    buffer_unpack(testing, &prueba, sizeof(int));
-    log_info(kernelLogger,"%i", prueba);
+    t_list* list = lista_de_instrucciones_buffer(testing, kernelLogger);
+
+    
 
 
 }

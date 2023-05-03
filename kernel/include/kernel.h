@@ -12,6 +12,8 @@
 #include <commons/config.h>
 #include <pthread.h>
 
+#include "utils/instrucciones.h"
+
 //include "common_flags.h"
 //#include "connections.h"
 //#include "kernel_config.h"

@@ -1,14 +1,13 @@
-#include <../include/consola_config.h>
-
+#include "../include/consola_config.h"
 
 
 t_consola_config *configDeKernel;
 
-
-static void inicializar_config(t_config* tempCfg) {
-    configDeKernel = malloc(sizeof(t_consola_config));
-    configDeKernel->IP_KERNEL = strdup(config_get_string_value(tempCfg, "IP"));
-    configDeKernel->PUERTO_KERNEL = strdup(config_get_string_value(tempCfg, "PUERTO"));
+void inicializar_config(t_config* tempCfg)
+{
+configDeKernel = malloc(sizeof(t_consola_config));
+configDeKernel->IP_KERNEL = strdup(config_get_string_value(tempCfg, "IP"));
+configDeKernel->PUERTO_KERNEL = strdup(config_get_string_value(tempCfg, "PUERTO"));
 }
 
 

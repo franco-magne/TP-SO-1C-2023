@@ -14,10 +14,11 @@ typedef struct{
 }t_consola_config;
 
 
-static void inicializar_config(t_config* );
+void inicializar_config(t_config* self);
 char* consola_config_get_kernel_ip(t_consola_config* self);
 char* consola_config_get_kernel_port(t_consola_config* self);
 void consola_config_destroy(t_consola_config* self);
+
 
 
 

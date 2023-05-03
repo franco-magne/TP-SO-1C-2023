@@ -1,11 +1,13 @@
-#include <../include/consola.h>
+#include "../include/consola.h"
+#include "../include/consola_config.h"
+
+
 
 t_log* consolaLogger;
 t_config* consolaConfig;
 extern t_consola_config *configDeKernel;
 
 
-void check_arguments(int , t_log* );
 
 
 int main(int argc, char *argv[]) { 
@@ -27,25 +29,16 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    t_buffer *buffer = buffer_create();
-    //inicializar_config( argv[1] );
-   
-    //stream_send_empty_buffer(kernelSocket, HANDSHAKE_kernel);
-    uint8_t kernelResponse = stream_recv_header(kernelSocket);
-    //stream_recv_empty_buffer(kernelSocket);
-    /*
-    if (kernelResponse != HANDSHAKE_ok_continue) {
-        log_error(consolaLogger, "Error al intentar establecer Handshake inicial con módulo Kernel");
-        return -1;
-    } 
-    */
-    int* testing = 2;
-
-    buffer_pack(buffer, &testing, sizeof(int));
-    stream_send_buffer(kernelSocket, HANDSHAKE_kernel, buffer);
-    buffer_destroy(buffer);
+    char* pathArchivoInstrucciones = string_duplicate(argv[2]);
+    consola_enviar_instrucciones_a_kernel(pathArchivoInstrucciones, kernelSocket, consolaLogger);
+    free(pathArchivoInstrucciones);
     
+    //uint32_t idProceso = receive_pid_kernel(kernelSocket, consolaLogger);
+    //log_info(consolaLogger, "Se recibio el PID %d", idProceso);
 
+    //wait_kernel_response(kernelSocket, idProceso, consolaConfig, consolaLogger);
+
+    //consola_destroy(consolaConfig, consolaLogger);
 
  
 
@@ -54,11 +47,53 @@ int main(int argc, char *argv[]) {
 
 void check_arguments(int argc, t_log* consolaLogger)
 {
-    if (argc != 1) { 
+    if (argc != 3) { 
         
         log_error(consolaLogger, "Cantidad de argumentos inválida.\nArgumentos: <pathArchivoConfiguracion> <pathInstrucciones>");
         log_destroy(consolaLogger);
         
         exit(EXIT_FAILURE);
     }
+}
+
+void consola_enviar_instrucciones_a_kernel(const char *pathArchivoInstrucciones, const int kernelSocket, t_log *consolaLogger)
+{
+    t_buffer *instructionsBuffer = buffer_create();
+    
+    if(!consola_parser_parse_instructions(instructionsBuffer, pathArchivoInstrucciones, consolaLogger)) {
+
+        stream_send_empty_buffer(kernelSocket, HEADER_error);
+        log_error(consolaLogger, "Ocurrio un error en el parseo de las instrucciones. Finalizando consola...");
+        log_destroy(consolaLogger);
+        exit(EXIT_FAILURE);
+    }
+
+    stream_send_buffer(kernelSocket, HEADER_lista_instrucciones, instructionsBuffer);
+    
+    log_info(consolaLogger, "Se envía la lista de instrucciones al Kernel");
+    
+    buffer_destroy(instructionsBuffer);
+    return;
+} 
+
+uint32_t receive_pid_kernel(const int kernelSocket,  t_log* consolaLogger)
+{
+    t_header kernelResponse;
+    uint32_t idProcesoTemp = 0;
+
+    kernelResponse = stream_recv_header(kernelSocket);
+    
+    if (kernelResponse != HEADER_pid) {
+        
+        log_error(consolaLogger, "Error al intentar recibir el PID");
+       // consola_destroy(consolaConfig, consolaLogger);
+        exit(EXIT_FAILURE);
+    }
+
+    t_buffer *bufferPID = buffer_create();
+    stream_recv_buffer(kernelSocket, bufferPID);
+    buffer_unpack(bufferPID, &idProcesoTemp, sizeof(idProcesoTemp));
+    buffer_destroy(bufferPID);
+    
+    return idProcesoTemp;
 }

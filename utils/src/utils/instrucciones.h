@@ -30,6 +30,7 @@ typedef enum {
     INSTRUCCION_F_CLOSE,
     INSTRUCCION_DELETE_SEGMENT,
     INSTRUCCION_EXIT,
+    INSTRUCCION_error,
     INSTRUCCION_YIELD
 } t_tipo_instruccion;
 
@@ -39,6 +40,14 @@ typedef enum{
     REGISTRO_bx,
     REGISTRO_cx,
     REGISTRO_dx,
+    REGISTRO_eax,
+    REGISTRO_ebx,
+    REGISTRO_ecx,
+    REGISTRO_edx,
+    REGISTRO_rax,
+    REGISTRO_rbx,
+    REGISTRO_rcx,
+    REGISTRO_rdx,
     REGISTRO_null
 
 }t_registro;

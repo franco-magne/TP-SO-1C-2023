@@ -17,4 +17,4 @@ MEMCHECK_FLAGS=--track-origins=yes
 HELGRIND_FLAGS=
 
 # Source files (*.c) to be excluded from tests compilation
-TEST_EXCLUDE=src/consola.c
+TEST_EXCLUDE=src/main.c

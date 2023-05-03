@@ -29,7 +29,10 @@
 			"log.h": "c",
 			"stdnoreturn.h": "c",
 			"consola.h": "c",
-			"consola_config.h": "c"
+			"consola_config.h": "c",
+			"consola-parser": "c",
+			"serializacion.h": "c",
+			"commons-nuestras.h": "c"
 		}
 	}
 }
