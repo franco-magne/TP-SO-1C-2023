@@ -12,7 +12,7 @@
 #include <commons/config.h>
 #include <pthread.h>
 
-#include "utils/instrucciones.h"
+#include "../../utils/src/utils/instrucciones.h"
 
 //include "common_flags.h"
 //#include "connections.h"

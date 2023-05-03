@@ -10,7 +10,7 @@
 #include <commons/string.h>
 //Static libraries
 
-#include <utils/instrucciones.h>
+#include "../../utils/src/utils/instrucciones.h"
 
 //Internal libraries consola module
 #include "consola_serializar.h" 

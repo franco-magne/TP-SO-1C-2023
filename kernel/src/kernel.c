@@ -87,8 +87,14 @@ void encolar_en_new_a_nuevo_cliente(int cliente){
 
    log_info(kernelLogger, "Nuevo cliente en la cola de new \n");
     t_buffer* testing = buffer_create();
+    
     uint8_t test = stream_recv_header(cliente);
+    if(HEADER_lista_instrucciones == test)
+
+
     stream_recv_buffer(cliente, testing);
+
+
     t_list* list = lista_de_instrucciones_buffer(testing, kernelLogger);
 
     

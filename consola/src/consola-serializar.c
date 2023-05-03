@@ -39,6 +39,9 @@ void consola_serializer_pack_two_args(t_buffer* buffer, t_tipo_instruccion instr
     {
         // FALTA F_TRUNCATE, F_SEEK, CREATE_SEGMENT
         case INSTRUCCION_SET:
+            consola_serializer_pack_one_register_args(buffer, instruccion, *((t_registro*) arg1));
+            buffer_pack_string(buffer, arg2 );
+            break;
         case INSTRUCCION_MOV_IN:
 
             consola_serializer_pack_one_register_args(buffer, instruccion, *((t_registro*) arg1));
@@ -48,6 +51,10 @@ void consola_serializer_pack_two_args(t_buffer* buffer, t_tipo_instruccion instr
         case INSTRUCCION_MOV_OUT:
             consola_serializer_pack_one_integer_args(buffer, instruccion, *((uint32_t*) arg1));
             buffer_pack(buffer, arg2, sizeof(t_registro));
+            break;
+        case INSTRUCCION_CREATE_SEGMENT:
+            consola_serializer_pack_one_integer_args(buffer, instruccion, *((uint32_t*) arg1));
+            buffer_pack(buffer, arg2, sizeof(uint32_t));
             break;
 
         default:

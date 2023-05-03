@@ -32,7 +32,8 @@
 			"consola_config.h": "c",
 			"consola-parser": "c",
 			"serializacion.h": "c",
-			"commons-nuestras.h": "c"
+			"commons-nuestras.h": "c",
+			"instrucciones.h": "c"
 		}
 	}
 }

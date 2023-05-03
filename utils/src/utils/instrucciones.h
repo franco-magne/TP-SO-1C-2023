@@ -9,6 +9,7 @@
 ///////////////// INCLUDE COMMONS //////////////
 #include <commons/log.h>
 #include <commons/collections/list.h>
+#include <commons/string.h>
 
 //////////////// INCLUDE UTILS ////////////////
 #include "serializacion.h"
@@ -59,7 +60,7 @@ typedef struct  {
     char* dispositivo;
     t_registro registro1;
     t_registro registro2;
-    char* toString;
+   // char* toString;
 }t_instruccion;
 
 
@@ -73,6 +74,6 @@ typedef struct{
     
 } t_info_instruccion;
 
-
+t_list* lista_de_instrucciones_buffer(t_buffer* bufferConInstrucciones, t_log * logger);
 
 #endif

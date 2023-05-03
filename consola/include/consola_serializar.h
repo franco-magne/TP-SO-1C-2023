@@ -15,6 +15,7 @@
 #include <utils/instrucciones.h>
 #include "utils/commons-nuestras.h"
 #include "../../utils/src/utils/serializacion.h"
+#include "../../utils/src/utils/instrucciones.h"
 
 
 void consola_serializer_pack_no_args(t_buffer* buffer, t_tipo_instruccion instruccion);

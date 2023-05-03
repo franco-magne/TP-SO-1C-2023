@@ -50,6 +50,13 @@ bool consola_parser_parse_instructions(t_buffer *buffer, const char *pathInstruc
                     switch (obtener_tipo_instruccion(identificadorInstruccion))
                     {
                         case INSTRUCCION_SET:
+                            arg1 = string_duplicate(vectorStringsInstruccion[1]);
+                            string_trim(&arg1);
+                            auxRegistro1 = obtener_registro(arg1);
+                            arg2 = string_duplicate(vectorStringsInstruccion[2]);
+                            string_trim(&arg2);
+                            consola_serializer_pack_two_args(buffer, obtener_tipo_instruccion(identificadorInstruccion), (void*)&auxRegistro1, (void*)arg2);
+                            break;
                         case INSTRUCCION_MOV_IN:
                             arg1 = string_duplicate(vectorStringsInstruccion[1]);
                             string_trim(&arg1);
