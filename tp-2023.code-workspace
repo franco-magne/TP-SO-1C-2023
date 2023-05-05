@@ -33,7 +33,11 @@
 			"consola-parser": "c",
 			"serializacion.h": "c",
 			"commons-nuestras.h": "c",
-			"instrucciones.h": "c"
+			"instrucciones.h": "c",
+			"compare": "c",
+			"limits": "c",
+			"new": "c",
+			"kernel-estado.h": "c"
 		}
 	}
 }

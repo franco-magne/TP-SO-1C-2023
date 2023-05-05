@@ -14,6 +14,13 @@
 //////////////// INCLUDE UTILS ////////////////
 #include "serializacion.h"
 
+typedef enum {
+    NEW,
+    READY,
+    EXEC,
+    BLOCK,
+    EXIT
+} t_nombre_estado;
 
 typedef enum {
     INSTRUCCION_F_READ,

@@ -39,8 +39,8 @@ t_buffer* buffer_unpack(t_buffer* self, void* dest, int size)
         exit(-1);
     }
     memcpy(dest, self->stream, size);
+    memmove(self->stream, self->stream + size, self->size - size);
     self->size -= size;
-    memmove(self->stream, self->stream + size, self->size);
     self->stream = realloc(self->stream, self->size);
 
     return self;
