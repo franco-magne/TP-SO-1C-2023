@@ -30,7 +30,7 @@ typedef struct {
 uint32_t pcb_get_program_counter(t_pcb* this);
 uint32_t pcb_get_pid(t_pcb* this);
 t_buffer* pcb_get_instrucciones_buffer(t_pcb* this);
-t_buffer* pcb_get_estadoActual(t_pcb* this);
+t_nombre_estado pcb_get_estado_actual(t_pcb* this);
 
 
 /////////////////////// SETTER ////////////////////////
@@ -38,6 +38,7 @@ t_buffer* pcb_get_estadoActual(t_pcb* this);
 void pcb_set_program_counter(t_pcb* this, uint32_t programCounter); 
 void pcb_set_instructions_buffer(t_pcb* this, t_buffer* instructionsBuffer);
 void pcb_set_pid(t_pcb* this, uint32_t pid);
+void pcb_set_estado_actual(t_pcb* this, uint32_t pid);
 
 
 

@@ -35,6 +35,10 @@ t_buffer* pcb_get_instrucciones_buffer(t_pcb* this)
     return this->instruccionesBuffer;
 }
 
+t_nombre_estado pcb_get_estado_actual(t_pcb* this){
+    return this->estadoActual;
+}
+
 
 /////////////////////// SETTER ////////////////////////
 
@@ -53,3 +57,7 @@ void pcb_set_pid(t_pcb* this, uint32_t pid)
    this->pid = pid;
 }
 
+void pcb_set_estado_actual(t_pcb* this, uint32_t pid) 
+{
+   this->pid = pid;
+}

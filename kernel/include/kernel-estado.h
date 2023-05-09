@@ -20,9 +20,11 @@ typedef struct {
     t_list* listaProcesos;
   //  sem_t* semaforoEstado;
 
-}t_estado;
+}t_estado ;
 
 t_list* estado_get_list(t_estado* this);
 void estado_encolar_pcb_atomic(t_estado* estadoDest, t_pcb * targetPcb);
+//t_pcb* estado_desencolar_primer_pcb(t_estado* this);
+//t_pcb* estado_desencolar_primer_pcb_atomic(t_estado* this);
 
 #endif
