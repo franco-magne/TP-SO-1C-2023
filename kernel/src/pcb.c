@@ -12,6 +12,7 @@ t_pcb* pcb_create(uint32_t pid)
    }
    self->pid = pid;
    self->estadoActual= NEW;
+   self->estadoAnterior= NEW;
    self->programCounter=0;
    self->instruccionesBuffer = NULL;
    self->registros = REGISTRO_null;
@@ -39,6 +40,9 @@ t_nombre_estado pcb_get_estado_actual(t_pcb* this){
     return this->estadoActual;
 }
 
+t_nombre_estado pcb_get_estado_anterior(t_pcb* this){
+    return this->estadoAnterior;
+}
 
 /////////////////////// SETTER ////////////////////////
 
@@ -57,7 +61,12 @@ void pcb_set_pid(t_pcb* this, uint32_t pid)
    this->pid = pid;
 }
 
-void pcb_set_estado_actual(t_pcb* this, uint32_t pid) 
+void pcb_set_estado_actual(t_pcb* this, uint32_t estadoActual) 
 {
-   this->pid = pid;
+   this->estadoActual = estadoActual;
+}
+
+void pcb_set_estado_anterior(t_pcb* this, uint32_t estadoAnterior) 
+{
+   this->estadoAnterior = estadoAnterior;
 }
