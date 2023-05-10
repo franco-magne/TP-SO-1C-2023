@@ -37,7 +37,9 @@
 			"compare": "c",
 			"limits": "c",
 			"new": "c",
-			"kernel-estado.h": "c"
+			"kernel-estado.h": "c",
+			"dictionary.h": "c",
+			"config.h": "c"
 		}
 	}
 }

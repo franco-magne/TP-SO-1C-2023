@@ -2,7 +2,7 @@
 
 
 t_log* kernelLogger;
-t_config* kernelConfig;
+t_kernel_config* kernelConfig;
 
 /////////// LA USAN VARIOS PROCESOS "HILOS" /////////////
 static uint32_t nextPid ;
@@ -38,16 +38,71 @@ uint32_t obtener_siguiente_pid(void)
     return newNextPid;
 }
 
+
+static void pid_destroyer(void* pidADestruir)
+{
+    free(pidADestruir);
+}
+
+static void* pcb_to_pid_transformer(void* pcbATransformar)
+{
+    t_pcb* tempPcbATransformar = (t_pcb*) pcbATransformar;
+    uint32_t* tempPid = malloc(sizeof(*tempPid));
+    
+    *tempPid = tempPcbATransformar->pid;
+
+    return (void*) tempPid; 
+}
+
+
+char* string_pids_ready(t_estado* estadoReady)
+{
+    t_list* tempPidList;
+    char* listaPidsString = string_new();
+    uint32_t tempPid;
+
+    pthread_mutex_lock(estado_get_mutex(estadoReady));
+    tempPidList = list_map(estadoReady->listaProcesos, pcb_to_pid_transformer);
+    pthread_mutex_unlock(estado_get_mutex(estadoReady));
+
+    string_append(&listaPidsString, "[");
+
+    for(int i = 0; i < tempPidList->elements_count; i++) {
+        
+        tempPid = *(uint32_t*)list_get(tempPidList, i);
+
+        char* stringPid = string_itoa(tempPid);
+        string_append(&listaPidsString, stringPid);
+        free(stringPid);
+        
+        if(i != tempPidList->elements_count - 1) {
+
+            string_append(&listaPidsString, ", ");
+        }
+    }
+
+    string_append(&listaPidsString, "]");
+
+    list_destroy_and_destroy_elements(tempPidList, pid_destroyer);
+    return listaPidsString;
+}
+
+
+
 //////////////////////////////////////////////////////////////////////////
 
-int main() {
+int main(int argc, char* argv[]) {
     kernelLogger = log_create(KERNEL_LOG_UBICACION,KERNEL_PROCESS_NAME,true,LOG_LEVEL_INFO);
-    kernelConfig = config_create(KERNEL_CONFIG_UBICACION);
-    char *kernelIP = config_get_string_value(kernelConfig, "IP");
-    char *kernelPort = config_get_string_value(kernelConfig,"PUERTO");
+    t_config* kernelConfigPath = config_create(argv[1]);
+    //char *kernelIP = config_get_string_value(kernelConfig, "IP");
+    //char *kernelPort = config_get_string_value(kernelConfig,"PUERTO");
     nextPid++;
     pthread_mutex_init(&nextPidMutex, NULL);
 
+    //kernelConfig = kernel_config_create(argv[1], kernelLogger);
+   kernelConfig = kernel_config_initializer( kernelConfigPath);
+   log_info(kernelLogger,strdup(config_get_string_value(kernelConfigPath, "IP_MEMORIA")) );
+    
    /////////////////////////////// CONEXION CON CPU /////////////////////////////
 /*
     int kernelSocketCPU = conectar_a_servidor(kernelIP, "8001");
@@ -85,7 +140,7 @@ int main() {
     
 
 
-   int server_fd = iniciar_servidor(kernelIP, kernelPort);
+   int server_fd = iniciar_servidor(kernel_config_get_ip_escucha(kernelConfig), kernel_config_get_puerto_escucha(kernelConfig));
    log_info(kernelLogger,"Servidor listo para recibir al cliente\n");
    inicializar_estructuras();
    aceptar_conexiones_kernel(server_fd);
@@ -94,6 +149,7 @@ int main() {
 
    log_destroy(kernelLogger);
    config_destroy(kernelConfig);
+
    return 0;
 }
 
@@ -142,10 +198,9 @@ void encolar_en_new_a_nuevo_proceso(int cliente){
         buffer_destroy(bufferIntrucciones);
         uint32_t newPid = obtener_siguiente_pid();
 
-        t_pcb* newPcb = malloc(sizeof(t_pcb*)); // Me rompe pcb_create()
+        t_pcb* newPcb = pcb_create(newPid); // Me rompe pcb_create()
         
         // LE SETEO LOS VALORES BASICOS
-        pcb_set_pid(newPcb, newPid);
         pcb_set_instructions_buffer(newPcb, instructionsBufferCopy);
 
         log_info(kernelLogger, "Creación de nuevo proceso ID %d mediante <socket %d>", pcb_get_pid(newPcb), cliente);
@@ -158,11 +213,6 @@ void encolar_en_new_a_nuevo_proceso(int cliente){
         buffer_destroy(bufferPID);
 
         /////// LO GUARDO EN LA LISTA DE NEW ////////
-        /*
-        t_estado* estadoNew = malloc(sizeof(estadoNew));
-        estadoNew->nombreEstado = NEW;
-        estadoNew->listaProcesos = list_create();
-        */
         estado_encolar_pcb_atomic(estadoNew, newPcb);// ACA LO LLEVA A NEW
         log_transition("NULL", "NEW", pcb_get_pid(newPcb));
         sem_post(&hayPcbsParaAgregarAlSistema);  // ESTE SEMAFORO LO QUE HACE ES AGREGAR PCB AL SISTEMA qUE CUMPLAN LO DE ARRIBA
@@ -214,10 +264,7 @@ void* planificador_largo_plazo(void* args)
         sem_wait(&hayPcbsParaAgregarAlSistema);
         sem_wait(&gradoMultiprog);
                                  
-        // t_pcb* pcbQuePasaAReady = estado_desencolar_primer_pcb_atomic(estadoNew);
-        //t_pcb* pcbQuePasaAReady = malloc(sizeof(pcbQuePasaAReady));
-        pthread_mutex_lock(&eliminarLista);
-        t_pcb* pcbQuePasaAReady = list_remove(estadoNew->listaProcesos, 0);
+        t_pcb* pcbQuePasaAReady = estado_desencolar_primer_pcb_atomic(estadoNew);
         
         
         //uint32_t* nuevaTablaPaginasSegmentos = mem_adapter_obtener_tabla_pagina(pcbQuePasaAReady, kernelConfig, kernelDevLogger);
@@ -233,17 +280,17 @@ void* planificador_largo_plazo(void* args)
                 
             //pcb_set_estado_anterior(pcbQuePasaAReady, pcb_get_estado_actual(pcbQuePasaAReady));
                 
-                //pcb_set_estado_actual(pcbQuePasaAReady, READY);       ROMPE EN ESTADO ACTUAL 
+                //pcb_set_estado_actual(pcbQuePasaAReady, READY);      // ROMPE EN ESTADO ACTUAL 
                
                 estado_encolar_pcb_atomic(estadoReady, pcbQuePasaAReady);
             
-                //char* stringPidsReady = string_pids_ready(estadoReady);
+                char* stringPidsReady = string_pids_ready(estadoReady);
                 log_transition("NEW", "READY", pcb_get_pid(pcbQuePasaAReady));
-                pthread_mutex_unlock(&eliminarLista);
-                //log_info(kernelLogger,  "Cola Ready <%s>: %s", kernel_config_get_algoritmo_planificacion(kernelConfig), stringPidsReady);
-                //free(stringPidsReady);
-                free(pcbQuePasaAReady);
-               // sem_post(estado_get_sem(estadoReady));
+
+                log_info(kernelLogger,  "Cola Ready <%s>: %s", kernel_config_get_algoritmo_planificacion(kernelConfig), stringPidsReady);
+                free(stringPidsReady);
+               // free(pcbQuePasaAReady);
+                sem_post(estado_get_sem(estadoReady));
             
         //}
         pcbQuePasaAReady = NULL;
@@ -272,31 +319,18 @@ void inicializar_estructuras(void) {
     //pthread_mutex_init(&mutexSocketMemoria, NULL);
     //pthread_mutex_init(&estadoEsperandoMemoria, 1);
 
-    // int valorInicialGradoMultiprog = kernel_config_get_grado_multiprogramacion(kernelConfig);
-    int valorInicialGradoMultiprog  = 4;
+ //   int valorInicialGradoMultiprog = kernel_config_get_grado_multiprogramacion(kernelConfig);
+    int valorInicialGradoMultiprog = 4;
     sem_init(&hayPcbsParaAgregarAlSistema, 0, 0);
     sem_init(&gradoMultiprog, 0, valorInicialGradoMultiprog);
    // sem_init(&dispatchPermitido, 0, 1); plani de corto plazo
     log_info(kernelLogger, "Se inicializa el grado multiprogramación en %d", valorInicialGradoMultiprog);
     
-    
-    estadoNew = malloc(sizeof(*estadoNew));
-    estadoNew->nombreEstado = NEW;
-    estadoNew->listaProcesos = list_create();
-    
-    estadoReady = malloc(sizeof(*estadoReady));
-    estadoReady->nombreEstado = READY;
-    estadoReady->listaProcesos = list_create();
-
-    estadoExit = malloc(sizeof(*estadoExit));
-    estadoExit->nombreEstado = EXIT;
-    estadoExit->listaProcesos = list_create();
-    
-
-    //estadoNew = estado_create(NEW);
-    //estadoReady = estado_create(READY);
+ 
+    estadoNew = estado_create(NEW);
+    estadoReady = estado_create(READY);
     //estadoExec = estado_create(EXEC);
-    //estadoExit = estado_create(EXIT);
+    estadoExit = estado_create(EXIT);
     //estadoBlocked = estado_create(BLOCK);
     // TODO HACER ESTADO_CREATE son las inicializaciones de arriba
 

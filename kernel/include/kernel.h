@@ -15,6 +15,7 @@
 
 //////////////////////////////// BIBLOTECA UTILS NUESTRA //////////////
 #include "kernel-estado.h"
+#include "kernel-config.h"
 #include "pcb.h"
 #include <utils/conexiones.h>
 #include "utils/serializacion.h"

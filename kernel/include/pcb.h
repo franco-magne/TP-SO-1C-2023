@@ -26,7 +26,7 @@ typedef struct {
 }t_pcb;
 
 ////////////////////////// DEFINICION DE LAS FUNCIONES ////////////////
-
+t_pcb* pcb_create(uint32_t pid);
 uint32_t pcb_get_program_counter(t_pcb* this);
 uint32_t pcb_get_pid(t_pcb* this);
 t_buffer* pcb_get_instrucciones_buffer(t_pcb* this);
