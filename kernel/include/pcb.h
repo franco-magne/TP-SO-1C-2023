@@ -19,7 +19,7 @@
 typedef struct {
     uint32_t pid;
     uint32_t programCounter;
-    t_registro registros;
+    t_registros_cpu* registros; 
     t_buffer* instruccionesBuffer;
     t_nombre_estado estadoActual;
     t_nombre_estado estadoAnterior;
@@ -27,6 +27,7 @@ typedef struct {
 }t_pcb;
 
 ////////////////////////// DEFINICION DE LAS FUNCIONES ////////////////
+t_registros_cpu* pcb_get_registros_cpu(t_pcb* this);
 t_pcb* pcb_create(uint32_t pid);
 uint32_t pcb_get_program_counter(t_pcb* this);
 uint32_t pcb_get_pid(t_pcb* this);

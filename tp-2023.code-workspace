@@ -39,7 +39,9 @@
 			"new": "c",
 			"kernel-estado.h": "c",
 			"dictionary.h": "c",
-			"config.h": "c"
+			"config.h": "c",
+			"kernel-cpu-adapter.h": "c",
+			"list.h": "c"
 		}
 	}
 }

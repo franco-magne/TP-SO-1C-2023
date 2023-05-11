@@ -32,7 +32,7 @@ typedef struct{
     int ESTIMACION_INICIAL;
     int HRRN_ALFA;
     //int SOCKET_MEMORIA;
-    //int SOCKET_DISPATCH_CPU;
+    int SOCKET_DISPATCH_CPU;
     //int SOCKET_INTERRUPT_CPU;
     int GRADO_MULTIPROGRAMACION;
     char** RECURSOS;
@@ -57,7 +57,7 @@ char* kernel_config_get_puerto_escucha(t_kernel_config* this);
 int kernel_config_get_grado_multiprogramacion(t_kernel_config* this); 
 bool kernel_config_es_algoritmo_fifo(t_kernel_config* this); 
 bool kernel_config_es_algoritmo_HRRN(t_kernel_config* this);
-char* kernel_config_get_algoritmo_planificacion(t_kernel_config* this);
-
+char* kernel_config_get_algoritmo_planificacion(t_kernel_config* this); 
+int kernel_config_get_socket_dispatch_cpu(t_kernel_config* this); 
 
 #endif

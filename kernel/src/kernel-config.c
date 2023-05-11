@@ -16,7 +16,7 @@ t_kernel_config* kernel_config_initializer(t_config* tempCfg)
     kernelConfig->ESTIMACION_INICIAL = config_get_int_value(tempCfg, "ESTIMACION_INICIAL");
     kernelConfig->HRRN_ALFA =  config_get_int_value(tempCfg, "HRRN_ALFA");
    // kernelConfig->SOCKET_MEMORIA = -1;
-   // kernelConfig->SOCKET_DISPATCH_CPU = -1;
+    kernelConfig->SOCKET_DISPATCH_CPU = -1;
    // kernelConfig->SOCKET_INTERRUPT_CPU = -1;
     kernelConfig->GRADO_MULTIPROGRAMACION = config_get_int_value(tempCfg, "GRADO_MAX_MULTIPROGRAMACION");
     kernelConfig->RECURSOS = config_get_array_value(tempCfg, "RECURSOS");
@@ -101,19 +101,19 @@ char* kernel_config_get_algoritmo_planificacion(t_kernel_config* this)
 // FALTA RECURSOS
 // FALTA INSTANCIAS DE RECURSOS
 
-///////////////////// NO APLICADOS TODAVIA //////////////////////
 
-/*
-void kernel_config_set_socket_memoria(t_kernel_config* this, int socketMemoria) 
+/*void kernel_config_set_socket_memoria(t_kernel_config* this, int socketMemoria) 
 {
     this->SOCKET_MEMORIA = socketMemoria;
-}
+}*/
 
 int kernel_config_get_socket_dispatch_cpu(t_kernel_config* this) 
 {
     return this->SOCKET_DISPATCH_CPU;
 }
 
+/*
+///////////////////// NO APLICADOS TODAVIA //////////////////////
 int kernel_config_get_socket_interrupt_cpu(t_kernel_config* this) 
 {
     return this->SOCKET_INTERRUPT_CPU;

@@ -27,6 +27,7 @@ int main() {
    log_info(cpuLogger,"Servidor kernel listo para recibir al modulo\n");
    int serverEspera = esperar_cliente(serverCpu);
 
+  atender_peticiones_de_kernel();
   
 
    return 0;

@@ -18,6 +18,38 @@ static char* t_registro_to_char(t_registro registro)
         
         return "DX";
     }
+    if(registro == REGISTRO_ax) {
+
+        return "EAX";
+    }
+    else if(registro == REGISTRO_bx) {
+
+        return "EBX";
+    }
+    else if(registro == REGISTRO_cx) {
+        
+        return "ECX";
+    }
+    else if(registro == REGISTRO_dx) {
+        
+        return "EDX";
+    }
+    if(registro == REGISTRO_ax) {
+
+        return "RAX";
+    }
+    else if(registro == REGISTRO_bx) {
+
+        return "RBX";
+    }
+    else if(registro == REGISTRO_cx) {
+        
+        return "RCX";
+    }
+    else if(registro == REGISTRO_dx) {
+        
+        return "RDX";
+    }
     else {
 
         return "NULL";
@@ -144,7 +176,13 @@ t_list* lista_de_instrucciones_buffer(t_buffer* bufferConInstrucciones, t_log * 
     return instrucciones;
 }
 
+t_registros_cpu* registros_cpu_create()
+{
+    t_registros_cpu* tempRegistrosCpu = malloc(sizeof(*tempRegistrosCpu));
+    memset((void*) tempRegistrosCpu, '\0', sizeof(*tempRegistrosCpu));
 
+    return tempRegistrosCpu;
+}
 
 
 

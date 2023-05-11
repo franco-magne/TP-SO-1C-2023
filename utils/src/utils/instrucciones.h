@@ -60,6 +60,23 @@ typedef enum{
 
 }t_registro;
 
+typedef struct{
+
+    uint32_t registroAx;
+    uint32_t registroBx;
+    uint32_t registroCx;
+    uint32_t registroDx;
+    uint32_t registroEAx;
+    uint32_t registroEBx;
+    uint32_t registroECx;
+    uint32_t registroEDx;
+    uint32_t registroRAx;
+    uint32_t registroRBx;
+    uint32_t registroRCx;
+    uint32_t registroRDx;
+
+}t_registros_cpu;
+
 typedef struct  {
     t_tipo_instruccion tipoInstruccion;
     uint32_t operando1;
@@ -82,5 +99,5 @@ typedef struct{
 } t_info_instruccion;
 
 t_list* lista_de_instrucciones_buffer(t_buffer* bufferConInstrucciones, t_log * logger);
-
+t_registros_cpu* registros_cpu_create();
 #endif

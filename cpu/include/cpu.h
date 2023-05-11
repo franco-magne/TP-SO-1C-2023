@@ -12,6 +12,8 @@
 #include <commons/config.h>
 #include <pthread.h>
 
+#include "cpu-atender-kernel.h"
+
 #define CPU_CONFIG_UBICACION "config/cpu.config"
 #define CPU_LOG_UBICACION "logs/cpu.log"
 #define CPU_PROCESS_NAME "Cpu"

@@ -45,7 +45,7 @@ static uint32_t obtener_diferencial_de_tiempo_en_milisegundos(struct timespec en
 }
 
 
-static void log_transition(const char* prev, const char* post, int pid) {
+static void log_transition(const char* prev, const char* post, int pid) {   //Da el color amarillo
     char* transicion = string_from_format("\e[1;93m%s->%s\e[0m", prev, post);
     log_info(kernelLogger, "Transición de %s PCB <ID %d>", transicion, pid);
     free(transicion);
@@ -176,7 +176,7 @@ int main(int argc, char* argv[]) {
   
 
    log_destroy(kernelLogger);
-   config_destroy(kernelConfig);
+   config_destroy(kernelConfig);    //OJO falta Free
 
    return 0;
 }
@@ -310,7 +310,7 @@ void* planificador_largo_plazo(void* args)
                 
                 pcb_set_estado_anterior(pcbQuePasaAReady, pcb_get_estado_actual(pcbQuePasaAReady));
                 
-                pcb_set_estado_actual(pcbQuePasaAReady, READY);      // ROMPE EN ESTADO ACTUAL 
+                pcb_set_estado_actual(pcbQuePasaAReady, READY);     
                
                 estado_encolar_pcb_atomic(estadoReady, pcbQuePasaAReady);
             
@@ -444,7 +444,7 @@ void inicializar_estructuras(void) {
     
     if (kernel_config_es_algoritmo_fifo(kernelConfig)) {
         
-       //elegir_pcb = elegir_pcb_segun_fifo;
+        //elegir_pcb = elegir_pcb_segun_fifo;
      //  evaluar_desalojo = evaluar_desalojo_segun_fifo;
      //  actualizar_pcb_por_bloqueo = actualizar_pcb_por_bloqueo_segun_fifo;
     } else {

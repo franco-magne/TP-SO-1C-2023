@@ -5,21 +5,26 @@
 t_pcb* pcb_create(uint32_t pid) 
 {
    printf("Creando nuevo PCB con PID %d\n", pid); 
-    t_pcb* self = malloc(sizeof(*self));
-   if (self == NULL) {
+    t_pcb* this = malloc(sizeof(*this));
+   if (this == NULL) {
       printf("Error al asignar memoria para el PCB\n");
       exit(EXIT_FAILURE);
    }
-   self->pid = pid;
-   self->estadoActual= NEW;
-   self->estadoAnterior= NEW;
-   self->programCounter=0;
-   self->instruccionesBuffer = NULL;
-   self->registros = REGISTRO_null;
+   this->pid = pid;
+   this->estadoActual= NEW;
+   this->estadoAnterior= NEW;
+   this->programCounter=0;
+   this->instruccionesBuffer = NULL;
+   this->registros = registros_cpu_create();
 
-   return self;
+   return this;
 }
 //////////////////////// GETTERS /////////////////////
+
+t_registros_cpu* pcb_get_registros_cpu(t_pcb* this)
+{
+    return this->registros;
+}
 
 uint32_t pcb_get_program_counter(t_pcb* this)
 {
@@ -69,4 +74,21 @@ void pcb_set_estado_actual(t_pcb* this, uint32_t estadoActual)
 void pcb_set_estado_anterior(t_pcb* this, uint32_t estadoAnterior) 
 {
    this->estadoAnterior = estadoAnterior;
+}
+
+void pcb_set_registro_ax_cpu(t_pcb* this, uint32_t registro)
+{
+    this->registros->registroAx = registro;
+}
+void pcb_set_registro_bx_cpu(t_pcb* this, uint32_t registro)
+{
+    this->registros->registroBx = registro;
+}
+void pcb_set_registro_cx_cpu(t_pcb* this, uint32_t registro)
+{
+    this->registros->registroCx = registro;
+}
+void pcb_set_registro_dx_cpu(t_pcb* this, uint32_t registro)
+{
+    this->registros->registroDx = registro;
 }
