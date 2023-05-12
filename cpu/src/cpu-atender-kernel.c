@@ -42,7 +42,7 @@ static t_instruccion* cpu_fetch_instruction(t_cpu_pcb* pcb)
     uint32_t programCounter = cpu_pcb_get_program_counter(pcb);
     
     t_instruccion* nextInstruction = list_get(instructionsList, programCounter);
-    log_info(cpuDevLogger, "FETCH INSTRUCTION: PCB <ID %d>", cpu_pcb_get_pid(pcb));
+    log_info(cpuLogger, "FETCH INSTRUCTION: PCB <ID %d>", cpu_pcb_get_pid(pcb));
     
     return nextInstruction;
 }
@@ -50,7 +50,7 @@ static t_instruccion* cpu_fetch_instruction(t_cpu_pcb* pcb)
 static bool cpu_decode_instruction(uint32_t pid, t_instruccion* instruction) 
 {
     char* instruccionString = instruccion_to_string(instruction);
-    log_info(cpuDevLogger, "DECODE INSTRUCTION: PCB <ID %d> Decoded Instruction: %s", pid, instruccionString);
+    log_info(cpuLogger, "DECODE INSTRUCTION: PCB <ID %d> Decoded Instruction: %s", pid, instruccionString);
     free(instruccionString);
     
     return instruccion_get_tipo_instruccion(instruction) == INSTRUCCION_MOV_IN;
@@ -129,7 +129,7 @@ static void set_registro_segun_tipo(t_registro tipoRegistro, uint32_t valorASete
             break;
     }
 
-    log_info(cpuDevLogger, "Registro %s seteado con valor: %d", t_registro_to_char(tipoRegistro), get_registro_segun_tipo(tipoRegistro, pcb));
+    log_info(cpuLogger, "Registro %s seteado con valor: %d", t_registro_to_char(tipoRegistro), get_registro_segun_tipo(tipoRegistro, pcb));
 }
 
 static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstruccion, void* operando1, void* operando2) 
@@ -146,7 +146,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);
 
         log_info(cpuMinimalLogger, "PID: <%d> - Ejecutando: <SET> - <%s> - <%d>", cpu_pcb_get_pid(pcb), t_registro_to_char(registroASetear), valorASetear);
-        log_info(cpuDevLogger, "PID: <%d> - Ejecutando: <SET> - <%s> - <%d>", cpu_pcb_get_pid(pcb), t_registro_to_char(registroASetear), valorASetear);
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <SET> - <%s> - <%d>", cpu_pcb_get_pid(pcb), t_registro_to_char(registroASetear), valorASetear);
         
         intervalo_de_pausa(retardoInstruccion);
         
@@ -156,7 +156,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
     } else if (tipoInstruccion == INSTRUCCION_EXIT) {
         
         log_info(cpuMinimalLogger, "PID: <%d> - Ejecutando: <EXIT> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
-        log_info(cpuDevLogger, "PID: <%d> - Ejecutando: <EXIT> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <EXIT> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
 
         uint32_t pid = cpu_pcb_get_pid(pcb);
         uint32_t* arrayTablaPaginasActualizado = cpu_pcb_get_array_tabla_paginas(pcb);
@@ -282,14 +282,14 @@ static void dispatch_peticiones_de_kernel()
                 t_buffer* bufferInstrucciones = buffer_create();
                 stream_recv_buffer(cpu_config_get_socket_dispatch(cpuConfig), bufferInstrucciones);
                 
-                t_list* listaInstrucciones = instruccion_list_create_from_buffer(bufferInstrucciones, cpuDevLogger);  // Agregar a las commons?
+                t_list* listaInstrucciones = instruccion_list_create_from_buffer(bufferInstrucciones, cpuLogger);  // Agregar a las commons?
                 cpu_pcb_set_instrucciones(pcb, listaInstrucciones);
                 
                 buffer_destroy(bufferInstrucciones);
             } 
             else {
 
-                log_error(cpuDevLogger, "Error al intentar recibir las instrucciones de Kernel");  //DevLogger
+                log_error(cpuLogger, "Error al intentar recibir las instrucciones de Kernel");  //DevLogger
                 exit(EXIT_FAILURE);
             }
             
@@ -304,7 +304,7 @@ static void dispatch_peticiones_de_kernel()
         }
         else {
             
-            log_error(cpuDevLogger, "Error al intentar recibir el PCB de Kernel");
+            log_error(cpuLogger, "Error al intentar recibir el PCB de Kernel");
             exit(EXIT_FAILURE);
         }
 
@@ -324,6 +324,6 @@ void atender_peticiones_de_kernel(void)
     pthread_create(&interruptTh, NULL, (void*)dispatch_peticiones_de_kernel, NULL);
     pthread_detach(interruptTh);
     
-    log_info(cpuDevLogger, "Hilos de atención creados. Listo para atender peticiones de Kernel");
+    log_info(cpuLogger, "Hilos de atención creados. Listo para atender peticiones de Kernel");
     
 }

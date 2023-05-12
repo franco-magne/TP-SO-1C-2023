@@ -41,7 +41,8 @@
 			"dictionary.h": "c",
 			"config.h": "c",
 			"kernel-cpu-adapter.h": "c",
-			"list.h": "c"
+			"list.h": "c",
+			"cpu-estructuras.h": "c"
 		}
 	}
 }

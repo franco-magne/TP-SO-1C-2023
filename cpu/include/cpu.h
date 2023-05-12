@@ -13,6 +13,8 @@
 #include <pthread.h>
 
 #include "cpu-atender-kernel.h"
+#include "cpu-estructuras.h"
+
 
 #define CPU_CONFIG_UBICACION "config/cpu.config"
 #define CPU_LOG_UBICACION "logs/cpu.log"

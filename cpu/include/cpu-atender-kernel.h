@@ -11,7 +11,9 @@
 #include <commons/collections/list.h>
 //Internal cpu libraries
 #include "cpu-estructuras.h"
+#include "cpu.h"
 #include "cpu-pcb.h"
+
 
 
 
