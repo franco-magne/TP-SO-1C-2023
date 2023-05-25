@@ -42,7 +42,9 @@
 			"config.h": "c",
 			"kernel-cpu-adapter.h": "c",
 			"list.h": "c",
-			"cpu-estructuras.h": "c"
+			"cpu-estructuras.h": "c",
+			"kernel-conexiones.h": "c",
+			"cpu-atender-kernel.h": "c"
 		}
 	}
 }

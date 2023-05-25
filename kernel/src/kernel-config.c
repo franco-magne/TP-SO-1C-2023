@@ -101,7 +101,10 @@ char* kernel_config_get_algoritmo_planificacion(t_kernel_config* this)
 // FALTA RECURSOS
 // FALTA INSTANCIAS DE RECURSOS
 
-
+void kernel_config_set_socket_dispatch_cpu(t_kernel_config* self, int socketDispatch) 
+{
+    self->SOCKET_DISPATCH_CPU = socketDispatch;
+}
 /*void kernel_config_set_socket_memoria(t_kernel_config* this, int socketMemoria) 
 {
     this->SOCKET_MEMORIA = socketMemoria;

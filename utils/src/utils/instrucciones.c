@@ -185,4 +185,37 @@ t_registros_cpu* registros_cpu_create()
 }
 
 
+void destroy_instructions_list(t_list* instructionsList)
+{
+   // list_destroy_and_destroy_elements(instructionsList, instruccion_destroy);
+}
 
+t_tipo_instruccion instruccion_get_tipo_instruccion(t_instruccion* self) 
+{
+    return self->tipoInstruccion;
+}
+
+uint32_t instruccion_get_operando1(t_instruccion* self) 
+{
+    return self->operando1;
+}
+
+uint32_t instruccion_get_operando2(t_instruccion* self) 
+{
+    return self->operando2;
+}
+
+t_registro instruccion_get_registro1(t_instruccion* self) 
+{
+    return self->registro1;
+}
+
+t_registro instruccion_get_registro2(t_instruccion* self) 
+{
+    return self->registro2;
+}
+
+
+char* instruccion_get_dispositivo(t_instruccion* self){
+    return self->dispositivo;
+}

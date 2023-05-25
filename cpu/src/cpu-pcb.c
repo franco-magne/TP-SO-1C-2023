@@ -17,7 +17,7 @@ t_cpu_pcb* cpu_pcb_create (uint32_t pid, uint32_t programCounter, t_registros_cp
 void cpu_pcb_destroy(t_cpu_pcb* this) 
 {
     free(this->arrayDeSegmentos);
-    destroy_instructions_list(this->instrucciones);
+    // destroy_instructions_list(this->instrucciones);
     free(this->registrosCpu);
 
     free(this);
@@ -74,43 +74,43 @@ void cpu_pcb_set_registros(t_cpu_pcb* this, t_registros_cpu* registrosCpu)
 }
 
 ////////////////////////////  Registros 4bits  /////////////////////////////////////////
-uint32_t cpu_pcb_get_registro_ax(t_cpu_pcb* this)
+char*  cpu_pcb_get_registro_ax(t_cpu_pcb* this)
 {
     return cpu_pcb_get_registros(this)->registroAx;
 
 }
 
-uint32_t cpu_pcb_get_registro_bx(t_cpu_pcb* this)
+char*  cpu_pcb_get_registro_bx(t_cpu_pcb* this)
 {
     return cpu_pcb_get_registros(this)->registroBx;
 }
 
-uint32_t cpu_pcb_get_registro_cx(t_cpu_pcb* this)
+char*  cpu_pcb_get_registro_cx(t_cpu_pcb* this)
 {
     return cpu_pcb_get_registros(this)->registroCx;
 }
 
-uint32_t cpu_pcb_get_registro_dx(t_cpu_pcb* this)
+char*  cpu_pcb_get_registro_dx(t_cpu_pcb* this)
 {
     return cpu_pcb_get_registros(this)->registroDx;
 }
 
-void cpu_pcb_set_registro_ax(t_cpu_pcb* this, uint32_t registro)
+void cpu_pcb_set_registro_ax(t_cpu_pcb* this, char*  registro)
 {
     cpu_pcb_get_registros(this)->registroAx = registro;
 }
 
-void cpu_pcb_set_registro_bx(t_cpu_pcb* this, uint32_t registro)
+void cpu_pcb_set_registro_bx(t_cpu_pcb* this, char*  registro)
 {
     cpu_pcb_get_registros(this)->registroBx = registro;
 }
 
-void cpu_pcb_set_registro_cx(t_cpu_pcb* this, uint32_t registro)
+void cpu_pcb_set_registro_cx(t_cpu_pcb* this, char*  registro)
 {
     cpu_pcb_get_registros(this)->registroCx = registro;
 }
 
-void cpu_pcb_set_registro_dx(t_cpu_pcb* this, uint32_t registro)
+void cpu_pcb_set_registro_dx(t_cpu_pcb* this, char*  registro)
 {
     cpu_pcb_get_registros(this)->registroDx = registro;
 }
