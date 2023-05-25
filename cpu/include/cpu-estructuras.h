@@ -17,19 +17,14 @@
 
 typedef struct  {
 
-    uint32_t ENTRADAS_TLB;
-    char* REEMPLAZO_TLB;
+    
     uint32_t RETARDO_INSTRUCCION;
     char* IP_MEMORIA;
     char* PUERTO_MEMORIA;
     char* IP_ESCUCHA;
     char* PUERTO_ESCUCHA_DISPATCH;
-    char* PUERTO_ESCUCHA_INTERRUPT;
-    uint32_t TAMANIO_PAGINA;
-    uint32_t ENTRADAS_POR_TABLA;
     int SOCKET_MEMORIA;
     int SOCKET_DISPATCH_CPU;
-    int SOCKET_INTERRUPT_CPU;
 
 } t_cpu_config;
 
@@ -44,14 +39,12 @@ typedef struct  {
     t_registros_cpu* registrosCpu;
 } t_cpu_pcb;
 
-extern t_log* cpuMinimalLogger;
 extern t_log* cpuLogger;
 extern t_cpu_config* cpuConfig;
 
 
-void cpu_config_initializer(void* moduleConfig, t_config* tempCfg);
+t_cpu_config* cpu_config_initializer( t_config* tempCfg);
 void cpu_config_destroy(t_cpu_config* self);
-t_cpu_config* cpu_config_create(char* cpuConfigPath, t_log* cpuLogger) ;
 uint32_t cpu_config_get_retardo_instruccion(t_cpu_config* self);
 char* cpu_config_get_ip_memoria(t_cpu_config* self);
 char* cpu_config_get_puerto_memoria(t_cpu_config* self);

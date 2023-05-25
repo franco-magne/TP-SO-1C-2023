@@ -17,7 +17,7 @@ t_cpu_pcb* cpu_pcb_create (uint32_t pid, uint32_t programCounter, t_registros_cp
 void cpu_pcb_destroy(t_cpu_pcb* this) 
 {
     free(this->arrayDeSegmentos);
-    destroy_instructions_list(this->instrucciones);
+   // destroy_instructions_list(this->instrucciones);
     free(this->registrosCpu);
 
     free(this);

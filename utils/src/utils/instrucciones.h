@@ -80,7 +80,7 @@ typedef struct{
 typedef struct  {
     t_tipo_instruccion tipoInstruccion;
     uint32_t operando1;
-    uint32_t operando2;
+    char* operando2;
     char* dispositivo;
     t_registro registro1;
     t_registro registro2;
@@ -100,4 +100,14 @@ typedef struct{
 
 t_list* lista_de_instrucciones_buffer(t_buffer* bufferConInstrucciones, t_log * logger);
 t_registros_cpu* registros_cpu_create();
+
+void destroy_instructions_list(t_list* instructionsList);
+t_tipo_instruccion instruccion_get_tipo_instruccion(t_instruccion* self) ;
+uint32_t instruccion_get_operando1(t_instruccion* self);
+char* instruccion_get_operando2(t_instruccion* self);
+t_registro instruccion_get_registro1(t_instruccion* self);
+t_registro instruccion_get_registro2(t_instruccion* self);
+
+
+
 #endif

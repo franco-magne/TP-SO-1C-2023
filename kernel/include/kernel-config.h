@@ -18,8 +18,10 @@
 
 
 
+
+
+
 typedef struct{
-    
     char* IP_MEMORIA;
     char* PUERTO_MEMORIA;
     char* IP_FILESYSTEM;
@@ -59,5 +61,5 @@ bool kernel_config_es_algoritmo_fifo(t_kernel_config* this);
 bool kernel_config_es_algoritmo_HRRN(t_kernel_config* this);
 char* kernel_config_get_algoritmo_planificacion(t_kernel_config* this); 
 int kernel_config_get_socket_dispatch_cpu(t_kernel_config* this); 
-
+void kernel_config_set_socket_dispatch_cpu(t_kernel_config* self, int socketDispatch);
 #endif

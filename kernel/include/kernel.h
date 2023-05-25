@@ -20,6 +20,9 @@
 #include <utils/conexiones.h>
 #include "utils/serializacion.h"
 #include "../../utils/src/utils/instrucciones.h"
+#include "kernel-cpu-adapter.h"
+#include "kernel-conexiones.h"
+
 
 
 

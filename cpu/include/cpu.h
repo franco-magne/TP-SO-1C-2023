@@ -14,7 +14,7 @@
 
 #include "cpu-atender-kernel.h"
 #include "cpu-estructuras.h"
-
+#include "cpu-conexiones.h"
 
 #define CPU_CONFIG_UBICACION "config/cpu.config"
 #define CPU_LOG_UBICACION "logs/cpu.log"

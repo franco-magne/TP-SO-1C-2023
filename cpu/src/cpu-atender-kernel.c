@@ -49,11 +49,12 @@ static t_instruccion* cpu_fetch_instruction(t_cpu_pcb* pcb)
 
 static bool cpu_decode_instruction(uint32_t pid, t_instruccion* instruction) 
 {
-    char* instruccionString = instruccion_to_string(instruction);
-    log_info(cpuLogger, "DECODE INSTRUCTION: PCB <ID %d> Decoded Instruction: %s", pid, instruccionString);
-    free(instruccionString);
+    //char* instruccionString = instruccion_to_string(instruction);
+    log_info(cpuLogger, "DECODE INSTRUCTION: PCB <ID %d> Decoded Instruction: X", pid);
+    //free(instruccionString);
     
-    return instruccion_get_tipo_instruccion(instruction) == INSTRUCCION_MOV_IN;
+    //return instruccion_get_tipo_instruccion(instruction) == INSTRUCCION_MOV_IN;
+    return false;
 }
 
 static uint32_t cpu_fetch_operands(t_instruccion* nextInstruction, t_cpu_pcb* pcb) 
@@ -142,24 +143,24 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
     if (tipoInstruccion == INSTRUCCION_SET) {
         
         t_registro registroASetear = *((t_registro*) operando1);
-        uint32_t valorASetear = *((uint32_t*) operando2);
+        char* valorASetear = *((char*) operando2);
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);
 
-        log_info(cpuMinimalLogger, "PID: <%d> - Ejecutando: <SET> - <%s> - <%d>", cpu_pcb_get_pid(pcb), t_registro_to_char(registroASetear), valorASetear);
+        
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <SET> - <%s> - <%d>", cpu_pcb_get_pid(pcb), t_registro_to_char(registroASetear), valorASetear);
         
-        intervalo_de_pausa(retardoInstruccion);
+//        intervalo_de_pausa(retardoInstruccion);
         
         set_registro_segun_tipo(registroASetear, valorASetear, pcb);
 
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
     } else if (tipoInstruccion == INSTRUCCION_EXIT) {
         
-        log_info(cpuMinimalLogger, "PID: <%d> - Ejecutando: <EXIT> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
+        
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <EXIT> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
 
         uint32_t pid = cpu_pcb_get_pid(pcb);
-        uint32_t* arrayTablaPaginasActualizado = cpu_pcb_get_array_tabla_paginas(pcb);
+      //  uint32_t* arrayTablaPaginasActualizado = cpu_pcb_get_array_tabla_paginas(pcb);
         t_registros_cpu* registrosCpuActualizado = cpu_pcb_get_registros(pcb);
         
         t_buffer* bufferExit = buffer_create();
@@ -190,7 +191,7 @@ static bool cpu_ejecutar_ciclos_de_instruccion(t_cpu_pcb* pcb)
 {
     bool shouldStopExec = false;
     uint32_t operando1 = 0;
-    uint32_t operando2 = 0;
+    char* operando2 = NULL;
     t_registro registro1 = REGISTRO_null;
     t_registro registro2 = REGISTRO_null;
     char* dispositivoIo = NULL;
@@ -232,10 +233,12 @@ static bool cpu_ejecutar_ciclos_de_instruccion(t_cpu_pcb* pcb)
 
 static void dispatch_peticiones_de_kernel() 
 {
+    
     uint32_t pidRecibido = 0;
     uint32_t programCounter = 0;
    // uint32_t *arrayDeSegmentos = NULL;
     t_registros_cpu* registrosCpu = NULL;
+   
     
     for (;;) {
         
@@ -282,7 +285,7 @@ static void dispatch_peticiones_de_kernel()
                 t_buffer* bufferInstrucciones = buffer_create();
                 stream_recv_buffer(cpu_config_get_socket_dispatch(cpuConfig), bufferInstrucciones);
                 
-                t_list* listaInstrucciones = instruccion_list_create_from_buffer(bufferInstrucciones, cpuLogger);  // Agregar a las commons?
+                t_list* listaInstrucciones = lista_de_instrucciones_buffer(bufferInstrucciones, cpuLogger);  // Agregar a las commons?
                 cpu_pcb_set_instrucciones(pcb, listaInstrucciones);
                 
                 buffer_destroy(bufferInstrucciones);
@@ -300,7 +303,7 @@ static void dispatch_peticiones_de_kernel()
                 shouldStopExec = cpu_ejecutar_ciclos_de_instruccion(pcb);
             }
             
-            cpu_pcb_destroy(pcb);
+            //cpu_pcb_destroy(pcb);
         }
         else {
             
@@ -317,13 +320,13 @@ static void dispatch_peticiones_de_kernel()
 }
 
 
-void atender_peticiones_de_kernel(void) 
+void atender_peticiones_de_kernel() 
 {
     
-    pthread_t interruptTh; 
-    pthread_create(&interruptTh, NULL, (void*)dispatch_peticiones_de_kernel, NULL);
-    pthread_detach(interruptTh);
-    
+    //pthread_t interruptTh; 
+    //pthread_create(&interruptTh, NULL, (void*)dispatch_peticiones_de_kernel, NULL);
+    //pthread_detach(interruptTh);
+    dispatch_peticiones_de_kernel();
     log_info(cpuLogger, "Hilos de atención creados. Listo para atender peticiones de Kernel");
     
 }

@@ -132,8 +132,9 @@ int main(int argc, char* argv[]) {
    kernelConfig = kernel_config_initializer( kernelConfigPath);
     
    /////////////////////////////// CONEXION CON CPU /////////////////////////////
-/*
-    int kernelSocketCPU = conectar_a_servidor(kernelIP, "8001");
+    conectar_a_servidor_cpu_dispatch(kernelConfig,kernelLogger);
+   /* int kernelSocketCPU = conectar_a_servidor("127.0.0.1", "8001");
+    kernel_config_set_socket_dispatch_cpu(kernelConfig, kernelSocketCPU);
     if (kernelSocketCPU == -1) {
         log_error(kernelLogger, "Error al intentar establecer conexión inicial con módulo CPU");
 
@@ -141,9 +142,10 @@ int main(int argc, char* argv[]) {
 
     return -2;
     }
+   */
 
     /////////////////////////////// CONEXION CON FILE_SYSTEM /////////////////////////////
-
+/*
     int kernelSocketFS = conectar_a_servidor(kernelIP, "8003");
     if (kernelSocketFS == -1) {
         log_error(kernelLogger, "Error al intentar establecer conexión inicial con módulo FILE_SYSTEM");
@@ -164,6 +166,7 @@ int main(int argc, char* argv[]) {
         return -2;
       }
     */
+   
    ////////////////////////////// CONEXION CON CONSOLA //////////////////////////////
     
 
@@ -332,7 +335,7 @@ void* planificador_largo_plazo(void* args)
 void* atender_pcb(void* args) 
 {
     for (;;) {
-        
+    
         sem_wait(estado_get_sem(estadoExec));
 
         pthread_mutex_lock(estado_get_mutex(estadoExec));
@@ -344,13 +347,13 @@ void* atender_pcb(void* args)
         struct timespec start;
         set_timespec(&start);
         //pcb_set_proceso_bloqueado_o_terminado_atomic(pcb, false);
-        //cpu_adapter_enviar_pcb_a_cpu(pcb, headerAEnviar, kernelConfig, kernelLogger);
-        //uint8_t cpuResponse = stream_recv_header(kernel_config_get_socket_dispatch_cpu(kernelConfig)); 
-        uint8_t cpuResponse = HEADER_proceso_terminado;
+        cpu_adapter_enviar_pcb_a_cpu(pcb, headerAEnviar, kernelConfig, kernelLogger);
+        uint8_t cpuResponse = stream_recv_header(kernel_config_get_socket_dispatch_cpu(kernelConfig)); 
+        //uint8_t cpuResponse = HEADER_proceso_terminado;
         struct timespec end;
         set_timespec(&end);
 
-        //pcb = cpu_adapter_recibir_pcb_actualizado_de_cpu(pcb, cpuResponse, kernelConfig, kernelDevLogger); 
+        pcb = cpu_adapter_recibir_pcb_actualizado_de_cpu(pcb, cpuResponse, kernelConfig, kernelLogger); 
         
         pcb = estado_desencolar_primer_pcb_atomic(estadoExec);
 
@@ -444,9 +447,9 @@ void inicializar_estructuras(void) {
     
     if (kernel_config_es_algoritmo_fifo(kernelConfig)) {
         
-        //elegir_pcb = elegir_pcb_segun_fifo;
-     //  evaluar_desalojo = evaluar_desalojo_segun_fifo;
-     //  actualizar_pcb_por_bloqueo = actualizar_pcb_por_bloqueo_segun_fifo;
+    //elegir_pcb = elegir_pcb_segun_fifo;
+    //evaluar_desalojo = evaluar_desalojo_segun_fifo;
+    //actualizar_pcb_por_bloqueo = actualizar_pcb_por_bloqueo_segun_fifo;
     } else {
         
         log_error(kernelLogger, "No se pudo inicializar el planificador, no se encontró un algoritmo de planificación válido");

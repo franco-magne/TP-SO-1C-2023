@@ -20,7 +20,6 @@ void cpu_adapter_enviar_pcb_a_cpu(t_pcb* pcbAEnviar, uint8_t header, t_kernel_co
     buffer_pack(bufferPcbAEjecutar, &registrosCpu->registroCx, sizeof(uint32_t));
     buffer_pack(bufferPcbAEjecutar, &registrosCpu->registroDx, sizeof(uint32_t));
 
-
     stream_send_buffer(kernel_config_get_socket_dispatch_cpu(kernelConfig), header, bufferPcbAEjecutar);
     stream_send_buffer(kernel_config_get_socket_dispatch_cpu(kernelConfig), HEADER_lista_instrucciones, pcb_get_instrucciones_buffer(pcbAEnviar));
 

@@ -1,14 +1,19 @@
 #include <../include/cpu.h>
 
 t_log* cpuLogger;
-//t_config* cpuConfig;
+t_cpu_config* cpuConfig;
 
 int main() {  
 
     cpuLogger = log_create(CPU_LOG_UBICACION,CPU_PROCESS_NAME,true,LOG_LEVEL_INFO);
-    //cpuConfig = config_create(CPU_CONFIG_UBICACION);
-    //char *cpuIP = config_get_string_value(cpuConfig, "IP");
-    //char *cpuPort = config_get_string_value(cpuConfig,"PUERTO_CPU");
+    char* pathArchivoConfiguracion;
+    struct sockaddr cliente = {0};
+    socklen_t len = sizeof(cliente);
+    
+    t_config* configIncial = config_create(CPU_CONFIG_UBICACION);
+    cpuConfig = cpu_config_initializer(configIncial);
+  
+  
 
     ///////////////////////////////// CONECTARSE A MEMORIA //////////////////////////////
      /*int cpuSocketMemoria = conectar_a_servidor(cpuIP, cpuPort);
@@ -21,14 +26,11 @@ int main() {
       }
     */
 
-   ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////
+  ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////
 
-   int serverCpu = iniciar_servidor("127.0.0.1","8001");
-   log_info(cpuLogger,"Servidor kernel listo para recibir al modulo\n");
-   int serverEspera = esperar_cliente(serverCpu);
-
+  int serverCpu = inicializar_servidor_cpu_dispatch(cpuConfig,cpuLogger);
+  aceptar_conexion_dispatch(serverCpu, &cliente, &len);
   atender_peticiones_de_kernel();
   
-
    return 0;
 }
