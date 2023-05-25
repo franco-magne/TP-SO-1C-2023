@@ -148,7 +148,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         char* valorASetear = string_duplicate((char*) operando2);;
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);
 
-        
+      
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <SET> - <%s> - <%s>", cpu_pcb_get_pid(pcb), t_registro_to_char(registroASetear), valorASetear);
         
         intervalo_de_pausa(retardoInstruccion);
@@ -184,7 +184,40 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         
         shouldStopExec = true;
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+    } else if (tipoInstruccion == INSTRUCCION_YIELD ) {
+        
+        
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <YIELD> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
+
+        uint32_t pid = cpu_pcb_get_pid(pcb);
+      //  uint32_t* arrayTablaPaginasActualizado = cpu_pcb_get_array_tabla_paginas(pcb);
+        t_registros_cpu* registrosCpuActualizado = cpu_pcb_get_registros(pcb);
+        
+        t_buffer* bufferExit = buffer_create();
+
+         //Empaqueto pid
+        buffer_pack(bufferExit, &pid, sizeof(pid));
+
+        //Empaqueto pc
+        buffer_pack(bufferExit, &programCounterActualizado, sizeof(programCounterActualizado));
+
+        //Empaquetamos registros
+        buffer_pack(bufferExit, &registrosCpuActualizado->registroAx, sizeof(registrosCpuActualizado->registroAx));
+        buffer_pack(bufferExit, &registrosCpuActualizado->registroBx, sizeof(registrosCpuActualizado->registroBx));
+        buffer_pack(bufferExit, &registrosCpuActualizado->registroCx, sizeof(registrosCpuActualizado->registroCx));
+        buffer_pack(bufferExit, &registrosCpuActualizado->registroDx, sizeof(registrosCpuActualizado->registroDx));
+        
+        stream_send_buffer(cpu_config_get_socket_dispatch(cpuConfig), HEADER_proceso_desalojado, bufferExit);
+        buffer_destroy(bufferExit);
+        
+        shouldStopExec = true;
+        
+        cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+
+        
     }
+
+
 
     return shouldStopExec;
 }
@@ -224,6 +257,11 @@ static bool cpu_ejecutar_ciclos_de_instruccion(t_cpu_pcb* pcb)
         
       
         case INSTRUCCION_EXIT:
+
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);
+            break;
+        
+        case INSTRUCCION_YIELD:
 
             shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);
             break;

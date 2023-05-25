@@ -54,8 +54,9 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
     buffer_unpack(bufferPcb, &registroDxActualizado , sizeof(uint32_t));
 
    if (pidRecibido == pcb_get_pid(pcbAActualizar)) {
-        /* 
-        if (cpuResponse == HEADER_proceso_bloqueado) {
+        
+      
+        if (cpuResponse == HEADER_proceso_desalojado) {
             
     
         pcb_set_program_counter(pcbAActualizar, programCounterActualizado);
@@ -65,15 +66,15 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         pcb_set_registro_cx_cpu(pcbAActualizar, registroAxActualizado);
         pcb_set_registro_dx_cpu(pcbAActualizar, registroAxActualizado);
         } 
-        else {
-        
-        log_error(kernelLogger, "Error al recibir PCB de CPU");
-        exit(EXIT_FAILURE);
-        }
-        */ 
+       
     buffer_destroy(bufferPcb);
     
     return pcbAActualizar;
+    }  
+   else{
+        
+        log_error(kernelLogger, "Error al recibir PCB de CPU");
+        exit(EXIT_FAILURE);
     }
 
 }

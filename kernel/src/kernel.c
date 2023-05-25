@@ -372,6 +372,7 @@ void* atender_pcb(void* args)
                     char* stringPidsReady = string_pids_ready(estadoReady);
                     log_transition("EXEC", "READY", pcb_get_pid(pcb));
                     log_info(kernelLogger,  "Cola Ready <%s>: %s", kernel_config_get_algoritmo_planificacion(kernelConfig), stringPidsReady);
+                    log_info(kernelLogger , "Program counter -> %i", pcb_get_program_counter(pcb));
                     free(stringPidsReady);
                     sem_post(estado_get_sem(estadoReady));
                 
