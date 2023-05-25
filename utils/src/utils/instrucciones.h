@@ -104,7 +104,8 @@ t_registros_cpu* registros_cpu_create();
 void destroy_instructions_list(t_list* instructionsList);
 t_tipo_instruccion instruccion_get_tipo_instruccion(t_instruccion* self) ;
 uint32_t instruccion_get_operando1(t_instruccion* self);
-char* instruccion_get_operando2(t_instruccion* self);
+uint32_t instruccion_get_operando2(t_instruccion* self);
+char* instruccion_get_dispositivo(t_instruccion* self);
 t_registro instruccion_get_registro1(t_instruccion* self);
 t_registro instruccion_get_registro2(t_instruccion* self);
 

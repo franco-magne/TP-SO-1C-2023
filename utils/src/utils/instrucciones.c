@@ -200,7 +200,7 @@ uint32_t instruccion_get_operando1(t_instruccion* self)
     return self->operando1;
 }
 
-char* instruccion_get_operando2(t_instruccion* self) 
+uint32_t instruccion_get_operando2(t_instruccion* self) 
 {
     return self->operando2;
 }
@@ -216,4 +216,6 @@ t_registro instruccion_get_registro2(t_instruccion* self)
 }
 
 
-
+char* instruccion_get_dispositivo(t_instruccion* self){
+    return self->dispositivo;
+}

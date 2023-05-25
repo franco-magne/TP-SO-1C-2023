@@ -60,6 +60,9 @@ int cpu_config_get_socket_memoria(t_cpu_config* self)
 {
     return self->SOCKET_MEMORIA;
 }
+
+///////////////////////////// SETTERS ////////////////////////////////////
+
 void cpu_config_set_socket_memoria(t_cpu_config* self, int socketMemoria) 
 {
     self->SOCKET_MEMORIA = socketMemoria;

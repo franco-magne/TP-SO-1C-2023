@@ -33,7 +33,6 @@ typedef struct  {
 typedef struct  {
     uint32_t pid;
     uint32_t programCounter;
-    uint32_t* arrayTablaPaginas; // TP "de ellos" no usan un puntero 
     uint32_t* arrayDeSegmentos;
     t_list* instrucciones;
     t_registros_cpu* registrosCpu;

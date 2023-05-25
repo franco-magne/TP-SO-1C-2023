@@ -1,5 +1,5 @@
-#ifndef KERNEL-CONFIG_H
-#define KERNEL-CONFIG_H
+#ifndef KERNEL_CONFIG_H
+#define KERNEL_CONFIG_H
 
 //////////////// BIBLOTECAS STANDARS ///////////////
 #include <string.h>
@@ -8,19 +8,8 @@
 #include <commons/config.h>
 #include <commons/log.h>
 
-
-
-
 //////////////// BIBLOTECAS NUESTRAS ///////////////
 #include "utils/commons-nuestras.h"
-
-
-
-
-
-
-
-
 typedef struct{
     char* IP_MEMORIA;
     char* PUERTO_MEMORIA;

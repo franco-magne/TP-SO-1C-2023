@@ -5,7 +5,6 @@ void cpu_adapter_enviar_pcb_a_cpu(t_pcb* pcbAEnviar, uint8_t header, t_kernel_co
     uint32_t pidAEnviar = pcb_get_pid(pcbAEnviar);
     uint32_t pcAEnviar = pcb_get_program_counter(pcbAEnviar);
     
-
     t_registros_cpu* registrosCpu = pcb_get_registros_cpu(pcbAEnviar); 
 
     //Empaquetamos pid y pc
@@ -20,6 +19,7 @@ void cpu_adapter_enviar_pcb_a_cpu(t_pcb* pcbAEnviar, uint8_t header, t_kernel_co
     buffer_pack(bufferPcbAEjecutar, &registrosCpu->registroCx, sizeof(uint32_t));
     buffer_pack(bufferPcbAEjecutar, &registrosCpu->registroDx, sizeof(uint32_t));
 
+    //stream_send_empty_buffer(kernel_config_get_socket_dispatch_cpu(kernelConfig), header);
     stream_send_buffer(kernel_config_get_socket_dispatch_cpu(kernelConfig), header, bufferPcbAEjecutar);
     stream_send_buffer(kernel_config_get_socket_dispatch_cpu(kernelConfig), HEADER_lista_instrucciones, pcb_get_instrucciones_buffer(pcbAEnviar));
 
@@ -53,8 +53,8 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
     buffer_unpack(bufferPcb, &registroCxActualizado , sizeof(uint32_t));
     buffer_unpack(bufferPcb, &registroDxActualizado , sizeof(uint32_t));
 
-    if (pidRecibido == pcb_get_pid(pcbAActualizar)) {
-        
+   if (pidRecibido == pcb_get_pid(pcbAActualizar)) {
+        /* 
         if (cpuResponse == HEADER_proceso_bloqueado) {
             
     
@@ -70,9 +70,10 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         log_error(kernelLogger, "Error al recibir PCB de CPU");
         exit(EXIT_FAILURE);
         }
-
+        */ 
     buffer_destroy(bufferPcb);
     
     return pcbAActualizar;
     }
+
 }

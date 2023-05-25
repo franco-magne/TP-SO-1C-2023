@@ -347,9 +347,9 @@ void* atender_pcb(void* args)
         struct timespec start;
         set_timespec(&start);
         //pcb_set_proceso_bloqueado_o_terminado_atomic(pcb, false);
+
         cpu_adapter_enviar_pcb_a_cpu(pcb, headerAEnviar, kernelConfig, kernelLogger);
         uint8_t cpuResponse = stream_recv_header(kernel_config_get_socket_dispatch_cpu(kernelConfig)); 
-        //uint8_t cpuResponse = HEADER_proceso_terminado;
         struct timespec end;
         set_timespec(&end);
 
@@ -359,7 +359,7 @@ void* atender_pcb(void* args)
 
         uint32_t realEjecutado = 0;
         realEjecutado = obtener_diferencial_de_tiempo_en_milisegundos(end, start);
-        sleep(10);
+      
         log_debug(kernelLogger, "PCB <ID %d> estuvo en ejecución por %d miliseconds", pcb_get_pid(pcb), realEjecutado);
 
         switch (cpuResponse) {

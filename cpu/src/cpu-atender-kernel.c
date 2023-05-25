@@ -2,6 +2,8 @@
 
 
 
+
+
 static bool hayInterrupcion;
 static int pidProcesoEnExec;
 static pthread_mutex_t mutexInterrupcion;
@@ -72,7 +74,7 @@ static uint32_t cpu_fetch_operands(t_instruccion* nextInstruction, t_cpu_pcb* pc
 }
 
 
-static uint32_t get_registro_segun_tipo(t_registro tipoRegistro, t_cpu_pcb* pcb)
+static char*  get_registro_segun_tipo(t_registro tipoRegistro, t_cpu_pcb* pcb)
 {
     switch (tipoRegistro)
     {
@@ -102,7 +104,7 @@ static uint32_t get_registro_segun_tipo(t_registro tipoRegistro, t_cpu_pcb* pcb)
     }
 }
 
-static void set_registro_segun_tipo(t_registro tipoRegistro, uint32_t valorASetear, t_cpu_pcb* pcb)
+static void set_registro_segun_tipo(t_registro tipoRegistro, char* valorASetear, t_cpu_pcb* pcb)
 {
     switch (tipoRegistro)
     {
@@ -130,7 +132,7 @@ static void set_registro_segun_tipo(t_registro tipoRegistro, uint32_t valorASete
             break;
     }
 
-    log_info(cpuLogger, "Registro %s seteado con valor: %d", t_registro_to_char(tipoRegistro), get_registro_segun_tipo(tipoRegistro, pcb));
+    log_info(cpuLogger, "Registro %s seteado con valor: %s", t_registro_to_char(tipoRegistro), valorASetear ); // ver el tema de valor a setear para utilizar la funcion get_registro_segun_tipo que no la estamos usando
 }
 
 static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstruccion, void* operando1, void* operando2) 
@@ -143,13 +145,13 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
     if (tipoInstruccion == INSTRUCCION_SET) {
         
         t_registro registroASetear = *((t_registro*) operando1);
-        char* valorASetear = *((char*) operando2);
+        char* valorASetear = string_duplicate((char*) operando2);;
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);
 
         
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <SET> - <%s> - <%d>", cpu_pcb_get_pid(pcb), t_registro_to_char(registroASetear), valorASetear);
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <SET> - <%s> - <%s>", cpu_pcb_get_pid(pcb), t_registro_to_char(registroASetear), valorASetear);
         
-//        intervalo_de_pausa(retardoInstruccion);
+        intervalo_de_pausa(retardoInstruccion);
         
         set_registro_segun_tipo(registroASetear, valorASetear, pcb);
 
@@ -191,10 +193,10 @@ static bool cpu_ejecutar_ciclos_de_instruccion(t_cpu_pcb* pcb)
 {
     bool shouldStopExec = false;
     uint32_t operando1 = 0;
-    char* operando2 = NULL;
+    uint32_t operando2 = NULL;
     t_registro registro1 = REGISTRO_null;
     t_registro registro2 = REGISTRO_null;
-    char* dispositivoIo = NULL;
+    char* dispositivo = NULL;
 
     t_instruccion* nextInstruction = cpu_fetch_instruction(pcb);
     bool shouldFetchOperands = cpu_decode_instruction(cpu_pcb_get_pid(pcb), nextInstruction);
@@ -208,14 +210,16 @@ static bool cpu_ejecutar_ciclos_de_instruccion(t_cpu_pcb* pcb)
 
             if (shouldFetchOperands) {
                 
-                operando2 = cpu_fetch_operands(nextInstruction, pcb);
+                dispositivo = cpu_fetch_operands(nextInstruction, pcb);
+                
             }
             else {
 
-                operando2 = instruccion_get_operando2(nextInstruction);
+                dispositivo = instruccion_get_dispositivo(nextInstruction);
+                
             }
 
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &registro1, (void*) &operando2);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &registro1, (void*) dispositivo);
             break;
         
       
@@ -243,12 +247,17 @@ static void dispatch_peticiones_de_kernel()
     for (;;) {
         
         uint8_t kernelResponse = stream_recv_header(cpu_config_get_socket_dispatch(cpuConfig));
-        
+               
+
+
         t_buffer* bufferPcb = NULL;
         t_cpu_pcb* pcb = NULL;
-        
+
+
         if (kernelResponse == HEADER_pcb_a_ejecutar) {
             
+            log_info(cpuLogger, "TEST"); 
+
             bufferPcb = buffer_create();
             stream_recv_buffer(cpu_config_get_socket_dispatch(cpuConfig), bufferPcb);
             

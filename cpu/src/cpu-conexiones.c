@@ -33,6 +33,7 @@ void aceptar_conexion_dispatch(const int socketEscuchaDispatch, struct sockaddr*
     }
     
     cpu_config_set_socket_dispatch(cpuConfig, kernelDispatchSocket);
+   
 
     t_handshake kernelDispatchResponse = stream_recv_header(kernelDispatchSocket);
     stream_recv_empty_buffer(kernelDispatchSocket);
