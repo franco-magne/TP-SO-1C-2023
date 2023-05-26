@@ -22,7 +22,7 @@ static sem_t dispatchPermitido;
 static t_estado* estadoNew;
 static t_estado* estadoReady;
 static t_estado* estadoExec;
-//static t_estado* estadoBlocked;
+static t_estado* estadoBlocked;
 static t_estado* estadoExit;
 
 ///////////////////////// FUNCIONES UTILITARIAS //////////////////////////////
@@ -123,8 +123,7 @@ static t_pcb* elegir_pcb_segun_fifo(t_estado* estado)
 int main(int argc, char* argv[]) {
     kernelLogger = log_create(KERNEL_LOG_UBICACION,KERNEL_PROCESS_NAME,true,LOG_LEVEL_INFO);
     t_config* kernelConfigPath = config_create(argv[1]);
-    //char *kernelIP = config_get_string_value(kernelConfig, "IP");
-    //char *kernelPort = config_get_string_value(kernelConfig,"PUERTO");
+
     nextPid++;
     pthread_mutex_init(&nextPidMutex, NULL);
 
@@ -332,6 +331,33 @@ void* planificador_largo_plazo(void* args)
 }
 ///////////////////////////////////// FIN DEL PLANIFICADOR DE LARGO PLAZO ////////////////////////////
 //////////////////////////////////// COMIENZO DEL PLANIFICADOR DE CORTO PLAZO ////////////////////////
+static void atender_bloqueo(t_pcb* pcb) 
+{
+    
+    log_transition("EXEC", "BLOCKED", pcb_get_pid(pcb));
+    log_info(kernelLogger, "PCB <ID %d> - Bloqueado por: <%i> segundos", pcb_get_pid(pcb), pcb_get_tiempoIO(pcb));
+
+    log_info(kernelLogger, "PCB <ID %d> ingresa a la cola de espera de I/O de %i", pcb_get_pid(pcb), pcb_get_tiempoIO(pcb));
+    
+    pcb_set_estado_anterior(pcb, pcb_get_estado_actual(pcb));
+    pcb_set_estado_actual(pcb, BLOCK);
+    estado_encolar_pcb_atomic(estadoBlocked, pcb);
+    
+    sleep(pcb_get_tiempoIO(pcb));
+
+    pcb = estado_desencolar_primer_pcb_atomic(estadoBlocked);
+
+    pcb_set_estado_anterior(pcb, pcb_get_estado_actual(pcb));
+    pcb_set_estado_actual(pcb, READY);
+    estado_encolar_pcb_atomic(estadoReady, pcb);
+    char* stringPidsReady = string_pids_ready(estadoReady);
+    log_transition("BLOCK", "READY", pcb_get_pid(pcb));
+    log_info(kernelLogger,  "Cola Ready <%s>: %s", kernel_config_get_algoritmo_planificacion(kernelConfig), stringPidsReady);
+    free(stringPidsReady);
+    sem_post(estado_get_sem(estadoReady));
+    
+}
+
 void* atender_pcb(void* args) 
 {
     for (;;) {
@@ -372,7 +398,6 @@ void* atender_pcb(void* args)
                     char* stringPidsReady = string_pids_ready(estadoReady);
                     log_transition("EXEC", "READY", pcb_get_pid(pcb));
                     log_info(kernelLogger,  "Cola Ready <%s>: %s", kernel_config_get_algoritmo_planificacion(kernelConfig), stringPidsReady);
-                    log_info(kernelLogger , "Program counter -> %i", pcb_get_program_counter(pcb));
                     free(stringPidsReady);
                     sem_post(estado_get_sem(estadoReady));
                 
@@ -391,15 +416,8 @@ void* atender_pcb(void* args)
                 break;
 
             case HEADER_proceso_bloqueado:
+                atender_bloqueo(pcb);
 
-                //pthread_mutex_lock(&procesoBloqueadoOTerminadoMutex);
-                //procesoBloqueadoOTerminado = true;
-                //pthread_mutex_unlock(&procesoBloqueadoOTerminadoMutex);
-                //sem_post(&evaluarDesalojo);
-                
-                //pcb_set_proceso_bloqueado_o_terminado_atomic(pcb, true);
-
-                //atender_bloqueo(pcb);
                 break;
             default:
 
@@ -477,7 +495,7 @@ void inicializar_estructuras(void) {
     estadoReady = estado_create(READY);
     estadoExec = estado_create(EXEC);
     estadoExit = estado_create(EXIT);
-    //estadoBlocked = estado_create(BLOCK);
+    estadoBlocked = estado_create(BLOCK);
     
     pthread_t largoPlazoTh;
     pthread_create(&largoPlazoTh, NULL, (void*)planificador_largo_plazo, NULL);

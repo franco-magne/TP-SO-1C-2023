@@ -36,6 +36,7 @@ typedef struct  {
     uint32_t* arrayDeSegmentos;
     t_list* instrucciones;
     t_registros_cpu* registrosCpu;
+    uint32_t tiempoIO;
 } t_cpu_pcb;
 
 extern t_log* cpuLogger;

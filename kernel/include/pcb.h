@@ -19,6 +19,7 @@
 typedef struct {
     uint32_t pid;
     uint32_t programCounter;
+    uint32_t tiempoIO;  
     t_registros_cpu* registros; 
     t_buffer* instruccionesBuffer;
     t_nombre_estado estadoActual;
@@ -27,21 +28,24 @@ typedef struct {
 }t_pcb;
 
 ////////////////////////// DEFINICION DE LAS FUNCIONES ////////////////
-t_registros_cpu* pcb_get_registros_cpu(t_pcb* this);
 t_pcb* pcb_create(uint32_t pid);
+
+/////////////////////// GETTERS ////////////////////////
+t_registros_cpu* pcb_get_registros_cpu(t_pcb* this);
 uint32_t pcb_get_program_counter(t_pcb* this);
 uint32_t pcb_get_pid(t_pcb* this);
 t_buffer* pcb_get_instrucciones_buffer(t_pcb* this);
 t_nombre_estado pcb_get_estado_actual(t_pcb* this);
 t_nombre_estado pcb_get_estado_anterior(t_pcb* this);
+uint32_t pcb_get_tiempoIO(t_pcb* this);
 
-/////////////////////// SETTER ////////////////////////
-
+/////////////////////// SETTERS ////////////////////////
 void pcb_set_program_counter(t_pcb* this, uint32_t programCounter); 
 void pcb_set_instructions_buffer(t_pcb* this, t_buffer* instructionsBuffer);
 void pcb_set_pid(t_pcb* this, uint32_t pid);
 void pcb_set_estado_actual(t_pcb* this, uint32_t pid);
 void pcb_set_estado_anterior(t_pcb* this, uint32_t estadoAnterior);
+void pcb_set_tiempoIO(t_pcb*, uint32_t tiempoIO);
 
 
 #endif

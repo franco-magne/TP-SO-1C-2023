@@ -53,12 +53,19 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
     buffer_unpack(bufferPcb, &registroCxActualizado , sizeof(uint32_t));
     buffer_unpack(bufferPcb, &registroDxActualizado , sizeof(uint32_t));
 
+    if(cpuResponse == HEADER_proceso_bloqueado){
+        uint32_t unidadesDeTrabajo;
+        buffer_unpack(bufferPcb, &unidadesDeTrabajo, sizeof(unidadesDeTrabajo));
+        pcb_set_tiempoIO(pcbAActualizar,unidadesDeTrabajo);
+
+       
+    }
+
+
    if (pidRecibido == pcb_get_pid(pcbAActualizar)) {
         
-      
-        if (cpuResponse == HEADER_proceso_desalojado) {
+        if (cpuResponse == HEADER_proceso_desalojado || cpuResponse == HEADER_proceso_bloqueado ) {
             
-    
         pcb_set_program_counter(pcbAActualizar, programCounterActualizado);
 
         pcb_set_registro_ax_cpu(pcbAActualizar, registroAxActualizado);

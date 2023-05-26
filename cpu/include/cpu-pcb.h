@@ -34,8 +34,10 @@ uint32_t cpu_pcb_get_registro_rax(t_cpu_pcb* self);
 uint32_t cpu_pcb_get_registro_rbx(t_cpu_pcb* self);
 uint32_t cpu_pcb_get_registro_rcx(t_cpu_pcb* self);
 uint32_t cpu_pcb_get_registro_rdx(t_cpu_pcb* self);
+uint32_t cpu_pcb_get_tiempoIO(t_cpu_pcb* this);
 
 ////// FIRMAS DE SETTERS 
+void cpu_pcb_set_tiempoIO(t_cpu_pcb* this, uint32_t tiempoIO);
 void cpu_pcb_set_program_counter(t_cpu_pcb* self, uint32_t programCounter);
 void cpu_pcb_set_pid(t_cpu_pcb* self, uint32_t pid);
 //void cpu_pcb_set_array_tabla_paginas(t_cpu_pcb* self, uint32_t* tablaPaginas);
@@ -54,5 +56,7 @@ void cpu_pcb_set_registro_rax(t_cpu_pcb* self, uint32_t registro);
 void cpu_pcb_set_registro_rbx(t_cpu_pcb* self, uint32_t registro);
 void cpu_pcb_set_registro_rcx(t_cpu_pcb* self, uint32_t registro);
 void cpu_pcb_set_registro_rdx(t_cpu_pcb* self, uint32_t registro);
+
+
 
 #endif
