@@ -1,5 +1,5 @@
-#ifndef MEMORIA_H
-#define MEMORIA_H
+#ifndef MEMORIA-ATENDER-CPU_H
+#define MEMORIA-ATENDER-CPU_H
 
 #include <errno.h>
 #include <stdlib.h>
@@ -7,13 +7,11 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <../../utils/src/utils/conexiones.h>
-#include <../../utils/src/utils/serializacion.h>
 #include <commons/log.h>
 #include <commons/config.h>
 #include <pthread.h>
 
 #include <stdio.h>
-#include "memoria-estructuras.h"
 
 #define MEMORIA_CONFIG_UBICACION "config/memoria.config"
 #define MEMORIA_LOG_UBICACION "logs/memoria.log"

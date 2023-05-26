@@ -1,7 +1,12 @@
 #include <../include/memoria.h>
 
+
 t_log *memoriaLogger;
 t_config *memoriaConfig;
+
+t_MemoriaData *memoriaData;
+static bool cpuSinAtender;
+static bool kernelSinAtender;
 
 int main() {
 
@@ -41,4 +46,38 @@ void aceptar_conexiones_memoria(const int socketEscucha)
             log_error(memoriaLogger, "Error al aceptar conexión: %s", strerror(errno));
         }
     }
+}
+
+void* recibir_conexion(int socketEscucha, int* socketCliente, pthread_t* threadSuscripcion) {
+    struct sockaddr cliente = {0};
+    socklen_t len = sizeof(cliente);
+    *socketCliente = accept(socketEscucha, &cliente, &len);
+    if (*socketCliente == -1) {
+        log_error(memoriaData->memoriaLogger, "Error al aceptar conexion de cliente: %s", strerror(errno));
+        exit(-1);
+    }
+    uint8_t handshake = stream_recv_header(*socketCliente);
+    stream_recv_empty_buffer(*socketCliente);
+    //void* (*funcion_suscripcion)(void*) = NULL;
+    if (handshake == HANDSHAKE_cpu && cpuSinAtender) {
+        log_info(memoriaData->memoriaLogger, "\e[1;92mSe acepta conexión de CPU en socket [%d]\e[0m", *socketCliente);
+        t_buffer* buffer = buffer_create();
+        uint32_t tamanioPagina = 0;//memoriaData->tamanioPagina;
+        //uint32_t entradasPorTabla = memoriaData->entradasPorTabla;
+        buffer_pack(buffer, &tamanioPagina, sizeof(tamanioPagina));
+        //buffer_pack(buffer, &entradasPorTabla, sizeof(entradasPorTabla));
+        stream_send_buffer(*socketCliente, HANDSHAKE_ok_continue, buffer);
+        buffer_destroy(buffer);
+        //funcion_suscripcion = escuchar_peticiones_cpu;
+        cpuSinAtender = false;
+    } else if (handshake == HANDSHAKE_kernel && kernelSinAtender) {
+        log_info(memoriaData->memoriaLogger, "\e[1;92mSe acepta conexión de Kernel en socket [%d]\e[0m", *socketCliente);
+        stream_send_empty_buffer(*socketCliente, HANDSHAKE_ok_continue);
+        //funcion_suscripcion = escuchar_peticiones_kernel;
+        kernelSinAtender = false;
+    } else {
+        log_error(memoriaData->memoriaLogger, "Error al recibir handshake de cliente: %s", strerror(errno));
+        exit(-1);
+    }
+    //return funcion_suscripcion;
 }
