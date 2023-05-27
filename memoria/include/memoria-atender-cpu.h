@@ -1,5 +1,5 @@
-#ifndef MEMORIA-ATENDER-CPU_H
-#define MEMORIA-ATENDER-CPU_H
+#ifndef MEMORIA_ATENDER_CPU_H
+#define MEMORIA_ATENDER_CPU_H
 
 #include <errno.h>
 #include <stdlib.h>

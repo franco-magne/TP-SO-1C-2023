@@ -53,6 +53,7 @@ typedef struct {
     int retardo_acceso_memoria;
     int retardo_compactacion;
     t_log* memoriaLogger;
+    int tamMaxDefxCPU;
     //t_memoria_config* memoriaConfig;
 
 } t_MemoriaData;

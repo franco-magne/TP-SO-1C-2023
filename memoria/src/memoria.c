@@ -73,7 +73,7 @@ void* recibir_conexion(int socketEscucha, int* socketCliente, pthread_t* threadS
     } else if (handshake == HANDSHAKE_kernel && kernelSinAtender) {
         log_info(memoriaData->memoriaLogger, "\e[1;92mSe acepta conexión de Kernel en socket [%d]\e[0m", *socketCliente);
         stream_send_empty_buffer(*socketCliente, HANDSHAKE_ok_continue);
-        //funcion_suscripcion = escuchar_peticiones_kernel;
+        atender_peticiones_kernel(); //es void* pero nomas la llamo
         kernelSinAtender = false;
     } else {
         log_error(memoriaData->memoriaLogger, "Error al recibir handshake de cliente: %s", strerror(errno));
