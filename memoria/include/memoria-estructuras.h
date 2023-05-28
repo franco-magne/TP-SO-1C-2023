@@ -21,7 +21,6 @@
 typedef struct {
     void* espacio_usuario; // Espacio de usuario
     int tamanio;
-    // Otras estructuras auxiliares según sea necesario
 } Memoria;
 
 typedef struct {
@@ -32,19 +31,29 @@ typedef struct {
 
 typedef struct {
     Segmento* segmentos;
-    int contador;
 } TablaSegmentos;
 
 typedef struct {
     int base;
     int tamanio;
-    
 } EspacioLibre;
 
 typedef struct {
     EspacioLibre* espacios_libres;
-    int contador;
 } ListaEspacioLibre;
+
+typedef struct  {
+
+    char* IP_ESCUCHA;   //seria IP_MEMORIA
+    char* PUERTO_ESCUCHA;   //seria PUERTO_MEMORIA
+    uint32_t TAM_MEMORIA;
+    uint32_t TAM_SEGMENTO;
+    uint32_t CANT_SEGMENTOS;
+    uint32_t RETARDO_MEMORIA;
+    uint32_t RETARDO_COMPACTACION;
+    char* ALGORITMO_ASIGNACION;
+
+} t_memoria_config;
 
 typedef struct {
     Memoria* memoria;
