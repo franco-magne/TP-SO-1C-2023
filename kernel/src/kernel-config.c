@@ -20,7 +20,7 @@ t_kernel_config* kernel_config_initializer(t_config* tempCfg)
    // kernelConfig->SOCKET_INTERRUPT_CPU = -1;
     kernelConfig->GRADO_MULTIPROGRAMACION = config_get_int_value(tempCfg, "GRADO_MAX_MULTIPROGRAMACION");
     kernelConfig->RECURSOS = config_get_array_value(tempCfg, "RECURSOS");
-    kernelConfig->INSTANCIAS_RECURSOS = config_get_array_value(tempCfg, "INSTANCIAS_RECURSOS");
+    kernelConfig->INSTANCIAS_RECURSOS = config_get_int_value(tempCfg, "INSTANCIAS_RECURSOS");
     
     return kernelConfig;
 }
@@ -96,6 +96,12 @@ char* kernel_config_get_algoritmo_planificacion(t_kernel_config* this)
     return this->ALGORITMO_PLANIFICACION;
 }
 
+char** kernel_config_get_recurso(t_kernel_config* this){
+    return this->RECURSOS;
+}
+uint32_t* kernel_config_get_instancia(t_kernel_config* this){
+    return this->INSTANCIAS_RECURSOS;
+}
 // FALTAN ESTIMACION INICIAL
 // FALTAN HRRN_ALFA
 // FALTA RECURSOS

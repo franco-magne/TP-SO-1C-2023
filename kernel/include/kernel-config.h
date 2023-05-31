@@ -27,7 +27,7 @@ typedef struct{
     //int SOCKET_INTERRUPT_CPU;
     int GRADO_MULTIPROGRAMACION;
     char** RECURSOS;
-    char** INSTANCIAS_RECURSOS;
+    uint32_t* INSTANCIAS_RECURSOS;
 
 }t_kernel_config;
 

@@ -17,7 +17,7 @@ t_pcb* pcb_create(uint32_t pid)
    this->instruccionesBuffer = NULL;
    this->registros = registros_cpu_create();
    this->tiempoIO = 0;
-
+   this->recursoUtilizado = NULL;
    return this;
 }
 //////////////////////// GETTERS /////////////////////
@@ -53,6 +53,10 @@ t_nombre_estado pcb_get_estado_anterior(t_pcb* this){
 uint32_t pcb_get_tiempoIO(t_pcb* this) 
 {
     return this->tiempoIO;
+}
+
+char* pcb_get_recurso_utilizado(t_pcb* this){
+    return this->recursoUtilizado;
 }
 
 /////////////////////// SETTER ////////////////////////
@@ -105,4 +109,9 @@ void pcb_set_registro_dx_cpu(t_pcb* this, uint32_t registro)
 void pcb_set_tiempoIO(t_pcb* this, uint32_t tiempoIO)
 {
     this->tiempoIO = tiempoIO;
+}
+
+void pcb_set_recurso_utilizado(t_pcb* this, uint32_t recurso)
+{
+    this->recursoUtilizado = recurso;
 }

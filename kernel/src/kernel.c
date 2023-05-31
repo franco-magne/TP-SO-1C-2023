@@ -253,8 +253,7 @@ void encolar_en_new_a_nuevo_proceso(int cliente){
     {
         log_error(kernelLogger, "Error de empaquetado no llego bien la instruccion");
         log_destroy(kernelLogger);
-         exit(EXIT_FAILURE);
-        
+        exit(EXIT_FAILURE);
     }
 
     
@@ -278,7 +277,7 @@ void* hilo_que_libera_pcbs_en_exit(void* args)
         t_pcb* pcbALiberar = malloc(sizeof(pcbALiberar));
         pcbALiberar = estado_desencolar_primer_pcb_atomic(estadoExit);
         //mem_adapter_finalizar_proceso(pcbALiberar, kernelConfig, kernelLogger);
-        log_info(kernelLogger, "Se finaliza PCB <ID %d>", pcb_get_pid(pcbALiberar));
+        log_info(kernelLogger, "\e[0;32mSe finaliza PCB <ID %d>", pcb_get_pid(pcbALiberar));
         //pcb_destroy(pcbALiberar);
         sem_post(&gradoMultiprog);
         free(pcbALiberar);
@@ -331,10 +330,28 @@ void* planificador_largo_plazo(void* args)
 }
 ///////////////////////////////////// FIN DEL PLANIFICADOR DE LARGO PLAZO ////////////////////////////
 //////////////////////////////////// COMIENZO DEL PLANIFICADOR DE CORTO PLAZO ////////////////////////
-static void atender_bloqueo(t_pcb* pcb) 
+static void pedir_recursos_wait(t_pcb* pcb){
+t_
+
+if(pcb_get_instrucciones_buffer(pcb))
+
+}
+
+static void devolver_recursos_signal(t_pcb* pcb){
+
+    //
+    /*
+    signal(c){
+        c++;
+        if(c<=0)
+            wakeup(pid);
+    }
+*/
+}
+static void atender_bloqueo_IO(t_pcb* pcb) 
 {
     
-    log_transition("EXEC", "BLOCKED", pcb_get_pid(pcb));
+    log_transition("EXEC", "BLOCK", pcb_get_pid(pcb));
     log_info(kernelLogger, "PCB <ID %d> - Bloqueado por: <%i> segundos", pcb_get_pid(pcb), pcb_get_tiempoIO(pcb));
 
     log_info(kernelLogger, "PCB <ID %d> ingresa a la cola de espera de I/O de %i", pcb_get_pid(pcb), pcb_get_tiempoIO(pcb));
@@ -416,9 +433,15 @@ void* atender_pcb(void* args)
                 break;
 
             case HEADER_proceso_bloqueado:
-                atender_bloqueo(pcb);
+                atender_bloqueo_IO(pcb);
 
                 break;
+            case HEADER_proceso_pedir_recurso:
+
+                break;
+            case HEADER_proceso_devolver_recurso:
+                break;
+
             default:
 
                 log_error(kernelLogger, "Error al recibir mensaje de CPU");

@@ -27,12 +27,71 @@ static char* t_registro_to_char(t_registro registro)
         
         return "DX";
     }
+    if(registro == REGISTRO_eax) {
+
+        return "EAX";
+    }
+    else if(registro == REGISTRO_ebx) {
+
+        return "EBX";
+    }
+    else if(registro == REGISTRO_ecx) {
+        
+        return "ECX";
+    }
+    else if(registro == REGISTRO_edx) {
+        
+        return "EDX";
+    }
+    if(registro == REGISTRO_rax) {
+
+        return "RAX";
+    }
+    else if(registro == REGISTRO_rbx) {
+
+        return "RBX";
+    }
+    else if(registro == REGISTRO_rcx) {
+        
+        return "RCX";
+    }
+    else if(registro == REGISTRO_rdx) {
+        
+        return "RDX";
+    }
     else {
 
         return "NULL";
     }
 }
 
+void empaquetar_instruccion(uint32_t pid, uint32_t programCounterActualizado, t_registros_cpu * registrosCpuActualizado, uint8_t header, recurso* recursos){
+
+        uint32_t  unidadesDeTrabajo = recursos->tiempoIO;
+        char* recurso_utilizado = recursos ->recursoUtilizado;
+
+        t_buffer* buffer = buffer_create();
+
+         //Empaqueto pid
+        buffer_pack(buffer, &pid, sizeof(pid));
+
+        //Empaqueto pc
+        buffer_pack(buffer, &programCounterActualizado, sizeof(programCounterActualizado));
+
+        //Empaquetamos registros
+        buffer_pack(buffer, &registrosCpuActualizado->registroAx, sizeof(registrosCpuActualizado->registroAx));
+        buffer_pack(buffer, &registrosCpuActualizado->registroBx, sizeof(registrosCpuActualizado->registroBx));
+        buffer_pack(buffer, &registrosCpuActualizado->registroCx, sizeof(registrosCpuActualizado->registroCx));
+        buffer_pack(buffer, &registrosCpuActualizado->registroDx, sizeof(registrosCpuActualizado->registroDx));
+        
+        if(header == HEADER_proceso_bloqueado) buffer_pack(buffer, &unidadesDeTrabajo, sizeof(unidadesDeTrabajo));
+        
+
+
+        stream_send_buffer(cpu_config_get_socket_dispatch(cpuConfig), header, buffer);
+        buffer_destroy(buffer);
+    
+}
 
 
 //Dispatch module
@@ -127,6 +186,38 @@ static void set_registro_segun_tipo(t_registro tipoRegistro, char* valorASetear,
             
             cpu_pcb_set_registro_dx(pcb, valorASetear);
             break;
+        
+        case REGISTRO_eax:
+            cpu_pcb_set_registro_eax(pcb,valorASetear);
+            break;
+
+        case REGISTRO_ebx:
+            cpu_pcb_set_registro_ebx(pcb,valorASetear);
+            break;
+
+        case REGISTRO_ecx:
+            cpu_pcb_set_registro_ecx(pcb,valorASetear);
+            break;
+        
+        case REGISTRO_edx:
+            cpu_pcb_set_registro_edx(pcb,valorASetear);
+            break;
+        
+        case REGISTRO_rax:
+            cpu_pcb_set_registro_rax(pcb,valorASetear);
+            break;
+
+        case REGISTRO_rbx:
+            cpu_pcb_set_registro_rbx(pcb,valorASetear);
+            break;
+
+        case REGISTRO_rcx:
+            cpu_pcb_set_registro_rcx(pcb,valorASetear);
+            break;
+        
+        case REGISTRO_rdx:
+            cpu_pcb_set_registro_rdx(pcb,valorASetear);
+            break;
 
         default:
             break;
@@ -145,7 +236,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
     if (tipoInstruccion == INSTRUCCION_SET) {
         
         t_registro registroASetear = *((t_registro*) operando1);
-        char* valorASetear = string_duplicate((char*) operando2);;
+        char* valorASetear = string_duplicate((char*) operando2);
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);
 
       
@@ -165,23 +256,24 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
       //  uint32_t* arrayTablaPaginasActualizado = cpu_pcb_get_array_tabla_paginas(pcb);
         t_registros_cpu* registrosCpuActualizado = cpu_pcb_get_registros(pcb);
         
-        t_buffer* bufferExit = buffer_create();
+        empaquetar_instruccion(pid, programCounterActualizado,registrosCpuActualizado,HEADER_proceso_terminado, NULL);
+        /*t_buffer* buffer = buffer_create();
 
          //Empaqueto pid
-        buffer_pack(bufferExit, &pid, sizeof(pid));
+        buffer_pack(buffer, &pid, sizeof(pid));
 
         //Empaqueto pc
-        buffer_pack(bufferExit, &programCounterActualizado, sizeof(programCounterActualizado));
+        buffer_pack(buffer, &programCounterActualizado, sizeof(programCounterActualizado));
 
         //Empaquetamos registros
-        buffer_pack(bufferExit, &registrosCpuActualizado->registroAx, sizeof(registrosCpuActualizado->registroAx));
-        buffer_pack(bufferExit, &registrosCpuActualizado->registroBx, sizeof(registrosCpuActualizado->registroBx));
-        buffer_pack(bufferExit, &registrosCpuActualizado->registroCx, sizeof(registrosCpuActualizado->registroCx));
-        buffer_pack(bufferExit, &registrosCpuActualizado->registroDx, sizeof(registrosCpuActualizado->registroDx));
+        buffer_pack(buffer, &registrosCpuActualizado->registroAx, sizeof(registrosCpuActualizado->registroAx));
+        buffer_pack(buffer, &registrosCpuActualizado->registroBx, sizeof(registrosCpuActualizado->registroBx));
+        buffer_pack(buffer, &registrosCpuActualizado->registroCx, sizeof(registrosCpuActualizado->registroCx));
+        buffer_pack(buffer, &registrosCpuActualizado->registroDx, sizeof(registrosCpuActualizado->registroDx));
         
-        stream_send_buffer(cpu_config_get_socket_dispatch(cpuConfig), HEADER_proceso_terminado, bufferExit);
-        buffer_destroy(bufferExit);
-        
+        stream_send_buffer(cpu_config_get_socket_dispatch(cpuConfig), HEADER_proceso_terminado, buffer);
+        buffer_destroy(buffer);
+        */
         shouldStopExec = true;
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
     } else if (tipoInstruccion == INSTRUCCION_YIELD ) {
@@ -193,6 +285,9 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
       //  uint32_t* arrayTablaPaginasActualizado = cpu_pcb_get_array_tabla_paginas(pcb);
         t_registros_cpu* registrosCpuActualizado = cpu_pcb_get_registros(pcb);
         
+        empaquetar_instruccion(pid, programCounterActualizado,registrosCpuActualizado,HEADER_proceso_desalojado, NULL);
+
+        /*
         t_buffer* bufferYield = buffer_create();
 
          //Empaqueto pid
@@ -209,7 +304,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         
         stream_send_buffer(cpu_config_get_socket_dispatch(cpuConfig), HEADER_proceso_desalojado, bufferYield);
         buffer_destroy(bufferYield);
-        
+        */
         shouldStopExec = true;
         
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
@@ -220,15 +315,20 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
         uint32_t unidadesDeTrabajo = *((uint32_t*) operando1);
 
-    
+        recurso* recursoIO = malloc(sizeof(recurso*));
+        recursoIO->tiempoIO = unidadesDeTrabajo;
         
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <IO> - <%d> - <NULL>", cpu_pcb_get_pid(pcb) , unidadesDeTrabajo);
 
-        intervalo_de_pausa(retardoInstruccion);
+        //intervalo_de_pausa(retardoInstruccion);
         
         uint32_t pid = cpu_pcb_get_pid(pcb);
         t_registros_cpu* registrosCpuActualizado = cpu_pcb_get_registros(pcb);
         
+        empaquetar_instruccion(pid, programCounterActualizado,registrosCpuActualizado,HEADER_proceso_bloqueado, recursoIO);
+
+
+        /*
         t_buffer* bufferIO = buffer_create();
 
         //Empaqueto pid
@@ -249,10 +349,11 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
 
         stream_send_buffer(cpu_config_get_socket_dispatch(cpuConfig), HEADER_proceso_bloqueado, bufferIO);
         buffer_destroy(bufferIO);
-        
+        */
         shouldStopExec = true;
         cpu_pcb_set_tiempoIO(pcb,unidadesDeTrabajo);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+        free(recursoIO);
 
     } else if (tipoInstruccion == INSTRUCCION_SIGNAL ) {
         
@@ -261,14 +362,17 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
 
         intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+        //cpu_pcb_set_registros
 
     } else if (tipoInstruccion == INSTRUCCION_WAIT ) {
         
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <WAIT> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
+        char* recurso = string_duplicate((char*) operando1);
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <WAIT> - <%s> - <NULL>", cpu_pcb_get_pid(pcb), recurso);
 
         intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+        cpu_pcb_set_recurso_utilizar(pcb, recurso);
 
     } else if (tipoInstruccion == INSTRUCCION_CREATE_SEGMENT ) {
     
@@ -401,7 +505,8 @@ static bool cpu_ejecutar_ciclos_de_instruccion(t_cpu_pcb* pcb)
             shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);
             break;
         case INSTRUCCION_WAIT:
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);
+            dispositivo = instruccion_get_dispositivo(nextInstruction);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo, NULL);
             break;
         case INSTRUCCION_CREATE_SEGMENT:
             shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);

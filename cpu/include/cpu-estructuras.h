@@ -37,7 +37,14 @@ typedef struct  {
     t_list* instrucciones;
     t_registros_cpu* registrosCpu;
     uint32_t tiempoIO;
+    char* recursoUtilizado;
 } t_cpu_pcb;
+
+typedef struct{
+    uint32_t tiempoIO;
+    char* recursoUtilizado;
+} recurso;
+
 
 extern t_log* cpuLogger;
 extern t_cpu_config* cpuConfig;
