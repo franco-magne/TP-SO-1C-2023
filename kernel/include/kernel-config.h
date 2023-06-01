@@ -27,14 +27,20 @@ typedef struct{
     //int SOCKET_INTERRUPT_CPU;
     int GRADO_MULTIPROGRAMACION;
     char** RECURSOS;
-    uint32_t* INSTANCIAS_RECURSOS;
+    char** INSTANCIAS_RECURSOS;
 
 }t_kernel_config;
+
+
+typedef struct{
+    char* recurso;
+    uint32_t* instancias_recurso;
+}t_kernel_recurso;
 
 //////////////// FIRMA DE FUNCIONES //////////////////////////
 t_kernel_config* kernel_config_create(char* kernelConfigPath, t_log* logger);
 t_kernel_config* kernel_config_initializer( t_config* tempCfg);
-
+t_kernel_recurso* iniciar_estructuras_de_recursos(int cantidad_de_recursos,  char** instancias, char** listarecurso);
 /////////////  FIRMA DE GETTERS //////////////////////////
 
 char* kernel_config_get_ip_memoria(t_kernel_config* this); 
@@ -51,4 +57,6 @@ bool kernel_config_es_algoritmo_HRRN(t_kernel_config* this);
 char* kernel_config_get_algoritmo_planificacion(t_kernel_config* this); 
 int kernel_config_get_socket_dispatch_cpu(t_kernel_config* this); 
 void kernel_config_set_socket_dispatch_cpu(t_kernel_config* self, int socketDispatch);
+char** kernel_config_get_recurso(t_kernel_config* this);
+char** kernel_config_get_instancias(t_kernel_config* this);
 #endif

@@ -33,3 +33,15 @@ void intervalo_de_pausa(uint32_t duracionEnMilisegundos)
     timeSpec.tv_nsec = (duracionEnMilisegundos % SECS_MILISECS) * MILISECS_NANOSECS;
     nanosleep(&timeSpec, &timeSpec);
 }
+
+int size_recurso_list(char** vectorRecursos)
+{
+    int tamanioLista = 0;
+
+    for(int i = 0; vectorRecursos[i] != NULL; i++){
+
+        tamanioLista++;
+    }
+
+    return tamanioLista ;
+}

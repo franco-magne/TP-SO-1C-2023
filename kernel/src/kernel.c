@@ -3,14 +3,14 @@
 
 t_log* kernelLogger;
 t_kernel_config* kernelConfig;
-
+t_kernel_recurso* recursoConfig;
 static t_estado* elegir_pcb;
 
 //static t_preemption_handler evaluar_desalojo;
 
 /////////// LA USAN VARIOS PROCESOS "HILOS" /////////////
 static uint32_t nextPid ;
-
+static int cantidad_de_recursos;
 ///////////  SEMAFOROS MUTEX ////////////////
 static pthread_mutex_t nextPidMutex;
 static pthread_mutex_t eliminarLista; // provisorio
@@ -128,8 +128,14 @@ int main(int argc, char* argv[]) {
     pthread_mutex_init(&nextPidMutex, NULL);
 
     //kernelConfig = kernel_config_create(argv[1], kernelLogger);
-   kernelConfig = kernel_config_initializer( kernelConfigPath);
+   kernelConfig = kernel_config_initializer(kernelConfigPath);
+   cantidad_de_recursos = size_recurso_list(kernel_config_get_recurso(kernelConfig));
+  
+   recursoConfig = iniciar_estructuras_de_recursos(cantidad_de_recursos, kernel_config_get_instancias(kernelConfig), kernel_config_get_recurso(kernelConfig));
     
+   
+
+
    /////////////////////////////// CONEXION CON CPU /////////////////////////////
     conectar_a_servidor_cpu_dispatch(kernelConfig,kernelLogger);
    /* int kernelSocketCPU = conectar_a_servidor("127.0.0.1", "8001");
@@ -331,22 +337,12 @@ void* planificador_largo_plazo(void* args)
 ///////////////////////////////////// FIN DEL PLANIFICADOR DE LARGO PLAZO ////////////////////////////
 //////////////////////////////////// COMIENZO DEL PLANIFICADOR DE CORTO PLAZO ////////////////////////
 static void pedir_recursos_wait(t_pcb* pcb){
-t_
 
-if(pcb_get_instrucciones_buffer(pcb))
 
 }
 
 static void devolver_recursos_signal(t_pcb* pcb){
 
-    //
-    /*
-    signal(c){
-        c++;
-        if(c<=0)
-            wakeup(pid);
-    }
-*/
 }
 static void atender_bloqueo_IO(t_pcb* pcb) 
 {

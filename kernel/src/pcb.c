@@ -111,7 +111,7 @@ void pcb_set_tiempoIO(t_pcb* this, uint32_t tiempoIO)
     this->tiempoIO = tiempoIO;
 }
 
-void pcb_set_recurso_utilizado(t_pcb* this, uint32_t recurso)
+void pcb_set_recurso_utilizado(t_pcb* this, char* recurso)
 {
     this->recursoUtilizado = recurso;
 }

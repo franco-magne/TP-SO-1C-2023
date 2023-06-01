@@ -67,8 +67,9 @@ static char* t_registro_to_char(t_registro registro)
 
 void empaquetar_instruccion(uint32_t pid, uint32_t programCounterActualizado, t_registros_cpu * registrosCpuActualizado, uint8_t header, recurso* recursos){
 
-        uint32_t  unidadesDeTrabajo = recursos->tiempoIO;
-        char* recurso_utilizado = recursos ->recursoUtilizado;
+        // esto es para las instrucciones bloqueantes IO y posibles bloqueantes wait y signal
+        uint32_t  unidadesDeTrabajo = cpu_get_recurso_IO(recursos);
+        char* recurso_utilizado = cpu_get_recurso_sem(recursos);
 
         t_buffer* buffer = buffer_create();
 
@@ -86,7 +87,7 @@ void empaquetar_instruccion(uint32_t pid, uint32_t programCounterActualizado, t_
         
         if(header == HEADER_proceso_bloqueado) buffer_pack(buffer, &unidadesDeTrabajo, sizeof(unidadesDeTrabajo));
         
-
+        if(header == HEADER_proceso_pedir_recurso  || header == HEADER_proceso_devolver_recurso) buffer_pack(buffer, &recurso_utilizado, sizeof(recurso_utilizado)) ;
 
         stream_send_buffer(cpu_config_get_socket_dispatch(cpuConfig), header, buffer);
         buffer_destroy(buffer);
@@ -316,7 +317,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t unidadesDeTrabajo = *((uint32_t*) operando1);
 
         recurso* recursoIO = malloc(sizeof(recurso*));
-        recursoIO->tiempoIO = unidadesDeTrabajo;
+        cpu_set_recursoIO(recursoIO, unidadesDeTrabajo);
         
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <IO> - <%d> - <NULL>", cpu_pcb_get_pid(pcb) , unidadesDeTrabajo);
 
@@ -326,7 +327,6 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         t_registros_cpu* registrosCpuActualizado = cpu_pcb_get_registros(pcb);
         
         empaquetar_instruccion(pid, programCounterActualizado,registrosCpuActualizado,HEADER_proceso_bloqueado, recursoIO);
-
 
         /*
         t_buffer* bufferIO = buffer_create();
@@ -367,12 +367,18 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
     } else if (tipoInstruccion == INSTRUCCION_WAIT ) {
         
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
-        char* recurso = string_duplicate((char*) operando1);
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <WAIT> - <%s> - <NULL>", cpu_pcb_get_pid(pcb), recurso);
+        char* recurso1 = string_duplicate((char*) operando1);
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <WAIT> - <%s> - <NULL>", cpu_pcb_get_pid(pcb), recurso1);
+      
+        recurso *recursoWait = malloc(sizeof(recurso*));
+        cpu_set_recurso_sem(recursoWait, recurso1);
 
-        intervalo_de_pausa(retardoInstruccion);
+
+        intervalo_de_pausa(retardoInstruccion);// PROVISORIO !!!!!
+
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
-        cpu_pcb_set_recurso_utilizar(pcb, recurso);
+        cpu_pcb_set_recurso_utilizar(pcb, recurso1);
+
 
     } else if (tipoInstruccion == INSTRUCCION_CREATE_SEGMENT ) {
     

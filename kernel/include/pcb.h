@@ -24,6 +24,7 @@ typedef struct {
     t_buffer* instruccionesBuffer;
     t_nombre_estado estadoActual;
     t_nombre_estado estadoAnterior;
+    char* recursoUtilizado;
 
 }t_pcb;
 
@@ -46,6 +47,6 @@ void pcb_set_pid(t_pcb* this, uint32_t pid);
 void pcb_set_estado_actual(t_pcb* this, uint32_t pid);
 void pcb_set_estado_anterior(t_pcb* this, uint32_t estadoAnterior);
 void pcb_set_tiempoIO(t_pcb*, uint32_t tiempoIO);
-
+void pcb_set_recurso_utilizado(t_pcb* this, char* recurso);
 
 #endif

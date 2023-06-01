@@ -61,5 +61,8 @@ int cpu_config_get_socket_dispatch(t_cpu_config* self);
 int cpu_config_get_socket_memoria(t_cpu_config* self);
 void cpu_config_set_socket_memoria(t_cpu_config* self, int socketMemoria);
 void cpu_config_set_socket_dispatch(t_cpu_config* self, int socketDispatch); 
-
+void cpu_set_recurso_sem(recurso* this, char* recurso);
+void cpu_set_recursoIO(recurso* this, uint32_t tiempoIO);
+char* cpu_get_recurso_sem(recurso* this);
+uint32_t cpu_get_recurso_IO(recurso* this);
 #endif

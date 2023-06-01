@@ -20,9 +20,19 @@ t_kernel_config* kernel_config_initializer(t_config* tempCfg)
    // kernelConfig->SOCKET_INTERRUPT_CPU = -1;
     kernelConfig->GRADO_MULTIPROGRAMACION = config_get_int_value(tempCfg, "GRADO_MAX_MULTIPROGRAMACION");
     kernelConfig->RECURSOS = config_get_array_value(tempCfg, "RECURSOS");
-    kernelConfig->INSTANCIAS_RECURSOS = config_get_int_value(tempCfg, "INSTANCIAS_RECURSOS");
+    kernelConfig->INSTANCIAS_RECURSOS = config_get_array_value(tempCfg, "INSTANCIAS_RECURSOS");
     
     return kernelConfig;
+}
+
+t_kernel_recurso* iniciar_estructuras_de_recursos(int cantidad_de_recursos, char** instancias, char** listarecurso){
+    t_kernel_recurso* recursos = malloc(sizeof(*recursos) * cantidad_de_recursos);
+
+    for(int i = 0; i < cantidad_de_recursos; i++){
+        recursos[i].recurso = listarecurso[i];
+        recursos[i].instancias_recurso = (uint32_t)atoi(instancias[i]);
+    }
+    return recursos;
 }
 
 t_kernel_config* kernel_config_create(char* kernelConfigPath, t_log* logger)
@@ -73,12 +83,10 @@ char* kernel_config_get_puerto_escucha(t_kernel_config* this)
     return this->PUERTO_ESCUCHA;
 }
 
-
 int kernel_config_get_grado_multiprogramacion(t_kernel_config* this) 
 {
     return this->GRADO_MULTIPROGRAMACION;
 }
-
 
 bool kernel_config_es_algoritmo_fifo(t_kernel_config* this) 
 {
@@ -90,7 +98,6 @@ bool kernel_config_es_algoritmo_HRRN(t_kernel_config* this)
     return strcmp(this->ALGORITMO_PLANIFICACION, "HRRN") == 0;
 }
 
-
 char* kernel_config_get_algoritmo_planificacion(t_kernel_config* this)
 {
     return this->ALGORITMO_PLANIFICACION;
@@ -99,7 +106,7 @@ char* kernel_config_get_algoritmo_planificacion(t_kernel_config* this)
 char** kernel_config_get_recurso(t_kernel_config* this){
     return this->RECURSOS;
 }
-uint32_t* kernel_config_get_instancia(t_kernel_config* this){
+char** kernel_config_get_instancias(t_kernel_config* this){
     return this->INSTANCIAS_RECURSOS;
 }
 // FALTAN ESTIMACION INICIAL
