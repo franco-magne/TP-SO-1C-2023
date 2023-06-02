@@ -7,8 +7,8 @@ void memoria_config_initializer(void* moduleConfig, t_config* tempCfg)
     
     memoriaConfig->IP_ESCUCHA = strdup(config_get_string_value(tempCfg, "IP_ESCUCHA"));
     memoriaConfig->PUERTO_ESCUCHA = strdup(config_get_string_value(tempCfg, "PUERTO_ESCUCHA"));
-    memoriaConfig->TAM_MEMORIA = (uint32_t) config_get_int_value(tempCfg, "TAM_SEGMENTO");
-    memoriaConfig->TAM_SEGMENTO = (uint32_t) config_get_int_value(tempCfg, "TAM_PAGINA");
+    memoriaConfig->TAM_MEMORIA = (uint32_t) config_get_int_value(tempCfg, "TAM_MEMORIA");
+    memoriaConfig->TAM_SEGMENTO = (uint32_t) config_get_int_value(tempCfg, "TAM_SEGMENTO");
     memoriaConfig->CANT_SEGMENTOS = (uint32_t) config_get_int_value(tempCfg, "CANT_SEGMENTOS");
     memoriaConfig->RETARDO_MEMORIA = (uint32_t) config_get_int_value(tempCfg, "RETARDO_MEMORIA");
     memoriaConfig->RETARDO_COMPACTACION = (uint32_t) config_get_int_value(tempCfg, "RETARDO_COMPACTACION");
@@ -68,4 +68,5 @@ uint32_t memoria_config_get_retardo_memoria(t_memoria_config* self)
 uint32_t memoria_config_get_procesos_totales(t_memoria_config* self) 
 {
     //return self->TAM_MEMORIA / (self->TAM_PAGINA * self->MARCOS_POR_PROCESO);
+    return 0;
 }

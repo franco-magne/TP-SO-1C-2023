@@ -1,5 +1,5 @@
-#ifndef MEMORIA-ESTRUCTURAS_H
-#define MEMORIA-ESTRUCTURAS_H
+#ifndef MEMORIA_ESTRUCTURAS_H
+#define MEMORIA_ESTRUCTURAS_H
 
 #include <errno.h>
 #include <stdlib.h>
@@ -24,19 +24,25 @@ typedef struct {
 } Memoria;
 
 typedef struct {
-    int segmento_id;
-    int tamanio;
+    //int segmento_id; no necesito idSeg xq me lo indica el indice en que se encuentra en la tabla
+    int limite; //tamanio
     int base;
 } Segmento;
 
 typedef struct {
-    Segmento* segmentos;
-} TablaSegmentos;
+    Segmento segmentos; 
+    int validez;   //0 o 1
+} EntradasxTabla;
+
+typedef struct {
+    EntradasxTabla* entradas;
+} TabladeSegmentos;
 
 typedef struct {
     int base;
     int tamanio;
 } EspacioLibre;
+t_list espaciosVacios;
 
 typedef struct {
     EspacioLibre* espacios_libres;
@@ -55,16 +61,5 @@ typedef struct  {
 
 } t_memoria_config;
 
-typedef struct {
-    Memoria* memoria;
-    TablaSegmentos* tablaSegmentos;
-    ListaEspacioLibre* listaEspacioLibre;
-    int retardo_acceso_memoria;
-    int retardo_compactacion;
-    t_log* memoriaLogger;
-    int tamMaxDefxCPU;
-    //t_memoria_config* memoriaConfig;
-
-} t_MemoriaData;
 
 #endif

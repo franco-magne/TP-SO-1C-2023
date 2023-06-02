@@ -9,7 +9,8 @@
 #include <commons/log.h>
 //Bibliotecas static-utils
 //Bibliotecas internas modulo consola
-#include <memoria-estructuras.h> 
+#include "memoria-estructuras.h"
+
 
 int config_init(void* moduleConfig, char* pathToConfig, t_log* moduleLogger,
                 void (*config_initializer)(void* moduleConfig, t_config* tempConfig)) {

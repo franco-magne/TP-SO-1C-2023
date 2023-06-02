@@ -27,11 +27,14 @@ typedef enum {
     HEADER_proceso_terminado,
     //HEADER_movin,
     //HEADER_movout,
-    HEADER_solicitud_tabla_paginas_segmentos,
+    HEADER_solicitud_tabla_segmentos,
     //HEADER_page_fault,
     //HEADER_page_fault_resuelto,
     HEADER_instruccion_io_teclado,
-    HEADER_instruccion_io_pantalla
+    HEADER_instruccion_io_pantalla,
+    HEADER_createSegment,
+    HEADER_deleteSegment,
+    HEADER_compactacion
 } t_header;
 
 typedef enum {
