@@ -4,6 +4,7 @@
 //Standard Libraries
 #include <stdint.h>
 //Static-utils libraries
+#include "../../utils/src/utils/commons-nuestras.h"
 #include "../../utils/src/utils/instrucciones.h"
 #include "../../utils/src/utils/serializacion.h"
 #include "../../utils/src/utils/conexiones.h"
