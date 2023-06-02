@@ -45,3 +45,24 @@ int size_recurso_list(char** vectorRecursos)
 
     return tamanioLista ;
 }
+
+bool contains(char** list, char* object ){
+
+    for(int i= 0; i < size_recurso_list(list); i++){
+        if(strcmp(list[i],object)) return true;
+        
+    }
+    return false;
+
+}
+
+int position_in_list(char** list, char* object ){
+
+    for(int i= 0; i < size_recurso_list(list); i++){
+        if(strcmp(list[i],object)) return i;
+        
+    }
+    return -1;
+
+}
+

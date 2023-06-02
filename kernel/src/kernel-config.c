@@ -130,13 +130,19 @@ int kernel_config_get_socket_dispatch_cpu(t_kernel_config* this)
 
 /*
 ///////////////////// NO APLICADOS TODAVIA //////////////////////
-int kernel_config_get_socket_interrupt_cpu(t_kernel_config* this) 
-{
-    return this->SOCKET_INTERRUPT_CPU;
-}
 
 int kernel_config_get_socket_memoria(t_kernel_config* this) 
 {
     return this->SOCKET_MEMORIA;
 }
 */
+
+char* recurso_get_nombre_recurso(t_kernel_recurso* this)
+{
+    return this->recurso;
+}
+
+uint32_t* recurso_get_instancias_recurso(t_kernel_recurso* this)
+{
+    return this->instancias_recurso;
+}

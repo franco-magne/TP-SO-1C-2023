@@ -39,6 +39,7 @@ t_buffer* pcb_get_instrucciones_buffer(t_pcb* this);
 t_nombre_estado pcb_get_estado_actual(t_pcb* this);
 t_nombre_estado pcb_get_estado_anterior(t_pcb* this);
 uint32_t pcb_get_tiempoIO(t_pcb* this);
+char* pcb_get_recurso_utilizado(t_pcb* this);
 
 /////////////////////// SETTERS ////////////////////////
 void pcb_set_program_counter(t_pcb* this, uint32_t programCounter); 
