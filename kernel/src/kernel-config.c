@@ -25,13 +25,16 @@ t_kernel_config* kernel_config_initializer(t_config* tempCfg)
     return kernelConfig;
 }
 
-t_kernel_recurso* iniciar_estructuras_de_recursos(int cantidad_de_recursos, char** instancias, char** listarecurso){
-    t_kernel_recurso* recursos = malloc(sizeof(*recursos) * cantidad_de_recursos);
 
-    for(int i = 0; i < cantidad_de_recursos; i++){
+t_kernel_recurso* iniciar_estructuras_de_recursos(int cantidad_de_recursos, char** instancias, char** listarecurso) {
+    t_kernel_recurso* recursos = malloc(sizeof(*recursos) * cantidad_de_recursos);
+    
+    for (int i = 0; i < cantidad_de_recursos; i++) {
         recursos[i].recurso = listarecurso[i];
-        recursos[i].instancias_recurso = (uint32_t)atoi(instancias[i]);
+        recursos[i].instancias_recurso = malloc(sizeof(int));  // Asignar memoria para instancias_recurso
+        *(recursos[i].instancias_recurso) = atoi(instancias[i]);  // Almacenar el valor convertido
     }
+    
     return recursos;
 }
 
@@ -142,7 +145,7 @@ char* recurso_get_nombre_recurso(t_kernel_recurso* this)
     return this->recurso;
 }
 
-uint32_t* recurso_get_instancias_recurso(t_kernel_recurso* this)
+int* recurso_get_instancias_recurso(t_kernel_recurso* this)
 {
     return this->instancias_recurso;
 }

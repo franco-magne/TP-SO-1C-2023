@@ -46,23 +46,35 @@ int size_recurso_list(char** vectorRecursos)
     return tamanioLista ;
 }
 
-bool contains(char** list, char* object ){
-
-    for(int i= 0; i < size_recurso_list(list); i++){
-        if(strcmp(list[i],object)) return true;
-        
+bool contains(char** list, char* object) {
+    if (list == NULL || object == NULL) {
+        return false; // Manejar el caso de punteros nulos
     }
+    
+    for (int i = 0; i < size_recurso_list(list); i++) {
+        if (list[i] != NULL && strcmp(list[i], object) == 0) {
+            return true;
+        }
+    }
+    
     return false;
-
 }
 
-int position_in_list(char** list, char* object ){
-
-    for(int i= 0; i < size_recurso_list(list); i++){
-        if(strcmp(list[i],object)) return i;
-        
+int position_in_list(char** list, char* object) {
+    for (int i = 0; i < size_recurso_list(list); i++) {
+        if (strcmp(list[i], object) == 0) {
+            return i;
+        }
     }
     return -1;
-
+}
+int list_get_index(t_list* list, bool (*cutting_condition)(void*, void*), void* target) {
+    for (int i = 0; i < list_size(list); i++) {
+        void* temp = list_get(list, i);
+        if (cutting_condition(temp, target)) {
+            return i;
+        }
+    }
+    return -1;
 }
 

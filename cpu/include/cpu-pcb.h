@@ -14,6 +14,7 @@
 
 t_cpu_pcb* cpu_pcb_create(uint32_t pid, uint32_t programCounter, t_registros_cpu* registrosCpu);
 void cpu_pcb_destroy(t_cpu_pcb* self);
+recurso* recursos_inicializar();
 
 ////// FIRMAS DE GETTERS
 uint32_t cpu_pcb_get_program_counter(t_cpu_pcb* self);

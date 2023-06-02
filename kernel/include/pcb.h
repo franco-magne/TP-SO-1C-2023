@@ -30,7 +30,7 @@ typedef struct {
 
 ////////////////////////// DEFINICION DE LAS FUNCIONES ////////////////
 t_pcb* pcb_create(uint32_t pid);
-
+bool pcb_es_este_pcb_por_pid(void* unPcb, void* otroPcb);
 /////////////////////// GETTERS ////////////////////////
 t_registros_cpu* pcb_get_registros_cpu(t_pcb* this);
 uint32_t pcb_get_program_counter(t_pcb* this);

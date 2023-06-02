@@ -115,3 +115,8 @@ void pcb_set_recurso_utilizado(t_pcb* this, char* recurso)
 {
     this->recursoUtilizado = recurso;
 }
+
+bool pcb_es_este_pcb_por_pid(void* unPcb, void* otroPcb) 
+{
+    return pcb_get_pid((t_pcb*)unPcb) == pcb_get_pid((t_pcb*)otroPcb);
+}

@@ -34,7 +34,7 @@ typedef struct{
 
 typedef struct{
     char* recurso;
-    uint32_t* instancias_recurso;
+    int* instancias_recurso;
 }t_kernel_recurso;
 
 //////////////// FIRMA DE FUNCIONES //////////////////////////
@@ -59,7 +59,7 @@ int kernel_config_get_socket_dispatch_cpu(t_kernel_config* this);
 char** kernel_config_get_recurso(t_kernel_config* this);
 char** kernel_config_get_instancias(t_kernel_config* this);
 char* recurso_get_nombre_recurso(t_kernel_recurso* this);
-uint32_t* recurso_get_instancias_recurso(t_kernel_recurso* this);
+int* recurso_get_instancias_recurso(t_kernel_recurso* this);
 
 /////////////  FIRMA DE SETTERS //////////////////////////
 void kernel_config_set_socket_dispatch_cpu(t_kernel_config* self, int socketDispatch);

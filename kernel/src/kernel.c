@@ -339,13 +339,14 @@ void* planificador_largo_plazo(void* args)
 }
 
 bool recurso_disponible(int posicion_recurso){
-    return (recursoConfig[posicion_recurso].instancias_recurso > 0);
+    return ( *(recursoConfig[posicion_recurso].instancias_recurso) > 0);
 }
 
 void asignar_recurso(int posicion_recurso){
-
+     int aux = 1;
     pthread_mutex_lock(&mutexCantidadRecursos);
-    recursoConfig[posicion_recurso].instancias_recurso -= 1;
+    *(recursoConfig[posicion_recurso].instancias_recurso) -=aux;
+    log_info(kernelLogger, "valor recurso actual : <%i>",*(recursoConfig[posicion_recurso].instancias_recurso) );
     pthread_mutex_unlock(&mutexCantidadRecursos);
 
 }
@@ -353,13 +354,14 @@ void asignar_recurso(int posicion_recurso){
 void devolver_recurso(int posicion_recurso){
 
     pthread_mutex_lock(&mutexCantidadRecursos);
-    recursoConfig[posicion_recurso].instancias_recurso += 1;
+    *(recursoConfig[posicion_recurso].instancias_recurso) += 1;
+    log_info(kernelLogger, "valor recurso actual : <%i>",*(recursoConfig[posicion_recurso].instancias_recurso) );
     pthread_mutex_unlock(&mutexCantidadRecursos);
 
 }
 
 bool pcb_esta_bloqueado_por_recurso(void* pcb){
-    return (strcmp (pcb_get_recurso_utilizado(pcb), nombre_recurso) ) ;
+return (strcmp(pcb_get_recurso_utilizado(pcb), nombre_recurso) == 0);
 }
 
 t_pcb* primer_elemento_bloqueado_por_recurso(t_list* listaBloqueado, char* nombreRecurso){
@@ -370,14 +372,18 @@ t_pcb* primer_elemento_bloqueado_por_recurso(t_list* listaBloqueado, char* nombr
     
     pthread_mutex_lock(&mutexNombreRecurso);
     nombre_recurso = nombreRecurso;
-    listAux = list_filter(listAux, pcb_esta_bloqueado_por_recurso);
-    if(list_size(listAux)){
-    pcb = list_get(listAux, 0);
-    list_remove_element(listaBloqueado, pcb);
     pthread_mutex_unlock(&mutexNombreRecurso);
-
-    return pcb;
+    listAux = list_filter(listAux, pcb_esta_bloqueado_por_recurso);
+    int cantidadPcbsEnLista = list_size(listAux);
+    if(cantidadPcbsEnLista == 1){
+         pcb = estado_desencolar_primer_pcb(estadoBlocked);
+         return pcb;
+    } else if(cantidadPcbsEnLista > 1){
+        pcb = list_get(listAux, 0);
+        pcb = estado_remover_pcb_de_cola_atomic(estadoBlocked,pcb);
+        return pcb;
     }
+
     
     return NULL;
             
@@ -385,24 +391,30 @@ t_pcb* primer_elemento_bloqueado_por_recurso(t_list* listaBloqueado, char* nombr
 
 ///////////////////////////////////// FIN DEL PLANIFICADOR DE LARGO PLAZO ////////////////////////////
 //////////////////////////////////// COMIENZO DEL PLANIFICADOR DE CORTO PLAZO ////////////////////////
-static void pedir_recursos_wait(t_pcb* pcb){
-
-       if(contains(kernel_config_get_recurso(kernelConfig) , pcb_get_recurso_utilizado(pcb)) ){
-        int posicion_recurso = position_in_list(kernel_config_get_recurso(kernelConfig) , pcb_get_recurso_utilizado(pcb));
-            if(recurso_disponible(posicion_recurso)) {
-                asignar_recurso(posicion_recurso);
-            } else {
-                log_transition("EXEC", "BLOCK", pcb_get_pid(pcb));
-                log_info(kernelLogger, "PID: <PID> - Bloqueado por: <%s> ", recursoConfig[posicion_recurso].recurso  );    
-                pcb_set_estado_anterior(pcb, pcb_get_estado_actual(pcb));
-                pcb_set_estado_actual(pcb, BLOCK);
-                estado_encolar_pcb_atomic(estadoBlocked, pcb);
-                }
+static bool pedir_recursos_wait(t_pcb* pcb) {
+    char* recursoUtilizado = pcb_get_recurso_utilizado(pcb);
     
-        
-       } 
+    if (contains(kernel_config_get_recurso(kernelConfig), recursoUtilizado)) {
+        int posicion_recurso = position_in_list(kernel_config_get_recurso(kernelConfig), recursoUtilizado);
 
+        if (recurso_disponible(posicion_recurso)) {
+            asignar_recurso(posicion_recurso);
+            log_info(kernelLogger, "RECURSO ASIGNADO AL PROCESO <%i>. RECURSO: <%s>", pcb_get_pid(pcb), recursoConfig[posicion_recurso].recurso);
+        } else {
+            log_transition("EXEC", "BLOCK", pcb_get_pid(pcb));
+            log_info(kernelLogger, "PID: <%i> - Bloqueado por: <%s>", pcb_get_pid(pcb), recursoConfig[posicion_recurso].recurso);
+
+            pcb_set_estado_anterior(pcb, pcb_get_estado_actual(pcb));
+            pcb_set_estado_actual(pcb, BLOCK);
+            estado_encolar_pcb_atomic(estadoBlocked, pcb);
+
+            return true;
+        }
+    }
+
+    return false;
 }
+
 
 static void devolver_recursos_signal(t_pcb* pcb){
     
@@ -410,9 +422,9 @@ static void devolver_recursos_signal(t_pcb* pcb){
             
             int posicion_recurso = position_in_list(kernel_config_get_recurso(kernelConfig) , pcb_get_recurso_utilizado(pcb));
             devolver_recurso(posicion_recurso);
-
+                log_info(kernelLogger, "RECURSO DEVUELTO POR EL PROCESO <%i> . RECURSO: <%s> ",pcb_get_pid(pcb), recursoConfig[posicion_recurso].recurso  );    
             t_pcb* pcbPasaReady = primer_elemento_bloqueado_por_recurso(estado_get_list(estadoBlocked), pcb_get_recurso_utilizado(pcb));
-            if(pcbPasaReady = NULL){
+            if(pcbPasaReady != NULL){
                 pcb_set_estado_anterior(pcbPasaReady, pcb_get_estado_actual(pcbPasaReady));
                 pcb_set_estado_actual(pcbPasaReady, READY);
                 estado_encolar_pcb_atomic(estadoReady, pcbPasaReady);
@@ -421,6 +433,7 @@ static void devolver_recursos_signal(t_pcb* pcb){
                 log_info(kernelLogger,  "Cola Ready <%s>: %s", kernel_config_get_algoritmo_planificacion(kernelConfig), stringPidsReady);
                 free(stringPidsReady);
                 sem_post(estado_get_sem(estadoReady));
+                
             }
         }
 
@@ -439,9 +452,14 @@ static void atender_bloqueo_IO(t_pcb* pcb)
     estado_encolar_pcb_atomic(estadoBlocked, pcb);
     
     sleep(pcb_get_tiempoIO(pcb));
-
-    pcb = estado_desencolar_primer_pcb_atomic(estadoBlocked);
-
+    int cantidadPcbsEnLista = list_size(estado_get_list(estadoBlocked));
+    
+    if (cantidadPcbsEnLista == 1) {
+        pcb = estado_desencolar_primer_pcb(estadoBlocked);
+    } 
+    else {
+    pcb = estado_remover_pcb_de_cola_atomic(estadoBlocked,pcb);
+    }
     pcb_set_estado_anterior(pcb, pcb_get_estado_actual(pcb));
     pcb_set_estado_actual(pcb, READY);
     estado_encolar_pcb_atomic(estadoReady, pcb);
@@ -456,7 +474,7 @@ static void atender_bloqueo_IO(t_pcb* pcb)
 void* atender_pcb(void* args) 
 {
     for (;;) {
-    
+        bool procesoFueBloqueado = false;
         sem_wait(estado_get_sem(estadoExec));
 
         pthread_mutex_lock(estado_get_mutex(estadoExec));
@@ -515,9 +533,11 @@ void* atender_pcb(void* args)
 
                 break;
             case HEADER_proceso_pedir_recurso:
-                pedir_recursos_wait(pcb);
+                procesoFueBloqueado = pedir_recursos_wait(pcb);
+
                 break;
             case HEADER_proceso_devolver_recurso:
+                devolver_recursos_signal(pcb);
                 break;
 
             default:
@@ -525,7 +545,7 @@ void* atender_pcb(void* args)
                 log_error(kernelLogger, "Error al recibir mensaje de CPU");
                 break;
         }
-        if(cpuResponse == HEADER_proceso_pedir_recurso || cpuResponse == HEADER_proceso_devolver_recurso){
+        if( (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado) || cpuResponse == HEADER_proceso_devolver_recurso){
                 estado_encolar_pcb_atomic(estadoExec, pcb);
                 sem_post(estado_get_sem(estadoExec));
         } 

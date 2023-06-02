@@ -23,7 +23,18 @@ void cpu_pcb_destroy(t_cpu_pcb* this)
 
     free(this);
 }
+///////////////////// COMIENZO DE RECURSOS ///////////////////
+recurso* recursos_inicializar(){
+    recurso* aux = malloc(sizeof(*aux));
+    aux->recursoUtilizado = NULL;
+    aux->tiempoIO = -1;
 
+    return aux;
+}
+
+
+
+////////////////// FIN DE RECURSOS ////////////////
 uint32_t cpu_pcb_get_pid(t_cpu_pcb* this) 
 {
     return this->pid;
