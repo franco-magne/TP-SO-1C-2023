@@ -25,6 +25,7 @@ void cpu_config_destroy(t_cpu_config* self)
 }
 
 
+
 uint32_t cpu_config_get_retardo_instruccion(t_cpu_config* self) 
 {
     return self->RETARDO_INSTRUCCION;
@@ -70,4 +71,25 @@ void cpu_config_set_socket_memoria(t_cpu_config* self, int socketMemoria)
 void cpu_config_set_socket_dispatch(t_cpu_config* self, int socketDispatch) 
 {
     self->SOCKET_DISPATCH_CPU = socketDispatch;
+}
+
+
+void cpu_set_recurso_sem(recurso* this, char* recurso)
+{
+    this->recursoUtilizado = recurso;
+}
+
+void cpu_set_recursoIO(recurso* this, uint32_t tiempoIO)
+{
+    this->tiempoIO = tiempoIO;
+}
+
+char* cpu_get_recurso_sem(recurso* this)
+{
+    return this->recursoUtilizado;
+}
+
+uint32_t cpu_get_recurso_IO(recurso* this)
+{
+    return this->tiempoIO;
 }

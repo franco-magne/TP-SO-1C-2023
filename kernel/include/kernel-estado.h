@@ -30,7 +30,8 @@ void estado_encolar_pcb_atomic(t_estado* estadoDest, t_pcb * targetPcb);
 t_pcb* estado_desencolar_primer_pcb(t_estado* this);
 t_pcb* estado_desencolar_primer_pcb_atomic(t_estado* this);
 sem_t* estado_get_sem(t_estado* this);
-
+t_pcb* estado_remover_pcb_de_cola(t_estado* self, t_pcb* targetPcb);
+t_pcb* estado_remover_pcb_de_cola_atomic(t_estado* self, t_pcb* targetPcb);
 pthread_mutex_t* estado_get_mutex(t_estado* this);
 
 
