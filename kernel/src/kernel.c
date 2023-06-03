@@ -410,9 +410,19 @@ static bool pedir_recursos_wait(t_pcb* pcb) {
 
             return true;
         }
+
+
+    } else {
+        log_error(kernelLogger, "RECURSO NO EXISTE POR EL PROCESO QUE PIDE ");    
+        pcb_set_estado_actual(pcb, EXIT);
+        estado_encolar_pcb_atomic(estadoExit, pcb);
+        log_transition("EXEC", "EXIT", pcb_get_pid(pcb));
+        //stream_send_empty_buffer(pcb_get_socket(pcb), HEADER_proceso_terminado);
+        sem_post(estado_get_sem(estadoExit));
+        return false;
+
     }
 
-    return false;
 }
 
 
@@ -435,6 +445,13 @@ static void devolver_recursos_signal(t_pcb* pcb){
                 sem_post(estado_get_sem(estadoReady));
                 
             }
+        } else {
+            log_error(kernelLogger, "RECURSO NO EXISTE POR EL PROCESO QUE LO DEVUELVE ");    
+            pcb_set_estado_actual(pcb, EXIT);
+            estado_encolar_pcb_atomic(estadoExit, pcb);
+            log_transition("EXEC", "EXIT", pcb_get_pid(pcb));
+            //stream_send_empty_buffer(pcb_get_socket(pcb), HEADER_proceso_terminado);
+            sem_post(estado_get_sem(estadoExit));
         }
 
 }
@@ -545,7 +562,7 @@ void* atender_pcb(void* args)
                 log_error(kernelLogger, "Error al recibir mensaje de CPU");
                 break;
         }
-        if( (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado) || cpuResponse == HEADER_proceso_devolver_recurso){
+        if( (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado && pcb_get_estado_actual(pcb) != EXIT) || (cpuResponse == HEADER_proceso_devolver_recurso && pcb_get_estado_actual(pcb) == EXEC) ){
                 estado_encolar_pcb_atomic(estadoExec, pcb);
                 sem_post(estado_get_sem(estadoExec));
         } 
