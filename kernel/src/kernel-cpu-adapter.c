@@ -4,7 +4,6 @@ void cpu_adapter_enviar_pcb_a_cpu(t_pcb* pcbAEnviar, uint8_t header, t_kernel_co
 {
     uint32_t pidAEnviar = pcb_get_pid(pcbAEnviar);
     uint32_t pcAEnviar = pcb_get_program_counter(pcbAEnviar);
-    
 
     t_registros_cpu* registrosCpu = pcb_get_registros_cpu(pcbAEnviar); 
 
@@ -20,7 +19,7 @@ void cpu_adapter_enviar_pcb_a_cpu(t_pcb* pcbAEnviar, uint8_t header, t_kernel_co
     buffer_pack(bufferPcbAEjecutar, &registrosCpu->registroCx, sizeof(uint32_t));
     buffer_pack(bufferPcbAEjecutar, &registrosCpu->registroDx, sizeof(uint32_t));
 
-
+    //stream_send_empty_buffer(kernel_config_get_socket_dispatch_cpu(kernelConfig), header);
     stream_send_buffer(kernel_config_get_socket_dispatch_cpu(kernelConfig), header, bufferPcbAEjecutar);
     stream_send_buffer(kernel_config_get_socket_dispatch_cpu(kernelConfig), HEADER_lista_instrucciones, pcb_get_instrucciones_buffer(pcbAEnviar));
 
@@ -42,7 +41,6 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
     stream_recv_buffer(kernel_config_get_socket_dispatch_cpu(kernelConfig), bufferPcb);
     buffer_unpack(bufferPcb, &pidRecibido, sizeof(pidRecibido));
     buffer_unpack(bufferPcb, &programCounterActualizado, sizeof(programCounterActualizado));
-
     //desempaquetar tabla paginas
     //uint32_t tamanioArrayTablaPaginas = tamanio_array_enteros(pcbAActualizar->arrayTablaPaginas) * sizeof(uint32_t);
     //tablaPagsActualizada = malloc(tamanioArrayTablaPaginas);
@@ -54,11 +52,26 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
     buffer_unpack(bufferPcb, &registroCxActualizado , sizeof(uint32_t));
     buffer_unpack(bufferPcb, &registroDxActualizado , sizeof(uint32_t));
 
-    if (pidRecibido == pcb_get_pid(pcbAActualizar)) {
+    switch(cpuResponse){
+        case HEADER_proceso_bloqueado : 
         
-        if (cpuResponse == HEADER_proceso_bloqueado) {
-            
+        uint32_t unidadesDeTrabajo;
+        buffer_unpack(bufferPcb, &unidadesDeTrabajo, sizeof(unidadesDeTrabajo));
+        pcb_set_tiempoIO(pcbAActualizar,unidadesDeTrabajo);
+        break;
+        case HEADER_proceso_pedir_recurso:
+        case HEADER_proceso_devolver_recurso: 
+        char* recursoAux = buffer_unpack_string(bufferPcb);
+        pcb_set_recurso_utilizado(pcbAActualizar, recursoAux);
+        break;
+    }
     
+
+
+   if (pidRecibido == pcb_get_pid(pcbAActualizar)) {
+        
+        if (cpuResponse == HEADER_proceso_desalojado || cpuResponse == HEADER_proceso_bloqueado || cpuResponse == HEADER_proceso_pedir_recurso || cpuResponse == HEADER_proceso_devolver_recurso ) {
+            
         pcb_set_program_counter(pcbAActualizar, programCounterActualizado);
 
         pcb_set_registro_ax_cpu(pcbAActualizar, registroAxActualizado);
@@ -66,14 +79,15 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         pcb_set_registro_cx_cpu(pcbAActualizar, registroAxActualizado);
         pcb_set_registro_dx_cpu(pcbAActualizar, registroAxActualizado);
         } 
-        else {
-        
-        log_error(kernelLogger, "Error al recibir PCB de CPU");
-        exit(EXIT_FAILURE);
-        }
-
+       
     buffer_destroy(bufferPcb);
     
     return pcbAActualizar;
+    }  
+   else{
+        
+        log_error(kernelLogger, "Error al recibir PCB de CPU");
+        exit(EXIT_FAILURE);
     }
+
 }
