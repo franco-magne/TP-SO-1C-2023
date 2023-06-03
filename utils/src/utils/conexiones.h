@@ -34,7 +34,9 @@ typedef enum {
     HEADER_instruccion_io_pantalla,
     HEADER_createSegment,
     HEADER_deleteSegment,
-    HEADER_compactacion
+    HEADER_compactacion,
+    HEADER_proceso_pedir_recurso,
+    HEADER_proceso_devolver_recurso
 } t_header;
 
 typedef enum {
