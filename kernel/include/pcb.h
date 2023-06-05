@@ -25,6 +25,7 @@ typedef struct {
     t_nombre_estado estadoActual;
     t_nombre_estado estadoAnterior;
     char* recursoUtilizado;
+    struct timespec tiempo_ready;
 
 }t_pcb;
 
@@ -40,6 +41,7 @@ t_nombre_estado pcb_get_estado_actual(t_pcb* this);
 t_nombre_estado pcb_get_estado_anterior(t_pcb* this);
 uint32_t pcb_get_tiempoIO(t_pcb* this);
 char* pcb_get_recurso_utilizado(t_pcb* this);
+struct timespec pcb_get_tiempo_en_ready(t_pcb* this);
 
 /////////////////////// SETTERS ////////////////////////
 void pcb_set_program_counter(t_pcb* this, uint32_t programCounter); 
@@ -49,5 +51,9 @@ void pcb_set_estado_actual(t_pcb* this, uint32_t pid);
 void pcb_set_estado_anterior(t_pcb* this, uint32_t estadoAnterior);
 void pcb_set_tiempoIO(t_pcb*, uint32_t tiempoIO);
 void pcb_set_recurso_utilizado(t_pcb* this, char* recurso);
+void pcb_set_tiempo_en_ready(t_pcb* this, struct timespec tiempo_en_ready);
+
+#include "../../utils/src/utils/commons-nuestras.h"
+
 
 #endif

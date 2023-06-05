@@ -19,4 +19,6 @@ int size_recurso_list(char **);
 bool contains(char** list, char* object );
 int position_in_list(char** list, char* object );
 int list_get_index(t_list* list, bool (*cutting_condition)(void*, void*), void* target);
+static void set_timespec(struct timespec* timespec);
+
 #endif

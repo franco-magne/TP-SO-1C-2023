@@ -78,3 +78,12 @@ int list_get_index(t_list* list, bool (*cutting_condition)(void*, void*), void* 
     return -1;
 }
 
+static void set_timespec(struct timespec* timespec) 
+{
+    int retVal = clock_gettime(CLOCK_REALTIME, timespec);
+    
+    if (retVal == -1) {
+        perror("clock_gettime");
+        exit(-1);
+    }
+}

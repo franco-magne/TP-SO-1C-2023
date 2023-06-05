@@ -113,9 +113,9 @@ static t_instruccion* cpu_fetch_instruction(t_cpu_pcb* pcb)
 
 static bool cpu_decode_instruction(uint32_t pid, t_instruccion* instruction) 
 {
-    //char* instruccionString = instruccion_to_string(instruction);
-    log_info(cpuLogger, "DECODE INSTRUCTION: PCB <ID %d> Decoded Instruction: X", pid);
-    //free(instruccionString);
+    char* instruccionString = instruccion_to_string(instruction);
+    log_info(cpuLogger, "DECODE INSTRUCTION: PCB <ID %d> Decoded Instruction: %s", pid, instruccionString);
+    free(instruccionString);
     
     //return instruccion_get_tipo_instruccion(instruction) == INSTRUCCION_MOV_IN;
     return false;
@@ -248,41 +248,25 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         intervalo_de_pausa(retardoInstruccion);
         
         set_registro_segun_tipo(registroASetear, valorASetear, pcb);
-
+        free(valorASetear);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
     } else if (tipoInstruccion == INSTRUCCION_EXIT) {
         
         
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <EXIT> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <EXIT> ", cpu_pcb_get_pid(pcb));
 
         uint32_t pid = cpu_pcb_get_pid(pcb);
       //  uint32_t* arrayTablaPaginasActualizado = cpu_pcb_get_array_tabla_paginas(pcb);
         t_registros_cpu* registrosCpuActualizado = cpu_pcb_get_registros(pcb);
         
         empaquetar_instruccion(pid, programCounterActualizado,registrosCpuActualizado,HEADER_proceso_terminado);
-        /*t_buffer* buffer = buffer_create();
-
-         //Empaqueto pid
-        buffer_pack(buffer, &pid, sizeof(pid));
-
-        //Empaqueto pc
-        buffer_pack(buffer, &programCounterActualizado, sizeof(programCounterActualizado));
-
-        //Empaquetamos registros
-        buffer_pack(buffer, &registrosCpuActualizado->registroAx, sizeof(registrosCpuActualizado->registroAx));
-        buffer_pack(buffer, &registrosCpuActualizado->registroBx, sizeof(registrosCpuActualizado->registroBx));
-        buffer_pack(buffer, &registrosCpuActualizado->registroCx, sizeof(registrosCpuActualizado->registroCx));
-        buffer_pack(buffer, &registrosCpuActualizado->registroDx, sizeof(registrosCpuActualizado->registroDx));
-        
-        stream_send_buffer(cpu_config_get_socket_dispatch(cpuConfig), HEADER_proceso_terminado, buffer);
-        buffer_destroy(buffer);
-        */
+    
         shouldStopExec = true;
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
     } else if (tipoInstruccion == INSTRUCCION_YIELD ) {
         
         
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <YIELD> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <YIELD> ", cpu_pcb_get_pid(pcb));
 
         uint32_t pid = cpu_pcb_get_pid(pcb);
       //  uint32_t* arrayTablaPaginasActualizado = cpu_pcb_get_array_tabla_paginas(pcb);
@@ -290,24 +274,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         
         empaquetar_instruccion(pid, programCounterActualizado,registrosCpuActualizado,HEADER_proceso_desalojado);
 
-        /*
-        t_buffer* bufferYield = buffer_create();
 
-         //Empaqueto pid
-        buffer_pack(bufferYield, &pid, sizeof(pid));
-
-        //Empaqueto pc
-        buffer_pack(bufferYield, &programCounterActualizado, sizeof(programCounterActualizado));
-
-        //Empaquetamos registros
-        buffer_pack(bufferYield, &registrosCpuActualizado->registroAx, sizeof(registrosCpuActualizado->registroAx));
-        buffer_pack(bufferYield, &registrosCpuActualizado->registroBx, sizeof(registrosCpuActualizado->registroBx));
-        buffer_pack(bufferYield, &registrosCpuActualizado->registroCx, sizeof(registrosCpuActualizado->registroCx));
-        buffer_pack(bufferYield, &registrosCpuActualizado->registroDx, sizeof(registrosCpuActualizado->registroDx));
-        
-        stream_send_buffer(cpu_config_get_socket_dispatch(cpuConfig), HEADER_proceso_desalojado, bufferYield);
-        buffer_destroy(bufferYield);
-        */
         shouldStopExec = true;
         
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
@@ -320,36 +287,11 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
 
         cpu_set_recursoIO(recursos, unidadesDeTrabajo);
         
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <IO> - <%d> - <NULL>", cpu_pcb_get_pid(pcb) , unidadesDeTrabajo);
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <IO> - <%d> ", cpu_pcb_get_pid(pcb) , unidadesDeTrabajo);
 
-        //intervalo_de_pausa(retardoInstruccion);
-        
         uint32_t pid = cpu_pcb_get_pid(pcb);
         t_registros_cpu* registrosCpuActualizado = cpu_pcb_get_registros(pcb);
         
-
-        /*
-        t_buffer* bufferIO = buffer_create();
-
-        //Empaqueto pid
-        buffer_pack(bufferIO, &pid, sizeof(pid));
-
-        //Empaqueto TIEMPO BLOQUEO OPERANDO 1
-        
-        //Empaqueto pc
-        buffer_pack(bufferIO, &programCounterActualizado, sizeof(programCounterActualizado));
-        
-        //Empaquetamos registros
-        buffer_pack(bufferIO, &registrosCpuActualizado->registroAx, sizeof(registrosCpuActualizado->registroAx));
-        buffer_pack(bufferIO, &registrosCpuActualizado->registroBx, sizeof(registrosCpuActualizado->registroBx));
-        buffer_pack(bufferIO, &registrosCpuActualizado->registroCx, sizeof(registrosCpuActualizado->registroCx));
-        buffer_pack(bufferIO, &registrosCpuActualizado->registroDx, sizeof(registrosCpuActualizado->registroDx));
-        
-        buffer_pack(bufferIO, &unidadesDeTrabajo, sizeof(unidadesDeTrabajo));
-
-        stream_send_buffer(cpu_config_get_socket_dispatch(cpuConfig), HEADER_proceso_bloqueado, bufferIO);
-        buffer_destroy(bufferIO);
-        */
         shouldStopExec = true;
         cpu_pcb_set_tiempoIO(pcb,unidadesDeTrabajo);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
@@ -359,16 +301,14 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
 
     } else if (tipoInstruccion == INSTRUCCION_SIGNAL ) {
         
-        uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
         char* recurso1 = string_duplicate((char*) operando1);
         uint32_t pid = cpu_pcb_get_pid(pcb);
         cpu_set_recurso_sem(recursos, recurso1);
         t_registros_cpu* registrosCpuActualizado = cpu_pcb_get_registros(pcb);
 
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <SIGNAL> - <%s> - <NULL>", cpu_pcb_get_pid(pcb), recurso1);
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <SIGNAL> - <%s> ", cpu_pcb_get_pid(pcb), recurso1);
 
 
-        intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
         empaquetar_instruccion(pid, programCounterActualizado,registrosCpuActualizado,HEADER_proceso_devolver_recurso);
 
@@ -377,19 +317,13 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
 
     } else if (tipoInstruccion == INSTRUCCION_WAIT ) {
         
-        uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
         char* recurso1 = string_duplicate((char*) operando1);
         uint32_t pid = cpu_pcb_get_pid(pcb);
         cpu_set_recurso_sem(recursos, recurso1);
         t_registros_cpu* registrosCpuActualizado = cpu_pcb_get_registros(pcb);
 
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <WAIT> - <%s> - <NULL>", cpu_pcb_get_pid(pcb), recurso1);
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <WAIT> - <%s> ", cpu_pcb_get_pid(pcb), recurso1);
         
-        
-
-
-        intervalo_de_pausa(retardoInstruccion);// PROVISORIO !!!!!
-
         empaquetar_instruccion(pid, programCounterActualizado,registrosCpuActualizado,HEADER_proceso_pedir_recurso);
 
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
@@ -592,8 +526,6 @@ static void dispatch_peticiones_de_kernel()
 
         if (kernelResponse == HEADER_pcb_a_ejecutar) {
             
-            log_info(cpuLogger, "TEST"); 
-
             bufferPcb = buffer_create();
             stream_recv_buffer(cpu_config_get_socket_dispatch(cpuConfig), bufferPcb);
             
@@ -668,5 +600,5 @@ static void dispatch_peticiones_de_kernel()
 void atender_peticiones_de_kernel() 
 {
     dispatch_peticiones_de_kernel();
-    log_info(cpuLogger, "Hilos de atención creados. Listo para atender peticiones de Kernel");
+
 }

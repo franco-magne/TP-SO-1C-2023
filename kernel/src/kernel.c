@@ -30,24 +30,6 @@ static t_estado* estadoExit;
 
 ///////////////////////// FUNCIONES UTILITARIAS //////////////////////////////
 
-static void set_timespec(struct timespec* timespec) 
-{
-    int retVal = clock_gettime(CLOCK_REALTIME, timespec);
-    
-    if (retVal == -1) {
-        perror("clock_gettime");
-        exit(EXIT_FAILURE);
-    }
-}
-
-static uint32_t obtener_diferencial_de_tiempo_en_milisegundos(struct timespec end, struct timespec start) 
-{
-    const uint32_t SECS_TO_MILISECS = 1000;
-    const uint32_t NANOSECS_TO_MILISECS = 1000000;
-    return (end.tv_sec - start.tv_sec) * SECS_TO_MILISECS + (end.tv_nsec - start.tv_nsec) / NANOSECS_TO_MILISECS;
-}
-
-
 static void log_transition(const char* prev, const char* post, int pid) {   //Da el color amarillo
     char* transicion = string_from_format("\e[1;93m%s->%s\e[0m", prev, post);
     log_info(kernelLogger, "Transición de %s PCB <ID %d>", transicion, pid);
@@ -112,14 +94,6 @@ char* string_pids_ready(t_estado* estadoReady)
     list_destroy_and_destroy_elements(tempPidList, pid_destroyer);
     return listaPidsString;
 }
-
-//////////////////////////////////////// Scheduling Algorithms ////////////////////////////////////////
-//FIFO      
-static t_pcb* elegir_pcb_segun_fifo(t_estado* estado)
-{
-    return estado_desencolar_primer_pcb_atomic(estado);
-}
-
 
 //////////////////////////////////////////////////////////////////////////
 /////////////////////////////// FUNCION MAIN ////////////////////////////
@@ -306,6 +280,7 @@ void* planificador_largo_plazo(void* args)
                                  
         t_pcb* pcbQuePasaAReady = estado_desencolar_primer_pcb_atomic(estadoNew);
         
+    
         
         //uint32_t* nuevaTablaPaginasSegmentos = mem_adapter_obtener_tabla_pagina(pcbQuePasaAReady, kernelConfig, kernelDevLogger);
 
@@ -321,9 +296,13 @@ void* planificador_largo_plazo(void* args)
                 pcb_set_estado_anterior(pcbQuePasaAReady, pcb_get_estado_actual(pcbQuePasaAReady));
                 
                 pcb_set_estado_actual(pcbQuePasaAReady, READY);     
-               
                 estado_encolar_pcb_atomic(estadoReady, pcbQuePasaAReady);
-            
+                struct timespec start;
+                clock_gettime(CLOCK_REALTIME, &start);
+                //set_timespec(&start);
+                pcb_set_tiempo_en_ready(pcbQuePasaAReady, start);
+
+
                 char* stringPidsReady = string_pids_ready(estadoReady);
                 log_transition("NEW", "READY", pcb_get_pid(pcbQuePasaAReady));
 
@@ -500,23 +479,14 @@ void* atender_pcb(void* args)
 
         uint8_t headerAEnviar = HEADER_pcb_a_ejecutar;
         
-        struct timespec start;
-        set_timespec(&start);
-        //pcb_set_proceso_bloqueado_o_terminado_atomic(pcb, false);
-
         cpu_adapter_enviar_pcb_a_cpu(pcb, headerAEnviar, kernelConfig, kernelLogger);
         uint8_t cpuResponse = stream_recv_header(kernel_config_get_socket_dispatch_cpu(kernelConfig)); 
-        struct timespec end;
-        set_timespec(&end);
+        
 
         pcb = cpu_adapter_recibir_pcb_actualizado_de_cpu(pcb, cpuResponse, kernelConfig, kernelLogger); 
         
         pcb = estado_desencolar_primer_pcb_atomic(estadoExec);
 
-        uint32_t realEjecutado = 0;
-        realEjecutado = obtener_diferencial_de_tiempo_en_milisegundos(end, start);
-      
-        log_debug(kernelLogger, "PCB <ID %d> estuvo en ejecución por %d miliseconds", pcb_get_pid(pcb), realEjecutado);
 
         switch (cpuResponse) {
             
@@ -583,15 +553,17 @@ void* planificador_corto_plazo(void* args)
 
     for (;;) {
         
-        //sem_wait(&evaluarDesalojo);
-
-      // evaluar_desalojo();
 
         sem_wait(&dispatchPermitido);
         log_info(kernelLogger, "Se permite dispatch");
 
         sem_wait(estado_get_sem(estadoReady));
-        pcbAejecutar = elegir_pcb_segun_fifo(estadoReady); // DEPENDE DEL PLANIFICADOR ACA ESTA FIFO
+        if( strcmp(kernel_config_get_algoritmo_planificacion(kernelConfig),"FIFO") == 0 ){
+            pcbAejecutar = elegir_pcb_segun_fifo(estadoReady); // DEPENDE DEL PLANIFICADOR ACA ESTA FIFO
+        } 
+        else {
+          //  pcbAejecutar = elegir_pcb_segun_hhrn(estadoReady);    
+        }
         log_info(kernelLogger, "Se toma una instancia de READY");
         log_transition("READY", "EXEC", pcb_get_pid(pcbAejecutar));
         
@@ -607,17 +579,6 @@ void* planificador_corto_plazo(void* args)
 /////////////////////////// FIN DEL PLANIFICADOR DE CORTO PLAZO //////////////////////
 void inicializar_estructuras(void) {
     
-    if (kernel_config_es_algoritmo_fifo(kernelConfig)) {
-        
-    //elegir_pcb = elegir_pcb_segun_fifo;
-    //evaluar_desalojo = evaluar_desalojo_segun_fifo;
-    //actualizar_pcb_por_bloqueo = actualizar_pcb_por_bloqueo_segun_fifo;
-    } else {
-        
-        log_error(kernelLogger, "No se pudo inicializar el planificador, no se encontró un algoritmo de planificación válido");
-        exit(EXIT_FAILURE);
-    }
-  
    // PLANI CORTO PLAZO
     nextPid = 1;
     //procesoBloqueadoOTerminado = false;

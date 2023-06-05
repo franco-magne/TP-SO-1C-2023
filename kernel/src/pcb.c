@@ -18,6 +18,7 @@ t_pcb* pcb_create(uint32_t pid)
    this->registros = registros_cpu_create();
    this->tiempoIO = 0;
    this->recursoUtilizado = NULL;
+
    return this;
 }
 //////////////////////// GETTERS /////////////////////
@@ -59,6 +60,9 @@ char* pcb_get_recurso_utilizado(t_pcb* this){
     return this->recursoUtilizado;
 }
 
+struct timespec pcb_get_tiempo_en_ready(t_pcb* this){
+    return this->tiempo_ready;
+}
 /////////////////////// SETTER ////////////////////////
 
 void pcb_set_program_counter(t_pcb* this, uint32_t programCounter) 
@@ -120,3 +124,8 @@ bool pcb_es_este_pcb_por_pid(void* unPcb, void* otroPcb)
 {
     return pcb_get_pid((t_pcb*)unPcb) == pcb_get_pid((t_pcb*)otroPcb);
 }
+
+void pcb_set_tiempo_en_ready(t_pcb* this, struct timespec tiempo_ready){
+    this->tiempo_ready = tiempo_ready;
+}
+
