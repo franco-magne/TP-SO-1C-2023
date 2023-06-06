@@ -2,8 +2,8 @@
 #include <../include/memoria-estructuras.h>
 
 //extern pthread_mutex_t mutexMemoriaData;
-t_log *memoriaLogger;
-t_config *memoriaConfig;
+extern t_log *memoriaLogger;
+extern t_memoria_config *memoriaConfig;
 
 bool puedo_crear_proceso(uint32_t tamanio){
     bool respuesta=1;

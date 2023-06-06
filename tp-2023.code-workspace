@@ -44,7 +44,10 @@
 			"list.h": "c",
 			"cpu-estructuras.h": "c",
 			"memoria.h": "c",
-			"memoria-estructuras.h": "c"
+			"memoria-estructuras.h": "c",
+			"memoria-atender-cpu.h": "c",
+			"cpu-atender-kernel.h": "c",
+			"pthread.h": "c"
 		}
 	}
 }

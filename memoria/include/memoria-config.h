@@ -7,11 +7,12 @@
 #include <string.h>
 //Commons libraries
 #include <commons/log.h>
+#include <../../utils/src/utils/conexiones.h>
 //Bibliotecas static-utils
 //Bibliotecas internas modulo consola
 #include "memoria-estructuras.h"
 
-
+//no cacho bien que hace config init.
 int config_init(void* moduleConfig, char* pathToConfig, t_log* moduleLogger,
                 void (*config_initializer)(void* moduleConfig, t_config* tempConfig)) {
     t_config* tempConfig = config_create(pathToConfig);
@@ -25,8 +26,11 @@ int config_init(void* moduleConfig, char* pathToConfig, t_log* moduleLogger,
     return 1;
 }
 
-void memoria_config_initializer(void* moduleConfig, t_config* tempCfg);
+//////////////// FIRMA DE FUNCIONES //////////////////////////
+t_memoria_config* memoria_config_initializer(t_config* tempCfg);
 t_memoria_config* memoria_config_create(char* memoriaConfigPath, t_log*);
+
+/////////////  FIRMA DE GETTERS //////////////////////////
 void memoria_config_destroy(t_memoria_config* self);
 char* memoria_config_get_ip_escucha(t_memoria_config*);
 char* memoria_config_get_puerto_escucha(t_memoria_config*);

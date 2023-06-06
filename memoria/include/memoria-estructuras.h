@@ -21,32 +21,32 @@
 typedef struct {
     void* espacio_usuario; // Espacio de usuario
     int tamanio;
-} Memoria;
+} t_memoria;
 
 typedef struct {
     //int segmento_id; no necesito idSeg xq me lo indica el indice en que se encuentra en la tabla
     int limite; //tamanio
     int base;
-} Segmento;
+} t_segmento;
 
 typedef struct {
-    Segmento segmentos; 
+    t_segmento segmentos; 
     int validez;   //0 o 1
-} EntradasxTabla;
+} t_entrada_por_tabla;
 
 typedef struct {
-    EntradasxTabla* entradas;
-} TabladeSegmentos;
+    t_entrada_por_tabla* entradas;
+} t_tabla_segmentos;
 
 typedef struct {
     int base;
     int tamanio;
-} EspacioLibre;
+} t_espacio_libre;
 t_list espaciosVacios;
 
 typedef struct {
-    EspacioLibre* espacios_libres;
-} ListaEspacioLibre;
+    t_espacio_libre* espacios_libres;
+} t_lista_espacios_libres;
 
 typedef struct  {
 

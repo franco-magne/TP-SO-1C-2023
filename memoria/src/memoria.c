@@ -1,30 +1,55 @@
 #include <../include/memoria.h>
 
 
-extern t_log *memoriaLogger;
-extern t_config *memoriaConfig;
+t_log *memoriaLogger;
+pthread_mutex_t mutexMemoriaData;
+
+t_memoria_config *memoriaConfig;
+t_memoria *memoriaPrincipal;
+t_segmento *segmento;
+
 
 static bool cpuSinAtender;
 static bool kernelSinAtender;
-
-void aceptar_conexiones_memoria(const int );
+//static bool fileSystemSinAtender;
 
 int main() {
 
-   memoriaLogger = log_create(MEMORIA_LOG_UBICACION,MEMORIA_PROCESS_NAME,true,LOG_LEVEL_INFO);
-   memoriaConfig = config_create(MEMORIA_CONFIG_UBICACION);
-   char *memoriaIP = config_get_string_value(memoriaConfig, "IP");
-   char *memoriaPort = config_get_string_value(memoriaConfig,"PUERTO_MEMORIA");
+    memoriaLogger = log_create(MEMORIA_LOG_UBICACION,MEMORIA_PROCESS_NAME,true,LOG_LEVEL_INFO);
+    t_config *memoriaConfigPath = config_create(MEMORIA_CONFIG_UBICACION);
+
+    memoriaConfig = memoria_config_initializer(memoriaConfigPath);
+
+    //char *memoriaIP = config_get_string_value(memoriaConfig, "IP");
+    //char *memoriaPort = config_get_string_value(memoriaConfig,"PUERTO_MEMORIA");
+
+    int serverMemoria = iniciar_servidor(memoria_config_get_ip_escucha(memoriaConfig), memoria_config_get_puerto_escucha(memoriaConfig));
+    log_info(memoriaLogger,"Servidor memoria listo para recibir al modulo\n");
+    aceptar_conexiones_memoria(serverMemoria);
+
+    int tamanioMemoria = memoria_config_get_tamanio_memoria(memoriaConfig);
+
+    memoriaPrincipal->tamanio = malloc(tamanioMemoria);
+    memset(memoriaPrincipal, 0, tamanioMemoria);
+
+
+    //Esto se utilizaba solo en paginacion o puede usarse para lo de BEST FIT??
+    if (memoria_config_es_algoritmo_sustitucion_clock(memoriaConfig)) {
+        //memoriaData->seleccionar_victima = seleccionar_victima_clock;
+    } else if (memoria_config_es_algoritmo_sustitucion_clock_modificado(memoriaConfig)) {
+        //memoriaData->seleccionar_victima = seleccionar_victima_clock_modificado;
+    } else {
+        log_error(memoriaLogger, "No se reconocio el algoritmo de sustitucion");
+        exit(-1);
+    }   
    
+    pthread_mutex_init(&mutexMemoriaData, NULL);
+    cpuSinAtender = true;
+    kernelSinAtender = true;
 
+    aceptar_conexiones_memoria(serverMemoria);
 
-   int serverMemoria = iniciar_servidor(memoriaIP, memoriaPort);
-   log_info(memoriaLogger,"Servidor memoria listo para recibir al modulo\n");
-   aceptar_conexiones_memoria(serverMemoria);
-   
-
-   
-
+    return 0;
 }  
 
 void aceptar_conexiones_memoria(const int socketEscucha) 
