@@ -14,6 +14,6 @@
 
 #define FS_CONFIG_UBICACION "config/fileSystem.config"
 #define FS_LOG_UBICACION "logs/fileSystem.log"
-#define FS_PROCESS_NAME "FileSystem" 
+#define FS_PROCESS_NAME "FILESYSTEM" 
 
 #endif
