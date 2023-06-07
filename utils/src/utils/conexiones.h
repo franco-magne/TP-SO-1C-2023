@@ -29,8 +29,8 @@ typedef enum {
     //HEADER_movout,
     HEADER_solicitud_tabla_paginas_segmentos,
     HEADER_proceso_pedir_recurso,
-    HEADER_proceso_devolver_recurso
-   
+    HEADER_proceso_devolver_recurso,
+    HEADER_cantidad_instrucciones_por_proceso
 } t_header;
 
 typedef enum {

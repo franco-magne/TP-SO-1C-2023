@@ -60,6 +60,7 @@ char** kernel_config_get_recurso(t_kernel_config* this);
 char** kernel_config_get_instancias(t_kernel_config* this);
 char* recurso_get_nombre_recurso(t_kernel_recurso* this);
 int* recurso_get_instancias_recurso(t_kernel_recurso* this);
+uint32_t kernel_config_get_estimacion_inicial(t_kernel_config* this);
 
 /////////////  FIRMA DE SETTERS //////////////////////////
 void kernel_config_set_socket_dispatch_cpu(t_kernel_config* self, int socketDispatch);

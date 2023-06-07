@@ -225,3 +225,4 @@ t_registro instruccion_get_registro2(t_instruccion* self)
 char* instruccion_get_dispositivo(t_instruccion* self){
     return self->dispositivo;
 }
+

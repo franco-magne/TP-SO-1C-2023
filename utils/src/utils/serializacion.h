@@ -59,6 +59,10 @@ void buffer_pack_string(t_buffer *buffer, char *stringToAdd);
  */
 t_buffer* buffer_unpack(t_buffer *buffer, void *dest, int size);
 
+
+void buffer_peek(t_buffer* buffer, void* dest, int size, int offset);
+
+
 ///////////////////////////////////////////////////////// STREAM /////////////////////////////////////////
 /**
  * @brief Recibe solamente el header del buffer enviado

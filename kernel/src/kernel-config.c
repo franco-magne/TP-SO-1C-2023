@@ -112,6 +112,10 @@ char** kernel_config_get_recurso(t_kernel_config* this){
 char** kernel_config_get_instancias(t_kernel_config* this){
     return this->INSTANCIAS_RECURSOS;
 }
+
+uint32_t kernel_config_get_estimacion_inicial(t_kernel_config* this){
+    return this->ESTIMACION_INICIAL;
+}
 // FALTAN ESTIMACION INICIAL
 // FALTAN HRRN_ALFA
 // FALTA RECURSOS

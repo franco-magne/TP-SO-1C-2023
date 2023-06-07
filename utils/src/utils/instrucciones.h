@@ -13,7 +13,7 @@
 
 //////////////// INCLUDE UTILS ////////////////
 #include "serializacion.h"
-
+#include "conexiones.h"
 typedef enum {
     NEW,
     READY,

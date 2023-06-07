@@ -18,7 +18,8 @@ t_pcb* pcb_create(uint32_t pid)
    this->registros = registros_cpu_create();
    this->tiempoIO = 0;
    this->recursoUtilizado = NULL;
-
+   this->rafaga_actual = -1;
+   this->rafaga_anterior = -1;
    return this;
 }
 //////////////////////// GETTERS /////////////////////
@@ -62,6 +63,13 @@ char* pcb_get_recurso_utilizado(t_pcb* this){
 
 struct timespec pcb_get_tiempo_en_ready(t_pcb* this){
     return this->tiempo_ready;
+}
+
+double pcb_get_rafaga_anterior(t_pcb* this){
+    return this->rafaga_anterior;
+}
+double pcb_get_rafaga_actual(t_pcb* this){
+   return this->rafaga_actual;
 }
 /////////////////////// SETTER ////////////////////////
 
@@ -129,3 +137,9 @@ void pcb_set_tiempo_en_ready(t_pcb* this, struct timespec tiempo_ready){
     this->tiempo_ready = tiempo_ready;
 }
 
+void pcb_set_rafaga_anterior(t_pcb* this, double rafaga){
+    this->rafaga_anterior = rafaga;
+}
+void pcb_set_rafaga_actual(t_pcb* this, double rafaga){
+    this->rafaga_actual = rafaga;
+}

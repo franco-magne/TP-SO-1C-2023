@@ -21,7 +21,7 @@
 
 #include "../../utils/src/utils/commons-nuestras.h"
 
- t_pcb* elegir_pcb_segun_fifo(t_estado* estado);
- t_pcb* elegir_pcb_segun_hhrn(t_estado* estado);
+t_pcb* elegir_pcb_segun_fifo(t_estado* estado);
+t_pcb* elegir_pcb_segun_hhrn(t_estado* estado);
 
 #endif

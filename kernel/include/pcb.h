@@ -26,7 +26,8 @@ typedef struct {
     t_nombre_estado estadoAnterior;
     char* recursoUtilizado;
     struct timespec tiempo_ready;
-
+    double rafaga_anterior;
+    double rafaga_actual;
 }t_pcb;
 
 ////////////////////////// DEFINICION DE LAS FUNCIONES ////////////////
@@ -52,6 +53,12 @@ void pcb_set_estado_anterior(t_pcb* this, uint32_t estadoAnterior);
 void pcb_set_tiempoIO(t_pcb*, uint32_t tiempoIO);
 void pcb_set_recurso_utilizado(t_pcb* this, char* recurso);
 void pcb_set_tiempo_en_ready(t_pcb* this, struct timespec tiempo_en_ready);
+double pcb_get_rafaga_actual(t_pcb* this);
+double pcb_get_rafaga_anterior(t_pcb* this);
+void pcb_set_rafaga_actual(t_pcb* this,double );
+void pcb_set_rafaga_anterior(t_pcb* this,double );
+
+
 
 #include "../../utils/src/utils/commons-nuestras.h"
 

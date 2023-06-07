@@ -12,6 +12,8 @@ FILE* abrir_archivo(const char* pathArchivo, const char* mode, t_log* moduloLogg
     return tempFilePointer;
 }
 
+
+
 int config_init(void* moduleConfig, char* pathToConfig, t_log* moduleLogger,void (*config_initializer)(void* moduleConfig, t_config* tempConfig)) {
     t_config* tempConfig = config_create(pathToConfig);
     if (NULL == tempConfig) {
@@ -78,7 +80,7 @@ int list_get_index(t_list* list, bool (*cutting_condition)(void*, void*), void* 
     return -1;
 }
 
-static void set_timespec(struct timespec* timespec) 
+void set_timespec(struct timespec* timespec) 
 {
     int retVal = clock_gettime(CLOCK_REALTIME, timespec);
     
@@ -86,4 +88,11 @@ static void set_timespec(struct timespec* timespec)
         perror("clock_gettime");
         exit(-1);
     }
+}
+
+double obtener_diferencial_de_tiempo_en_milisegundos(struct timespec end, struct timespec start) 
+{
+    const uint32_t SECS_TO_MILISECS = 1000;
+    const uint32_t NANOSECS_TO_MILISECS = 1000000;
+    return (end.tv_sec - start.tv_sec) * SECS_TO_MILISECS + (end.tv_nsec - start.tv_nsec) / NANOSECS_TO_MILISECS;
 }
