@@ -47,7 +47,8 @@
 			"cpu-atender-kernel.h": "c",
 			"kernel-config.h": "c",
 			"time.h": "c",
-			"kernel-algoritmos.h": "c"
+			"kernel-algoritmos.h": "c",
+			"pcb.h": "c"
 		}
 	}
 }

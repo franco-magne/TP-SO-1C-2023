@@ -20,6 +20,8 @@ t_pcb* pcb_create(uint32_t pid)
    this->recursoUtilizado = NULL;
    this->rafaga_actual = -1;
    this->rafaga_anterior = -1;
+   this->tamanio_de_segmento = -1;
+   this->id_de_segmento = -1;
    return this;
 }
 //////////////////////// GETTERS /////////////////////
@@ -70,6 +72,14 @@ double pcb_get_rafaga_anterior(t_pcb* this){
 }
 double pcb_get_rafaga_actual(t_pcb* this){
    return this->rafaga_actual;
+}
+
+uint32_t pcb_get_tamanio_de_segmento(t_pcb* this){
+    return this->tamanio_de_segmento;
+}
+
+uint32_t pcb_get_id_de_segmento(t_pcb* this){
+    return this->id_de_segmento;
 }
 /////////////////////// SETTER ////////////////////////
 
@@ -140,6 +150,15 @@ void pcb_set_tiempo_en_ready(t_pcb* this, struct timespec tiempo_ready){
 void pcb_set_rafaga_anterior(t_pcb* this, double rafaga){
     this->rafaga_anterior = rafaga;
 }
+
 void pcb_set_rafaga_actual(t_pcb* this, double rafaga){
     this->rafaga_actual = rafaga;
+}
+
+void pcb_set_tamanio_de_segmento(t_pcb* this, uint32_t tamanio){
+    this->tamanio_de_segmento = tamanio;
+}
+
+void pcb_set_id_de_segmento(t_pcb* this, uint32_t id){
+    this->id_de_segmento = id;
 }

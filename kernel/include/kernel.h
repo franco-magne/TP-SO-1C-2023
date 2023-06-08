@@ -26,7 +26,8 @@
 #include "kernel-conexiones.h"
 #include "kernel-algoritmos.h"
 #include "../../utils/src/utils/commons-nuestras.h"
-
+#include "kernel-instrucciones.h"
+#include "kernel-memoria-adapter.h"
 
 
 

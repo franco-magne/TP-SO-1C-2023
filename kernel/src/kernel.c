@@ -29,7 +29,7 @@ static t_estado* estadoExec;
 static t_estado* estadoBlocked;
 static t_estado* estadoExit;
 
-///////////////////////// FUNCIONES UTILITARIAS //////////////////////////////
+///////////////////////// FUNCIONES UTILITARIAS /////////////////////////
 
 static void log_transition(const char* prev, const char* post, int pid) {   //Da el color amarillo
     char* transicion = string_from_format("\e[1;93m%s->%s\e[0m", prev, post);
@@ -435,7 +435,8 @@ static void devolver_recursos_signal(t_pcb* pcb){
                 sem_post(estado_get_sem(estadoReady));
                 
             }
-        } else {
+        } 
+        else {
             log_error(kernelLogger, "RECURSO NO EXISTE POR EL PROCESO QUE LO DEVUELVE ");    
             pcb_set_estado_actual(pcb, EXIT);
             estado_encolar_pcb_atomic(estadoExit, pcb);
@@ -499,7 +500,7 @@ void* atender_pcb(void* args)
         struct timespec end;
         set_timespec(&end);
 
-        pcb_set_estado_actual( pcb,obtener_diferencial_de_tiempo_en_milisegundos(end,start) );
+        pcb_set_rafaga_actual( pcb,obtener_diferencial_de_tiempo_en_milisegundos(end,start) );
 
         pcb = cpu_adapter_recibir_pcb_actualizado_de_cpu(pcb, cpuResponse, kernelConfig, kernelLogger); 
         
@@ -525,13 +526,8 @@ void* atender_pcb(void* args)
                 
             case HEADER_proceso_terminado:
                 
-                pcb_set_estado_actual(pcb, EXIT);
-                estado_encolar_pcb_atomic(estadoExit, pcb);
+                instruccion_exit(pcb,estadoExit);
                 log_transition("EXEC", "EXIT", pcb_get_pid(pcb));
-                //stream_send_empty_buffer(pcb_get_socket(pcb), HEADER_proceso_terminado);
-                sem_post(estado_get_sem(estadoExit));
-                //pcb_set_proceso_bloqueado_o_terminado_atomic(pcb, true);
-                //terminar_proceso(pcb);
                 break;
 
             case HEADER_proceso_bloqueado:
@@ -545,13 +541,18 @@ void* atender_pcb(void* args)
             case HEADER_proceso_devolver_recurso:
                 devolver_recursos_signal(pcb);
                 break;
+            
+            case HEADER_creacion_de_segmento:
+                mem_adapter_crear_segmento( pcb,kernelConfig,kernelLogger);
+                break;
 
             default:
 
                 log_error(kernelLogger, "Error al recibir mensaje de CPU");
                 break;
         }
-        if( (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado && pcb_get_estado_actual(pcb) != EXIT) || (cpuResponse == HEADER_proceso_devolver_recurso && pcb_get_estado_actual(pcb) == EXEC) ){
+
+        if( (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado && pcb_get_estado_actual(pcb) != EXIT) || (cpuResponse == HEADER_proceso_devolver_recurso && pcb_get_estado_actual(pcb) == EXEC) || (cpuResponse == HEADER_creacion_de_segmento) ){
                 estado_encolar_pcb_atomic(estadoExec, pcb);
                 sem_post(estado_get_sem(estadoExec));
         } 

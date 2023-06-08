@@ -28,6 +28,8 @@ typedef struct {
     struct timespec tiempo_ready;
     double rafaga_anterior;
     double rafaga_actual;
+    uint32_t tamanio_de_segmento;
+    uint32_t id_de_segmento;
 }t_pcb;
 
 ////////////////////////// DEFINICION DE LAS FUNCIONES ////////////////
@@ -43,6 +45,10 @@ t_nombre_estado pcb_get_estado_anterior(t_pcb* this);
 uint32_t pcb_get_tiempoIO(t_pcb* this);
 char* pcb_get_recurso_utilizado(t_pcb* this);
 struct timespec pcb_get_tiempo_en_ready(t_pcb* this);
+double pcb_get_rafaga_actual(t_pcb* this);
+double pcb_get_rafaga_anterior(t_pcb* this);
+uint32_t pcb_get_tamanio_de_segmento(t_pcb* this);
+uint32_t pcb_get_id_de_segmento(t_pcb* this);
 
 /////////////////////// SETTERS ////////////////////////
 void pcb_set_program_counter(t_pcb* this, uint32_t programCounter); 
@@ -53,11 +59,10 @@ void pcb_set_estado_anterior(t_pcb* this, uint32_t estadoAnterior);
 void pcb_set_tiempoIO(t_pcb*, uint32_t tiempoIO);
 void pcb_set_recurso_utilizado(t_pcb* this, char* recurso);
 void pcb_set_tiempo_en_ready(t_pcb* this, struct timespec tiempo_en_ready);
-double pcb_get_rafaga_actual(t_pcb* this);
-double pcb_get_rafaga_anterior(t_pcb* this);
 void pcb_set_rafaga_actual(t_pcb* this,double );
 void pcb_set_rafaga_anterior(t_pcb* this,double );
-
+void pcb_set_tamanio_de_segmento(t_pcb* this, uint32_t);
+void pcb_set_id_de_segmento(t_pcb* this, uint32_t);
 
 
 #include "../../utils/src/utils/commons-nuestras.h"

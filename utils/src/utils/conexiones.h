@@ -25,12 +25,11 @@ typedef enum {
     HEADER_proceso_bloqueado,
     HEADER_proceso_desalojado,
     HEADER_proceso_terminado,
-    //HEADER_movin,
-    //HEADER_movout,
     HEADER_solicitud_tabla_paginas_segmentos,
     HEADER_proceso_pedir_recurso,
     HEADER_proceso_devolver_recurso,
-    HEADER_cantidad_instrucciones_por_proceso
+    HEADER_creacion_de_segmento
+
 } t_header;
 
 typedef enum {
