@@ -8,58 +8,46 @@
 #include <sys/socket.h>
 #include <../../utils/src/utils/conexiones.h>
 #include <commons/log.h>
+#include <commons/collections/list.h>
 #include <commons/config.h>
 #include <pthread.h>
 
 #include <stdio.h>
+#include "memoria-config.h"
 
 #define MEMORIA_CONFIG_UBICACION "config/memoria.config"
 #define MEMORIA_LOG_UBICACION "logs/memoria.log"
 #define MEMORIA_PROCESS_NAME "Memoria"
 
 
-typedef struct {
+/*typedef struct {
     void* espacio_usuario; // Espacio de usuario
     int tamanio;
-} Memoria;
+} Memoria;*/
+void* memoriaPrincipal;
 
 typedef struct {
-    //int segmento_id; no necesito idSeg xq me lo indica el indice en que se encuentra en la tabla
-    int limite; //tamanio
-    int base;
+    int segmento_id; 
+    uint32_t limite; //tamanio
+    uint32_t base;
+    int validez;
 } Segmento;
 
-typedef struct {
-    Segmento segmentos; 
-    int validez;   //0 o 1
-} EntradasxTabla;
 
-typedef struct {
-    EntradasxTabla* entradas;
-} TabladeSegmentos;
 
+
+/*
 typedef struct {
     int base;
     int tamanio;
-} EspacioLibre;
-t_list espaciosVacios;
+} EspacioLibre;  //lo calculo dinamicamente cuand creo segmento
 
 typedef struct {
     EspacioLibre* espacios_libres;
 } ListaEspacioLibre;
+*/
 
-typedef struct  {
 
-    char* IP_ESCUCHA;   //seria IP_MEMORIA
-    char* PUERTO_ESCUCHA;   //seria PUERTO_MEMORIA
-    uint32_t TAM_MEMORIA;
-    uint32_t TAM_SEGMENTO;
-    uint32_t CANT_SEGMENTOS;
-    uint32_t RETARDO_MEMORIA;
-    uint32_t RETARDO_COMPACTACION;
-    char* ALGORITMO_ASIGNACION;
-
-} t_memoria_config;
 
 
 #endif

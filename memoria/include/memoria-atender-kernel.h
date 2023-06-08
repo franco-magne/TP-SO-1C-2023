@@ -19,4 +19,6 @@
 #define MEMORIA_LOG_UBICACION "logs/memoria.log"
 #define MEMORIA_PROCESS_NAME "Memoria"
 
+void atender_peticiones_kernel(int socketKernel);
+
 #endif

@@ -1,27 +1,24 @@
 #include <../include/memoria-config.h>
 
 
-void memoria_config_initializer(void* moduleConfig, t_config* tempCfg) 
+t_memoria_config* memoria_config_initializer(t_config* tempCfg) 
 {
-    t_memoria_config* memoriaConfig = (t_memoria_config*)moduleConfig;
-    
-    memoriaConfig->IP_ESCUCHA = strdup(config_get_string_value(tempCfg, "IP_ESCUCHA"));
-    memoriaConfig->PUERTO_ESCUCHA = strdup(config_get_string_value(tempCfg, "PUERTO_ESCUCHA"));
+    t_memoria_config* memoriaConfig = malloc(sizeof(*memoriaConfig));
+
+    memoriaConfig->IP_ESCUCHA = strdup(config_get_string_value(tempCfg, "IP_MEMORIA"));
+    memoriaConfig->PUERTO_ESCUCHA = strdup(config_get_string_value(tempCfg, "PUERTO_MEMORIA"));
     memoriaConfig->TAM_MEMORIA = (uint32_t) config_get_int_value(tempCfg, "TAM_MEMORIA");
-    memoriaConfig->TAM_SEGMENTO = (uint32_t) config_get_int_value(tempCfg, "TAM_SEGMENTO");
+    memoriaConfig->TAM_SEGMENTO_0 = (uint32_t) config_get_int_value(tempCfg, "TAM_SEGMENTO_0");
     memoriaConfig->CANT_SEGMENTOS = (uint32_t) config_get_int_value(tempCfg, "CANT_SEGMENTOS");
     memoriaConfig->RETARDO_MEMORIA = (uint32_t) config_get_int_value(tempCfg, "RETARDO_MEMORIA");
     memoriaConfig->RETARDO_COMPACTACION = (uint32_t) config_get_int_value(tempCfg, "RETARDO_COMPACTACION");
     memoriaConfig->ALGORITMO_ASIGNACION = strdup(config_get_string_value(tempCfg, "ALGORITMO_ASIGNACION"));
+
+    return memoriaConfig;
 }
 
 
-t_memoria_config* memoria_config_create(char* memoriaConfigPath, t_log* memoriaLogger)
-{
-    t_memoria_config* self = malloc(sizeof(*self));
-    config_init(self, memoriaConfigPath, memoriaLogger, memoria_config_initializer);
-    return self;
-}
+
 
 void memoria_config_destroy(t_memoria_config* self) 
 {
@@ -45,9 +42,9 @@ uint32_t memoria_config_get_tamanio_memoria(t_memoria_config* self)
     return self->TAM_MEMORIA;
 }
 
-uint32_t memoria_config_get_tamanio_segmento(t_memoria_config* self) 
+uint32_t memoria_config_get_tamanio_segmento_0(t_memoria_config* self) 
 {
-    return self->TAM_SEGMENTO;
+    return self->TAM_SEGMENTO_0;
 }
 
 uint32_t memoria_config_get_cant_de_segmentos(t_memoria_config* self) 
