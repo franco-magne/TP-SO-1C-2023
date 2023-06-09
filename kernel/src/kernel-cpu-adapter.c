@@ -59,32 +59,51 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         buffer_unpack(bufferPcb, &unidadesDeTrabajo, sizeof(unidadesDeTrabajo));
         pcb_set_tiempoIO(pcbAActualizar,unidadesDeTrabajo);
         break;
+
         case HEADER_proceso_pedir_recurso:
         case HEADER_proceso_devolver_recurso: 
         char* recursoAux = buffer_unpack_string(bufferPcb);
         pcb_set_recurso_utilizado(pcbAActualizar, recursoAux);
         break;
+
+        case HEADER_creacion_de_segmento:
+        uint32_t id_de_segmento;
+        uint32_t tamanio_de_segmento;
+        buffer_unpack(bufferPcb, &id_de_segmento, sizeof(unidadesDeTrabajo));
+        buffer_unpack(bufferPcb, &tamanio_de_segmento, sizeof(unidadesDeTrabajo));
+        pcb_set_id_de_segmento(pcbAActualizar,id_de_segmento);
+        pcb_set_tamanio_de_segmento(pcbAActualizar,tamanio_de_segmento );
+
+        break;
     }
     
-
-
    if (pidRecibido == pcb_get_pid(pcbAActualizar)) {
         
-        if (cpuResponse == HEADER_proceso_desalojado || cpuResponse == HEADER_proceso_bloqueado || cpuResponse == HEADER_proceso_pedir_recurso || cpuResponse == HEADER_proceso_devolver_recurso ) {
-            
-        pcb_set_program_counter(pcbAActualizar, programCounterActualizado);
+        switch(cpuResponse){
+            case HEADER_proceso_desalojado:
+            case HEADER_proceso_bloqueado:
+            case HEADER_proceso_pedir_recurso:
+            case HEADER_proceso_devolver_recurso:
+            case HEADER_creacion_de_segmento:
 
-        pcb_set_registro_ax_cpu(pcbAActualizar, registroAxActualizado);
-        pcb_set_registro_bx_cpu(pcbAActualizar, registroAxActualizado);
-        pcb_set_registro_cx_cpu(pcbAActualizar, registroAxActualizado);
-        pcb_set_registro_dx_cpu(pcbAActualizar, registroAxActualizado);
-        } 
-       
-    buffer_destroy(bufferPcb);
+             pcb_set_program_counter(pcbAActualizar, programCounterActualizado);
+
+             pcb_set_registro_ax_cpu(pcbAActualizar, registroAxActualizado);
+             pcb_set_registro_bx_cpu(pcbAActualizar, registroAxActualizado);
+             pcb_set_registro_cx_cpu(pcbAActualizar, registroAxActualizado);
+             pcb_set_registro_dx_cpu(pcbAActualizar, registroAxActualizado);
+
+             break;
+
+             default: break;
+
+        }
     
+    buffer_destroy(bufferPcb);
     return pcbAActualizar;
+
     }  
-   else{
+    else{
         
         log_error(kernelLogger, "Error al recibir PCB de CPU");
         exit(EXIT_FAILURE);

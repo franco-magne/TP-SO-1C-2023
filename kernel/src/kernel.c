@@ -17,6 +17,7 @@ static pthread_mutex_t mutexCantidadRecursos;
 static pthread_mutex_t mutexNombreRecurso;
 static pthread_mutex_t nextPidMutex;
 static pthread_mutex_t eliminarLista; // provisorio
+pthread_mutex_t start_mutex = PTHREAD_MUTEX_INITIALIZER;
 ////////// SEMAFOROS /////////
 static sem_t hayPcbsParaAgregarAlSistema;
 static sem_t gradoMultiprog;
@@ -28,25 +29,7 @@ static t_estado* estadoExec;
 static t_estado* estadoBlocked;
 static t_estado* estadoExit;
 
-///////////////////////// FUNCIONES UTILITARIAS //////////////////////////////
-
-static void set_timespec(struct timespec* timespec) 
-{
-    int retVal = clock_gettime(CLOCK_REALTIME, timespec);
-    
-    if (retVal == -1) {
-        perror("clock_gettime");
-        exit(EXIT_FAILURE);
-    }
-}
-
-static uint32_t obtener_diferencial_de_tiempo_en_milisegundos(struct timespec end, struct timespec start) 
-{
-    const uint32_t SECS_TO_MILISECS = 1000;
-    const uint32_t NANOSECS_TO_MILISECS = 1000000;
-    return (end.tv_sec - start.tv_sec) * SECS_TO_MILISECS + (end.tv_nsec - start.tv_nsec) / NANOSECS_TO_MILISECS;
-}
-
+///////////////////////// FUNCIONES UTILITARIAS /////////////////////////
 
 static void log_transition(const char* prev, const char* post, int pid) {   //Da el color amarillo
     char* transicion = string_from_format("\e[1;93m%s->%s\e[0m", prev, post);
@@ -54,6 +37,13 @@ static void log_transition(const char* prev, const char* post, int pid) {   //Da
     free(transicion);
 }
 
+static void setear_tiempo_ready(t_pcb* this){
+                pthread_mutex_lock(&start_mutex);
+                struct timespec start;
+                set_timespec(&start);
+                pthread_mutex_unlock(&start_mutex);
+                pcb_set_tiempo_en_ready(this, start);
+}
 
 uint32_t obtener_siguiente_pid(void) 
 {
@@ -112,14 +102,6 @@ char* string_pids_ready(t_estado* estadoReady)
     list_destroy_and_destroy_elements(tempPidList, pid_destroyer);
     return listaPidsString;
 }
-
-//////////////////////////////////////// Scheduling Algorithms ////////////////////////////////////////
-//FIFO      
-static t_pcb* elegir_pcb_segun_fifo(t_estado* estado)
-{
-    return estado_desencolar_primer_pcb_atomic(estado);
-}
-
 
 //////////////////////////////////////////////////////////////////////////
 /////////////////////////////// FUNCION MAIN ////////////////////////////
@@ -237,11 +219,15 @@ void encolar_en_new_a_nuevo_proceso(int cliente){
         // DECLARO LAS ESTRUCTURAS ADMINISTRATIVAS PARA ARMAR EL PROCESO
         t_buffer* instructionsBufferCopy = buffer_create_copy(bufferIntrucciones);
         buffer_destroy(bufferIntrucciones);
+
+    
         uint32_t newPid = obtener_siguiente_pid();
 
         t_pcb* newPcb = pcb_create(newPid); // Me rompe pcb_create()
         
         // LE SETEO LOS VALORES BASICOS
+        pcb_set_rafaga_actual(newPcb, kernel_config_get_estimacion_inicial(kernelConfig));
+        pcb_set_rafaga_anterior(newPcb, kernel_config_get_estimacion_inicial(kernelConfig));
         pcb_set_instructions_buffer(newPcb, instructionsBufferCopy);
 
         log_info(kernelLogger, "Creación de nuevo proceso ID %d mediante <socket %d>", pcb_get_pid(newPcb), cliente);
@@ -306,6 +292,7 @@ void* planificador_largo_plazo(void* args)
                                  
         t_pcb* pcbQuePasaAReady = estado_desencolar_primer_pcb_atomic(estadoNew);
         
+    
         
         //uint32_t* nuevaTablaPaginasSegmentos = mem_adapter_obtener_tabla_pagina(pcbQuePasaAReady, kernelConfig, kernelDevLogger);
 
@@ -321,9 +308,11 @@ void* planificador_largo_plazo(void* args)
                 pcb_set_estado_anterior(pcbQuePasaAReady, pcb_get_estado_actual(pcbQuePasaAReady));
                 
                 pcb_set_estado_actual(pcbQuePasaAReady, READY);     
-               
                 estado_encolar_pcb_atomic(estadoReady, pcbQuePasaAReady);
-            
+                setear_tiempo_ready(pcbQuePasaAReady); // EMPIEZA A CONTAR EL TIEMPO 
+
+               
+
                 char* stringPidsReady = string_pids_ready(estadoReady);
                 log_transition("NEW", "READY", pcb_get_pid(pcbQuePasaAReady));
 
@@ -337,7 +326,8 @@ void* planificador_largo_plazo(void* args)
     }
 
 }
-
+///////////////////////////////////// FIN DEL PLANIFICADOR DE LARGO PLAZO ////////////////////////////
+//////////////////////////////////// COMIENZO DEL PLANIFICADOR DE CORTO PLAZO ////////////////////////
 bool recurso_disponible(int posicion_recurso){
     return ( *(recursoConfig[posicion_recurso].instancias_recurso) > 0);
 }
@@ -389,8 +379,7 @@ t_pcb* primer_elemento_bloqueado_por_recurso(t_list* listaBloqueado, char* nombr
             
 }
 
-///////////////////////////////////// FIN DEL PLANIFICADOR DE LARGO PLAZO ////////////////////////////
-//////////////////////////////////// COMIENZO DEL PLANIFICADOR DE CORTO PLAZO ////////////////////////
+
 static bool pedir_recursos_wait(t_pcb* pcb) {
     char* recursoUtilizado = pcb_get_recurso_utilizado(pcb);
     
@@ -410,9 +399,19 @@ static bool pedir_recursos_wait(t_pcb* pcb) {
 
             return true;
         }
+
+
+    } else {
+        log_error(kernelLogger, "RECURSO NO EXISTE POR EL PROCESO QUE PIDE ");    
+        pcb_set_estado_actual(pcb, EXIT);
+        estado_encolar_pcb_atomic(estadoExit, pcb);
+        log_transition("EXEC", "EXIT", pcb_get_pid(pcb));
+        //stream_send_empty_buffer(pcb_get_socket(pcb), HEADER_proceso_terminado);
+        sem_post(estado_get_sem(estadoExit));
+        return false;
+
     }
 
-    return false;
 }
 
 
@@ -427,6 +426,7 @@ static void devolver_recursos_signal(t_pcb* pcb){
             if(pcbPasaReady != NULL){
                 pcb_set_estado_anterior(pcbPasaReady, pcb_get_estado_actual(pcbPasaReady));
                 pcb_set_estado_actual(pcbPasaReady, READY);
+                setear_tiempo_ready(pcbPasaReady); // EMPIEZA A CONTAR EL TIEMPO 
                 estado_encolar_pcb_atomic(estadoReady, pcbPasaReady);
                 char* stringPidsReady = string_pids_ready(estadoReady);
                 log_transition("BLOCK", "READY", pcb_get_pid(pcbPasaReady));
@@ -435,6 +435,14 @@ static void devolver_recursos_signal(t_pcb* pcb){
                 sem_post(estado_get_sem(estadoReady));
                 
             }
+        } 
+        else {
+            log_error(kernelLogger, "RECURSO NO EXISTE POR EL PROCESO QUE LO DEVUELVE ");    
+            pcb_set_estado_actual(pcb, EXIT);
+            estado_encolar_pcb_atomic(estadoExit, pcb);
+            log_transition("EXEC", "EXIT", pcb_get_pid(pcb));
+            //stream_send_empty_buffer(pcb_get_socket(pcb), HEADER_proceso_terminado);
+            sem_post(estado_get_sem(estadoExit));
         }
 
 }
@@ -462,6 +470,7 @@ static void atender_bloqueo_IO(t_pcb* pcb)
     }
     pcb_set_estado_anterior(pcb, pcb_get_estado_actual(pcb));
     pcb_set_estado_actual(pcb, READY);
+    setear_tiempo_ready(pcb); // EMPIEZA A CONTAR EL TIEMPO 
     estado_encolar_pcb_atomic(estadoReady, pcb);
     char* stringPidsReady = string_pids_ready(estadoReady);
     log_transition("BLOCK", "READY", pcb_get_pid(pcb));
@@ -485,21 +494,18 @@ void* atender_pcb(void* args)
         
         struct timespec start;
         set_timespec(&start);
-        //pcb_set_proceso_bloqueado_o_terminado_atomic(pcb, false);
-
         cpu_adapter_enviar_pcb_a_cpu(pcb, headerAEnviar, kernelConfig, kernelLogger);
         uint8_t cpuResponse = stream_recv_header(kernel_config_get_socket_dispatch_cpu(kernelConfig)); 
+        
         struct timespec end;
         set_timespec(&end);
+
+        pcb_set_rafaga_actual( pcb,obtener_diferencial_de_tiempo_en_milisegundos(end,start) );
 
         pcb = cpu_adapter_recibir_pcb_actualizado_de_cpu(pcb, cpuResponse, kernelConfig, kernelLogger); 
         
         pcb = estado_desencolar_primer_pcb_atomic(estadoExec);
-
-        uint32_t realEjecutado = 0;
-        realEjecutado = obtener_diferencial_de_tiempo_en_milisegundos(end, start);
-      
-        log_debug(kernelLogger, "PCB <ID %d> estuvo en ejecución por %d miliseconds", pcb_get_pid(pcb), realEjecutado);
+        
 
         switch (cpuResponse) {
             
@@ -511,6 +517,7 @@ void* atender_pcb(void* args)
                     char* stringPidsReady = string_pids_ready(estadoReady);
                     log_transition("EXEC", "READY", pcb_get_pid(pcb));
                     log_info(kernelLogger,  "Cola Ready <%s>: %s", kernel_config_get_algoritmo_planificacion(kernelConfig), stringPidsReady);
+                    setear_tiempo_ready(pcb); // EMPIEZA A CONTAR EL TIEMPO 
                     free(stringPidsReady);
                     sem_post(estado_get_sem(estadoReady));
                 
@@ -519,13 +526,8 @@ void* atender_pcb(void* args)
                 
             case HEADER_proceso_terminado:
                 
-                pcb_set_estado_actual(pcb, EXIT);
-                estado_encolar_pcb_atomic(estadoExit, pcb);
+                instruccion_exit(pcb,estadoExit);
                 log_transition("EXEC", "EXIT", pcb_get_pid(pcb));
-                //stream_send_empty_buffer(pcb_get_socket(pcb), HEADER_proceso_terminado);
-                sem_post(estado_get_sem(estadoExit));
-                //pcb_set_proceso_bloqueado_o_terminado_atomic(pcb, true);
-                //terminar_proceso(pcb);
                 break;
 
             case HEADER_proceso_bloqueado:
@@ -539,13 +541,18 @@ void* atender_pcb(void* args)
             case HEADER_proceso_devolver_recurso:
                 devolver_recursos_signal(pcb);
                 break;
+            
+            case HEADER_creacion_de_segmento:
+                mem_adapter_crear_segmento( pcb,kernelConfig,kernelLogger);
+                break;
 
             default:
 
                 log_error(kernelLogger, "Error al recibir mensaje de CPU");
                 break;
         }
-        if( (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado) || cpuResponse == HEADER_proceso_devolver_recurso){
+
+        if( (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado && pcb_get_estado_actual(pcb) != EXIT) || (cpuResponse == HEADER_proceso_devolver_recurso && pcb_get_estado_actual(pcb) == EXEC) || (cpuResponse == HEADER_creacion_de_segmento) ){
                 estado_encolar_pcb_atomic(estadoExec, pcb);
                 sem_post(estado_get_sem(estadoExec));
         } 
@@ -566,15 +573,17 @@ void* planificador_corto_plazo(void* args)
 
     for (;;) {
         
-        //sem_wait(&evaluarDesalojo);
-
-      // evaluar_desalojo();
 
         sem_wait(&dispatchPermitido);
         log_info(kernelLogger, "Se permite dispatch");
 
         sem_wait(estado_get_sem(estadoReady));
-        pcbAejecutar = elegir_pcb_segun_fifo(estadoReady); // DEPENDE DEL PLANIFICADOR ACA ESTA FIFO
+        if( strcmp(kernel_config_get_algoritmo_planificacion(kernelConfig),"FIFO") == 0 ){
+            pcbAejecutar = elegir_pcb_segun_fifo(estadoReady); // DEPENDE DEL PLANIFICADOR ACA ESTA FIFO
+        } 
+        else {
+           pcbAejecutar = elegir_pcb_segun_hhrn(estadoReady);
+        }
         log_info(kernelLogger, "Se toma una instancia de READY");
         log_transition("READY", "EXEC", pcb_get_pid(pcbAejecutar));
         
@@ -590,17 +599,6 @@ void* planificador_corto_plazo(void* args)
 /////////////////////////// FIN DEL PLANIFICADOR DE CORTO PLAZO //////////////////////
 void inicializar_estructuras(void) {
     
-    if (kernel_config_es_algoritmo_fifo(kernelConfig)) {
-        
-    //elegir_pcb = elegir_pcb_segun_fifo;
-    //evaluar_desalojo = evaluar_desalojo_segun_fifo;
-    //actualizar_pcb_por_bloqueo = actualizar_pcb_por_bloqueo_segun_fifo;
-    } else {
-        
-        log_error(kernelLogger, "No se pudo inicializar el planificador, no se encontró un algoritmo de planificación válido");
-        exit(EXIT_FAILURE);
-    }
-  
    // PLANI CORTO PLAZO
     nextPid = 1;
     //procesoBloqueadoOTerminado = false;
