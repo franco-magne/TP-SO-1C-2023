@@ -31,8 +31,8 @@ int main() {
    fs->socket_memoria = fsSocketMemoria;
    log_info(fs_logger, "Conexion con MEMORIA establecida");
 
-
-   crear_estructuras_administrativas(fs, fs_logger);
+   levantar_bitmap(fs, fs_logger);
+   //crear_estructuras_administrativas(fs, fs_logger);
 
 
    ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////

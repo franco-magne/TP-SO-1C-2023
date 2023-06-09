@@ -1,22 +1,38 @@
 #include "../include/fs-structures.h"
 
+t_bitarray* bitmap;
 t_superbloque* superbloque;
 
-void load_bitmap(unsigned char** bitmap) {
-    int fd = open("bitmap.dat", O_RDONLY);
+void levantar_bitmap(t_filesystem* fs, t_log* logger) {
+
+    int fd = open(fs->bitmap_path, O_RDONLY); 
+
     if (fd == -1) {
-        fprintf(stderr, "Error al abrir el archivo bitmap.dat\n");
+        log_error(logger, "Error al abrir el archivo de bitmap.");
         exit(1);
     }
 
-    *bitmap = mmap(NULL, BITMAP_SIZE, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (*bitmap == MAP_FAILED) {
-        fprintf(stderr, "Error al mapear el archivo bitmap.dat\n");
+    off_t valor = lseek(fd, fs->block_count - 1, SEEK_SET); // Me aseguro que el fd tenga -block_count- bytes. Me desplazo
+
+    if (valor == -1) {
+        log_error(logger, "Error al desplazarse por el archivo.");
         exit(1);
     }
+
+    uint32_t size_bitarray = ceil(fs->block_count / 8); // Redondea hacia arriba
+    void* map = mmap(NULL, fs->block_count, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
+
+    if (map == MAP_FAILED) {
+        log_error(logger, "Fallo el mmap.");
+        exit(1);
+    }
+
+    bitmap = bitarray_create(map, size_bitarray);
 
     close(fd);
 }
+
+/*
 
 void crear_estructuras_administrativas(t_filesystem* fs, t_log* fs_logger) {
 
@@ -29,7 +45,7 @@ void crear_estructuras_administrativas(t_filesystem* fs, t_log* fs_logger) {
 
 
 
-}
+}*/
 
 void cargar_t_filesystem(t_config* config, t_config* sb_config, t_config* fcb_config, t_filesystem* fs) {
 
