@@ -21,12 +21,11 @@ void atender_peticiones_kernel(int socketKernel) {
         t_buffer* buffer = buffer_create();
         stream_recv_buffer(socket, buffer);
         switch (header) {
-            case HEADER_solicitud_tabla_segmentos: { //no seria HEADER_iniciarProceso  xq kernel no usa la tabla??
-                /*log_info(memoriaLogger, "\e[1;93mSe crea nuevo proceso\e[0m");
-                uint32_t tamanioTdeSeg;     
+            case HEADER_create_segment: { //no seria HEADER_iniciarProceso  xq kernel no usa la tabla??
+                /*
                 
                 //puedo obtener el tamanio de tabla de segmentos??? Si, sizeof(Segmento)*list_size(TdeSeg)
-            
+                buffer_unpack()
                 buffer_unpack(buffer, &tamanioTdeSeg, sizeof(tamanio));
                 if (puedo_crear_proceso(tamanioTdeSeg, memoriaData)) {
     
@@ -41,7 +40,16 @@ void atender_peticiones_kernel(int socketKernel) {
                     log_error(memoriaLogger, "No se pudo asignar tabla de segmentos con tamaño [%d]", tamanioTdeSeg);
                 }
                 buffer_destroy(buffer);*/
-                log_info(memoriaLogger, "\e[1;93mSe crea nuevo proceso\e[0m");
+            
+                uint32_t tamSegmento;  
+                uint32_t id_segmento;
+                
+                buffer_unpack(buffer, &id_segmento, sizeof(id_segmento));
+                buffer_unpack(buffer, &tamSegmento, sizeof(tamSegmento));
+                
+                log_info(memoriaLogger, "\e[1;93mSe crea nuevo segmento con id [%d] y tamanio [%d]\e[0m", id_segmento, tamSegmento);
+
+                stream_send_empty_buffer(socket, HANDSHAKE_ok_continue);
                 break;
             }
             case HEADER_proceso_terminado:  //cuando llega instruccion EXIT o cuando se llena la memoria??
@@ -52,7 +60,7 @@ void atender_peticiones_kernel(int socketKernel) {
                 stream_send_empty_buffer(socket, HANDSHAKE_ok_continue);
                 buffer_destroy(buffer);*/
                 break;
-            case HEADER_createSegment:{
+            /*case HEADER_createSegment:{
                 log_info(memoriaLogger, "Se crea el segmento");
                 /*if(hayEspacioLibre && elEspacioEsContiguo) {
                     log_info(memoriaLogger, "Cree el segmento");
@@ -64,9 +72,9 @@ void atender_peticiones_kernel(int socketKernel) {
                 }
                 else{
                     log_info(memoriaLogger, "Informo a kernel OutOfMemory");
-                }*/
-            }
-            case HEADER_deleteSegment:{
+                }*//*
+            }*/
+            case HEADER_delete_segment:{
                 /*Segmento* segmento;
                 buffer_unpack(socketKernel, segmento, sizeof(segmento));
                 segmento->base = -1; //ASI PODRIA SEÑALAR Q EL SEGMENTO ESTA VACIO????*/

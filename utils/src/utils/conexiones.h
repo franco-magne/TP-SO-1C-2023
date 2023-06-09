@@ -25,12 +25,16 @@ typedef enum {
     HEADER_proceso_bloqueado,
     HEADER_proceso_desalojado,
     HEADER_proceso_terminado,
-    //HEADER_movin,
-    //HEADER_movout,
+    HEADER_movin,
+    HEADER_movout,
     HEADER_solicitud_tabla_paginas_segmentos,
     HEADER_proceso_pedir_recurso,
-    HEADER_proceso_devolver_recurso
-   
+    HEADER_proceso_devolver_recurso,
+    HEADER_solicitud_tabla_segmentos,
+    HEADER_create_segment,
+    HEADER_delete_segment,
+    HEADER_compactacion
+
 } t_header;
 
 typedef enum {
@@ -39,6 +43,7 @@ typedef enum {
     HANDSHAKE_kernel,
     HANDSHAKE_memoria,
     HANDSHAKE_cpu,
+    HANDSHAKE_fileSystem,
     HANDSHAKE_interrupt,
     HANDSHAKE_dispatch,
     HANDSHAKE_ok_continue
