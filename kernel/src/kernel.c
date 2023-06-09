@@ -154,6 +154,7 @@ int main(int argc, char* argv[]) {
 
         return -2;
       }
+
     
     stream_send_empty_buffer(kernelSocketMemoria,HANDSHAKE_kernel);
     uint8_t headerMemoria = stream_recv_header(kernelSocketMemoria);
@@ -532,13 +533,8 @@ void* atender_pcb(void* args)
                 
             case HEADER_proceso_terminado:
                 
-                pcb_set_estado_actual(pcb, EXIT);
-                estado_encolar_pcb_atomic(estadoExit, pcb);
+                instruccion_exit(pcb,estadoExit);
                 log_transition("EXEC", "EXIT", pcb_get_pid(pcb));
-                //stream_send_empty_buffer(pcb_get_socket(pcb), HEADER_proceso_terminado);
-                sem_post(estado_get_sem(estadoExit));
-                //pcb_set_proceso_bloqueado_o_terminado_atomic(pcb, true);
-                //terminar_proceso(pcb);
                 break;
 
             case HEADER_proceso_bloqueado:
@@ -552,8 +548,9 @@ void* atender_pcb(void* args)
             case HEADER_proceso_devolver_recurso:
                 devolver_recursos_signal(pcb);
                 break;
-            
+
             case HEADER_create_segment:
+
                 mem_adapter_crear_segmento( pcb,kernelConfig,kernelLogger);
                 break;
 
@@ -563,7 +560,9 @@ void* atender_pcb(void* args)
                 break;
         }
 
+
         if( (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado && pcb_get_estado_actual(pcb) != EXIT) || (cpuResponse == HEADER_proceso_devolver_recurso && pcb_get_estado_actual(pcb) == EXEC) || (cpuResponse == HEADER_create_segment) ){
+
                 estado_encolar_pcb_atomic(estadoExec, pcb);
                 sem_post(estado_get_sem(estadoExec));
         } 

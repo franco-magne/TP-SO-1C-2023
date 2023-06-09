@@ -71,6 +71,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         uint32_t tamanio_de_segmento;
         buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
         buffer_unpack(bufferPcb, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
+
         pcb_set_id_de_segmento(pcbAActualizar,id_de_segmento);
         pcb_set_tamanio_de_segmento(pcbAActualizar,tamanio_de_segmento );
 
@@ -85,6 +86,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
             case HEADER_proceso_pedir_recurso:
             case HEADER_proceso_devolver_recurso:
             case HEADER_create_segment:
+
 
              pcb_set_program_counter(pcbAActualizar, programCounterActualizado);
 

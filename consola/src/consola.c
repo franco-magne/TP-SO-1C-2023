@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 
     char* pathArchivoInstrucciones = string_duplicate(argv[2]);
     consola_enviar_instrucciones_a_kernel(pathArchivoInstrucciones, kernelSocket, consolaLogger);
-    free(pathArchivoInstrucciones);
+   
     
     uint32_t idProceso = receive_pid_kernel(kernelSocket, consolaLogger);
     log_info(consolaLogger, "Se recibio el PID %d", idProceso);

@@ -26,7 +26,6 @@ int main() {
       }
         stream_send_empty_buffer(cpuSocketMemoria,HANDSHAKE_cpu);
 
-
   ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////
 
   int serverCpu = inicializar_servidor_cpu_dispatch(cpuConfig,cpuLogger);
