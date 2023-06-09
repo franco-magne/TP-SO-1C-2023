@@ -141,7 +141,7 @@ int main(int argc, char* argv[]) {
 
    /////////////////////////////// CONEXION CON CPU /////////////////////////////
     conectar_a_servidor_cpu_dispatch(kernelConfig,kernelLogger);
-    int kernelSocketCPU = conectar_a_servidor(kernel_config_get_ip_cpu(kernelConfig), kernel_config_get_puerto_cpu(kernelConfig));
+   /* int kernelSocketCPU = conectar_a_servidor("127.0.0.1", "8001");
     kernel_config_set_socket_dispatch_cpu(kernelConfig, kernelSocketCPU);
     if (kernelSocketCPU == -1) {
         log_error(kernelLogger, "Error al intentar establecer conexión inicial con módulo CPU");
@@ -150,7 +150,7 @@ int main(int argc, char* argv[]) {
 
     return -2;
     }
-   
+   */
 
     /////////////////////////////// CONEXION CON FILE_SYSTEM /////////////////////////////
 /*
@@ -161,11 +161,11 @@ int main(int argc, char* argv[]) {
         log_destroy(kernelLogger);
 
     return -2;
-    }*/
+    }
 
    /////////////////////////////// CONEXION CON MEMORIA /////////////////////////////
 
-    int kernelSocketMemoria = conectar_a_servidor(kernel_config_get_ip_memoria(kernelConfig), kernel_config_get_puerto_memoria(kernelConfig));
+    int kernelSocketMemoria = conectar_a_servidor(kernelIP, "8002");
       if (kernelSocketMemoria == -1) {
         log_error(kernelLogger, "Error al intentar establecer conexión inicial con módulo Memoria");
 
@@ -173,7 +173,7 @@ int main(int argc, char* argv[]) {
 
         return -2;
       }
-    
+    */
    
    ////////////////////////////// CONEXION CON CONSOLA //////////////////////////////
     

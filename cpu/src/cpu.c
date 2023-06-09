@@ -16,7 +16,7 @@ int main() {
   
 
     ///////////////////////////////// CONECTARSE A MEMORIA //////////////////////////////
-     int cpuSocketMemoria = conectar_a_servidor(cpu_config_get_ip_memoria(cpuConfig), cpu_config_get_puerto_memoria(cpuConfig));
+     /*int cpuSocketMemoria = conectar_a_servidor(cpuIP, cpuPort);
       if (cpuSocketMemoria == -1) {
         log_error(cpuLogger, "Error al intentar establecer conexión inicial con módulo Memoria");
 
@@ -24,10 +24,7 @@ int main() {
 
         return -2;
       }
-
-      stream_send_empty_buffer(cpuSocketMemoria, HANDSHAKE_cpu);
-
-
+    */
 
   ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////
 
