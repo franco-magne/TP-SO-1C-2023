@@ -143,11 +143,11 @@ int main(int argc, char* argv[]) {
         log_destroy(kernelLogger);
 
     return -2;
-    }
+    }*/
 
    /////////////////////////////// CONEXION CON MEMORIA /////////////////////////////
 
-    int kernelSocketMemoria = conectar_a_servidor(kernelIP, "8002");
+    int kernelSocketMemoria = conectar_a_servidor("127.0.0.1", "8002");
       if (kernelSocketMemoria == -1) {
         log_error(kernelLogger, "Error al intentar establecer conexión inicial con módulo Memoria");
 
@@ -155,7 +155,7 @@ int main(int argc, char* argv[]) {
 
         return -2;
       }
-    */
+    
    
    ////////////////////////////// CONEXION CON CONSOLA //////////////////////////////
     
@@ -542,7 +542,7 @@ void* atender_pcb(void* args)
                 devolver_recursos_signal(pcb);
                 break;
             
-            case HEADER_creacion_de_segmento:
+            case HEADER_create_segment:
                 mem_adapter_crear_segmento( pcb,kernelConfig,kernelLogger);
                 break;
 
@@ -552,7 +552,7 @@ void* atender_pcb(void* args)
                 break;
         }
 
-        if( (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado && pcb_get_estado_actual(pcb) != EXIT) || (cpuResponse == HEADER_proceso_devolver_recurso && pcb_get_estado_actual(pcb) == EXEC) || (cpuResponse == HEADER_creacion_de_segmento) ){
+        if( (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado && pcb_get_estado_actual(pcb) != EXIT) || (cpuResponse == HEADER_proceso_devolver_recurso && pcb_get_estado_actual(pcb) == EXEC) || (cpuResponse == HEADER_create_segment) ){
                 estado_encolar_pcb_atomic(estadoExec, pcb);
                 sem_post(estado_get_sem(estadoExec));
         } 

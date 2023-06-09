@@ -11,7 +11,7 @@ void mem_adapter_crear_segmento(t_pcb* pcbAIniciar, t_kernel_config* kernelConfi
     t_buffer* bufferNuevoSegmento = buffer_create();
     buffer_pack(bufferNuevoSegmento, &id_de_segmento, sizeof(id_de_segmento));
     buffer_pack(bufferNuevoSegmento, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
-    stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig),HEADER_creacion_de_segmento , bufferNuevoSegmento);
+    stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig),HEADER_create_segment , bufferNuevoSegmento);
     buffer_destroy(bufferNuevoSegmento);
 
     uint8_t memoriaResponse = stream_recv_header(kernel_config_get_socket_memoria(kernelConfig));
