@@ -69,8 +69,8 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         case HEADER_create_segment:
         uint32_t id_de_segmento;
         uint32_t tamanio_de_segmento;
-        buffer_unpack(bufferPcb, &id_de_segmento, sizeof(unidadesDeTrabajo));
-        buffer_unpack(bufferPcb, &tamanio_de_segmento, sizeof(unidadesDeTrabajo));
+        buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
+        buffer_unpack(bufferPcb, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
         pcb_set_id_de_segmento(pcbAActualizar,id_de_segmento);
         pcb_set_tamanio_de_segmento(pcbAActualizar,tamanio_de_segmento );
 

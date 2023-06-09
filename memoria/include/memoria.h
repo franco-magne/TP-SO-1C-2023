@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include "memoria-estructuras.h"
 #include "memoria-config.h"
+#include "memoria-atender-kernel.h"
 
 #define MEMORIA_CONFIG_UBICACION "config/memoria.config"
 #define MEMORIA_LOG_UBICACION "logs/memoria.log"

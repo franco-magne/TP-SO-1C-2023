@@ -1,7 +1,7 @@
 #include <../include/memoria.h>
 
 
-static t_log *memoriaLogger;
+t_log *memoriaLogger;
 static t_config *memoriaConfigInicial;
 static t_memoria_config* memoriaConfig;
 
@@ -39,6 +39,7 @@ void aceptar_conexiones_memoria(const int socketEscucha)
         const int clienteAceptado = accept(socketEscucha, &cliente, &len);
         
         if (clienteAceptado > -1) {    
+            log_info(memoriaLogger, "Cliente aceptado en el puerto");
             recibir_conexion(clienteAceptado);
         } 
         else {
@@ -52,10 +53,11 @@ void recibir_conexion(int socketCliente) {
     
     uint8_t handshake = stream_recv_header(socketCliente);
     //stream_recv_empty_buffer(*socketCliente);
+    log_info("Handshake recibido %d", handshake);
 
     if (handshake == HANDSHAKE_cpu) {  //solic tabla de segmentos   
         log_info(memoriaLogger, "\e[1;92mSe acepta conexión de CPU en socket [%d]\e[0m", socketCliente);
-        t_buffer* buffer = buffer_create();
+        /*t_buffer* buffer = buffer_create();
         uint32_t tamanioSegmento = memoria_config_get_tamanio_segmento_0(memoriaConfig);
         buffer_pack(buffer, &tamanioSegmento, sizeof(tamanioSegmento));
         stream_send_buffer(socketCliente, HANDSHAKE_ok_continue, buffer);
@@ -63,11 +65,13 @@ void recibir_conexion(int socketCliente) {
         pthread_create(&threadAntencionCpu, NULL, atender_peticiones_cpu(), socketCliente);
         pthread_detach(threadAntencionCpu);
         cpuSinAtender = false;
+        */
     } 
+
     else if (handshake == HANDSHAKE_kernel) {
         log_info(memoriaLogger, "\e[1;92mSe acepta conexión de Kernel en socket [%d]\e[0m", socketCliente);
         stream_send_empty_buffer(socketCliente, HANDSHAKE_ok_continue);
-        pthread_create(&threadAntencionCpu, NULL, atender_peticiones_kernel(), socketCliente);
+        pthread_create(&threadAntencionCpu, NULL, atender_peticiones_kernel, socketCliente);
         pthread_detach(threadAntencionCpu);
         kernelSinAtender = false;
     } 

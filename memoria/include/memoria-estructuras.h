@@ -24,8 +24,6 @@
     void* espacio_usuario; // Espacio de usuario
     int tamanio;
 } Memoria;*/
-void* memoriaPrincipal;
-t_list* tabla_de_segmentos;
 
 typedef struct {
     int segmento_id; 

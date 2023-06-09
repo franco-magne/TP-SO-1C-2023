@@ -65,6 +65,15 @@ char* buffer_unpack_string(t_buffer* self)
     return str;
 }
 
+void buffer_peek(t_buffer* self, void* dest, int size, int offset) {
+    if (self->stream == NULL || offset + size > self->size) {
+        puts("\e[0;31mbuffer_peek: Error al acceder al buffer\e[0m");
+        exit(-1);
+    }
+    memcpy(dest, self->stream + offset, size);
+}
+
+
 ///////////////////////////////////////////////////////// STREAM /////////////////////////////////////////
 
 static void stream_send(int toSocket, void* streamToSend, uint32_t bufferSize) {

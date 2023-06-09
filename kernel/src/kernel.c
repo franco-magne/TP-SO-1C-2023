@@ -146,16 +146,22 @@ int main(int argc, char* argv[]) {
     }*/
 
    /////////////////////////////// CONEXION CON MEMORIA /////////////////////////////
-
+    
     int kernelSocketMemoria = conectar_a_servidor("127.0.0.1", "8002");
       if (kernelSocketMemoria == -1) {
         log_error(kernelLogger, "Error al intentar establecer conexión inicial con módulo Memoria");
-
         log_destroy(kernelLogger);
 
         return -2;
       }
     
+    stream_send_empty_buffer(kernelSocketMemoria,HANDSHAKE_kernel);
+    uint8_t headerMemoria = stream_recv_header(kernelSocketMemoria);
+    if(headerMemoria == HANDSHAKE_ok_continue){
+        log_info(kernelLogger,"Entre");
+    }
+
+    kernel_config_set_socket_memoria(kernelConfig,kernelSocketMemoria);
    
    ////////////////////////////// CONEXION CON CONSOLA //////////////////////////////
     
@@ -526,8 +532,13 @@ void* atender_pcb(void* args)
                 
             case HEADER_proceso_terminado:
                 
-                instruccion_exit(pcb,estadoExit);
+                pcb_set_estado_actual(pcb, EXIT);
+                estado_encolar_pcb_atomic(estadoExit, pcb);
                 log_transition("EXEC", "EXIT", pcb_get_pid(pcb));
+                //stream_send_empty_buffer(pcb_get_socket(pcb), HEADER_proceso_terminado);
+                sem_post(estado_get_sem(estadoExit));
+                //pcb_set_proceso_bloqueado_o_terminado_atomic(pcb, true);
+                //terminar_proceso(pcb);
                 break;
 
             case HEADER_proceso_bloqueado:

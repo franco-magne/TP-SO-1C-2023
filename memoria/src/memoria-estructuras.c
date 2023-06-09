@@ -1,5 +1,7 @@
 #include <../include/memoria-estructuras.h>
 t_memoria_config* memoriaConfig;
+void* memoriaPrincipal;
+t_list* tabla_de_segmentos;
 /*
 inicializar mp
 crear segmento
