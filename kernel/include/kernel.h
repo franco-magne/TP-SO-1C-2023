@@ -9,6 +9,8 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <pthread.h>
+#include <time.h>
+
 ///////////////////////////////// BIBLOTECAS COMMONS /////////////////
 #include <commons/log.h>
 #include <commons/config.h>
@@ -22,6 +24,10 @@
 #include "../../utils/src/utils/instrucciones.h"
 #include "kernel-cpu-adapter.h"
 #include "kernel-conexiones.h"
+#include "kernel-algoritmos.h"
+#include "../../utils/src/utils/commons-nuestras.h"
+#include "kernel-instrucciones.h"
+#include "kernel-memoria-adapter.h"
 
 
 
