@@ -12,6 +12,8 @@
 #include "pcb.h"
 #include "kernel-config.h"
 
+#include "../../utils/src/utils/conexiones.h"
+
 void mem_adapter_crear_segmento(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger);
 
 

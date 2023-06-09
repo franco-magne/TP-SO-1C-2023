@@ -19,12 +19,12 @@ int main() {
 
       return -2;
    }
-
+   
 
    ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////
 
    int serverFS = iniciar_servidor(fileSystemIP,"8003");
-   log_info(fileSystemLogger,"Servidor kernel listo para recibir al modulo\n");
+   log_info(fileSystemLogger,"Servidor fyleSystem listo para recibir al modulo\n");
    int serverEspera = esperar_cliente(serverFS);
 
 

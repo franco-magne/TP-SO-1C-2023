@@ -28,7 +28,9 @@ typedef enum {
     HEADER_solicitud_tabla_paginas_segmentos,
     HEADER_proceso_pedir_recurso,
     HEADER_proceso_devolver_recurso,
-    HEADER_creacion_de_segmento
+    HEADER_create_segment,
+    HEADER_delete_segment
+
 
 } t_header;
 

@@ -43,12 +43,9 @@
 			"kernel-cpu-adapter.h": "c",
 			"list.h": "c",
 			"cpu-estructuras.h": "c",
-			"kernel-conexiones.h": "c",
-			"cpu-atender-kernel.h": "c",
-			"kernel-config.h": "c",
-			"time.h": "c",
-			"kernel-algoritmos.h": "c",
-			"pcb.h": "c"
+			"memoria.h": "c",
+			"memoria-estructuras.h": "c",
+			"memoria-atender-cpu.h": "c"
 		}
 	}
 }

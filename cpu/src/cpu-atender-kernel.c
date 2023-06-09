@@ -96,13 +96,14 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
         
         switch(header){
             case HEADER_proceso_bloqueado : buffer_pack(buffer, &unidadesDeTrabajo, sizeof(unidadesDeTrabajo));
-                                            break;
+            break;
             case HEADER_proceso_pedir_recurso:
             case HEADER_proceso_devolver_recurso: buffer_pack_string(buffer, recurso_utilizado);
-                                                  break;
-            case HEADER_creacion_de_segmento: buffer_pack(buffer, &id_de_segmento, sizeof(unidadesDeTrabajo));
-                                              buffer_pack(buffer, &tamanio_de_segmento, sizeof(unidadesDeTrabajo));
-                                                  break;
+            break;
+            case HEADER_create_segment: buffer_pack(buffer, &id_de_segmento, sizeof(id_de_segmento));
+            buffer_pack(buffer, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
+
+            break;
             default: break;
         }   
 
@@ -352,11 +353,12 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <CREATE_SEGMENT> - <%i> - <%i>", cpu_pcb_get_pid(pcb),id_de_segmento,tamanio_de_segmento);
 
         intervalo_de_pausa(retardoInstruccion);
-        
+        cpu_pcb_set_id_de_segmento(pcb,id_de_segmento);
+        cpu_pcb_set_tamanio_de_segmento(pcb,tamanio_de_segmento);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
 
-        empaquetar_instruccion(pcb, HEADER_creacion_de_segmento);
-
+        empaquetar_instruccion(pcb, HEADER_create_segment);
+        shouldStopExec = true;
 
     } else if (tipoInstruccion == INSTRUCCION_DELETE_SEGMENT ) {
         
