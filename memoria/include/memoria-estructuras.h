@@ -23,6 +23,8 @@ typedef struct {
     int validez;
 } Segmento;
 
+#include "memoria.h"
+
 int segmento_get_id(Segmento*);
 void segmento_set_id(Segmento* , int );
 uint32_t* segmento_get_limite(Segmento* );

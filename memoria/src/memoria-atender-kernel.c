@@ -52,7 +52,7 @@ void atender_peticiones_kernel(int socketKernel) {
 
                 stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
                 
-                if( (list_size((estado_get_list(tabla_segmentos))) == 3)){
+                if( (list_size((estado_get_list(tabla_segmentos))) == 4)){
                 for(int i = 0; i<(list_size((estado_get_list(tabla_segmentos)))); i++ ){
                     Segmento* x = estado_desencolar_primer_segmento_atomic(tabla_segmentos);
                     log_info(memoriaLogger, "id_segmento <%i> : ", x->segmento_id );

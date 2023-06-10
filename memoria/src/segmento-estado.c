@@ -26,7 +26,7 @@ Segmento* estado_desencolar_primer_segmento(tabla_de_segmentos* this){
       exit(EXIT_FAILURE);
     }
     else{
-      return list_remove(estado_get_list(this), 1); //es 1 xq el 0 no se borra nunca
+      return list_remove(estado_get_list(this), 0); //es 1 xq el 0 no se borra nunca
     }
 }
 

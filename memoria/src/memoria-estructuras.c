@@ -3,6 +3,7 @@
 extern t_memoria_config* memoriaConfig;
 void* memoriaPrincipal;
 uint32_t tamActualMemoria;
+extern Segmento* segCompartido;
 
 /*
 inicializar mp
@@ -71,7 +72,7 @@ Segmento* crear_segmento(int tamSegmento){
 }
 void inicializar_estructuras(){
     inicializar_memoria();
-    Segmento* segCompartido = crear_segmento(segmento_get_id(segCompartido));
+    segCompartido = crear_segmento(memoria_config_get_tamanio_segmento_0(memoriaConfig));
 }
 
 

@@ -4,6 +4,7 @@
 t_log *memoriaLogger;
 static t_config *memoriaConfigInicial;
 t_memoria_config* memoriaConfig;
+Segmento* segCompartido;
 tabla_de_segmentos* tabla_segmentos;
 
 static bool cpuSinAtender;
@@ -55,11 +56,12 @@ void recibir_conexion(int socketCliente) {
     uint8_t handshake = stream_recv_header(socketCliente);
     //stream_recv_empty_buffer(*socketCliente);
     log_info("Handshake recibido %d", handshake);
-    inicializar_estructuras();
+    
+    //deberia restar tamActualMemoria con los mutex
+
     if (handshake == HANDSHAKE_cpu) {  //solic tabla de segmentos   
         log_info(memoriaLogger, "\e[1;92mSe acepta conexión de CPU en socket [%d]\e[0m", socketCliente);
-        handshake = stream_recv_header(socketCliente);
-        log_info(memoriaLogger, "\e[1;92mHANDSHAKE [%d]\e[0m", handshake);
+    
         /*t_buffer* buffer = buffer_create();
         uint32_t tamanioSegmento = memoria_config_get_tamanio_segmento_0(memoriaConfig);
         buffer_pack(buffer, &tamanioSegmento, sizeof(tamanioSegmento));
@@ -73,6 +75,8 @@ void recibir_conexion(int socketCliente) {
 
     else if (handshake == HANDSHAKE_kernel) {
         log_info(memoriaLogger, "\e[1;92mSe acepta conexión de Kernel en socket [%d]\e[0m", socketCliente);
+        inicializar_estructuras();
+        estado_encolar_segmento_atomic(tabla_segmentos, segCompartido);
         stream_send_empty_buffer(socketCliente, HANDSHAKE_ok_continue);
         pthread_create(&threadAntencionCpu, NULL, atender_peticiones_kernel, socketCliente);
         pthread_detach(threadAntencionCpu);
