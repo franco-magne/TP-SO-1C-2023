@@ -27,6 +27,7 @@ void levantar_bitmap(t_filesystem* fs, t_log* logger) {
         exit(1);
     }
 
+    memset(map, 0, size_bitarray); // Seteo en cero a todo el map
     bitmap = bitarray_create(map, size_bitarray);
 
     close(fd);

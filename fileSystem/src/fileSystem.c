@@ -39,9 +39,13 @@ int main() {
 
    int serverFS = iniciar_servidor(fs->ip_memoria, fs->puerto_escucha); // DUDA: ¿INICIAR SERVIDOR NO DEBERIA RECIBIR SOLO EL PUERTO DE ESCUCHA?
    log_info(fs_logger, "Servidor FILESYSTEM listo para recibir a KERNEL\n");
-   int serverEspera = esperar_cliente(serverFS);
+   
+   while (fs_escuchando_en(serverFS, fs)); // Escucho a Kernel
 
 
+   config_destroy(fs_config);
+   config_destroy(superbloque_config);
+   config_destroy(fcb_config);
 
    return 0;
 }

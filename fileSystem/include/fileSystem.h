@@ -13,6 +13,7 @@
 //////////////////////////////// BIBLOTECA UTILS NUESTRA //////////////
 #include <../../utils/src/utils/conexiones.h>
 #include "../include/fs-structures.h"
+#include "../include/fs-atender-kernel.h"
 
 ///////////////////////////////// BIBLOTECAS COMMONS /////////////////
 #include <commons/log.h>

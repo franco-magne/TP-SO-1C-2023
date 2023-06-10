@@ -15,6 +15,7 @@
 #include <commons/config.h>
 #include <commons/bitarray.h>
 
+
 /////////////////////// ESTRUCTURA PARA FILESYSTEM ////////////////////////
 
 typedef struct {
@@ -28,6 +29,7 @@ typedef struct {
     double retardo_accesos;
     
     int socket_memoria;
+    int socket_kernel;
 
     uint32_t block_size;
     uint32_t block_count;
@@ -43,12 +45,16 @@ typedef struct {
     uint32_t block_count;
 } t_superbloque;
 
+/////////////////////// ESTRUCTURA PARA EL FCB ////////////////////////
+
 typedef struct {
     char* nombre_archivo;
     uint32_t tamanio_archivo;
     uint32_t puntero_directo;
     uint32_t puntero_indirecto;
 } t_fcb;
+
+
 
 ////////////////////////// DEFINICION DE LAS FUNCIONES ////////////////
 

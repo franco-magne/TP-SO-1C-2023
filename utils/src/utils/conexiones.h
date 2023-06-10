@@ -31,7 +31,14 @@ typedef enum {
     //HEADER_page_fault,
     //HEADER_page_fault_resuelto,
     HEADER_instruccion_io_teclado,
-    HEADER_instruccion_io_pantalla
+    HEADER_instruccion_io_pantalla,
+
+    HEADER_abrir_archivo,
+    HEADER_crear_archivo,
+    HEADER_truncar_archivo,
+    HEADER_leer_archivo,
+    HEADER_escribir_archivo
+
 } t_header;
 
 typedef enum {
