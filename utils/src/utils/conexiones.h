@@ -31,6 +31,7 @@ typedef enum {
     HEADER_create_segment,
     HEADER_delete_segment
 
+
 } t_header;
 
 typedef enum {

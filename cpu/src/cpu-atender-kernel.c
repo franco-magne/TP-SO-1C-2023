@@ -96,13 +96,14 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
         
         switch(header){
             case HEADER_proceso_bloqueado : buffer_pack(buffer, &unidadesDeTrabajo, sizeof(unidadesDeTrabajo));
-                                            break;
+            break;
             case HEADER_proceso_pedir_recurso:
             case HEADER_proceso_devolver_recurso: buffer_pack_string(buffer, recurso_utilizado);
-                                                  break;
+            break;
             case HEADER_create_segment: buffer_pack(buffer, &id_de_segmento, sizeof(id_de_segmento));
-                                              buffer_pack(buffer, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
-                                                  break;
+            buffer_pack(buffer, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
+
+            break;
             default: break;
         }   
 
@@ -358,7 +359,6 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
 
         empaquetar_instruccion(pcb, HEADER_create_segment);
         shouldStopExec = true;
-
 
     } else if (tipoInstruccion == INSTRUCCION_DELETE_SEGMENT ) {
         
