@@ -1,17 +1,18 @@
 #include <../include/memoria-atender-kernel.h>
-//#include <../include/memoria-estructuras.h>
+
 
 pthread_mutex_t mutexMemoriaData; //extern
+pthread_mutex_t mutexTamanioActualMemoria = PTHREAD_MUTEX_INITIALIZER; //extern
+
 extern t_log *memoriaLogger;
+extern uint32_t tamActualMemoria;
+extern tabla_de_segmentos* tabla_segmentos; //aca va con extern?
+
 //t_config *memoriaConfig;
 
-bool puedo_crear_proceso(uint32_t tamanio){
-    bool respuesta=1;
-    //respuesta = tamanio <= tamMaxDefxCPU && hayEspacioLibre(id_proceso)  
-                    //hayEspacioLibre(id_proceso) seria para asociar el proceso con su respectiva tabla de segmentos
-    return respuesta;   
+bool puedo_crear_segmento(uint32_t tamanio){
+    return tamanio <= tamActualMemoria;  
 }
-
 
 void atender_peticiones_kernel(int socketKernel) {
     uint8_t header;
@@ -30,18 +31,58 @@ void atender_peticiones_kernel(int socketKernel) {
                 
                 buffer_unpack(buffer, &id_de_segmento, sizeof(id_de_segmento));
                 buffer_unpack(buffer, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
-        
+
+                log_info(memoriaLogger,"tamanio de segmento <%i> y tamActualMemoria <%i>", tamanio_de_segmento, tamActualMemoria);
+
+                if(!puedo_crear_segmento(tamanio_de_segmento)){
+                    log_error(memoriaLogger, "No se puede crear el segmento, el tamanio supera espacio libre");
+                    stream_send_empty_buffer(socketKernel, HANDSHAKE_seg_muy_grande);
+                    break;
+                }
+                Segmento* unSegmento = crear_segmento(tamanio_de_segmento);
+                segmento_set_id(unSegmento, id_de_segmento);
+                segmento_set_socket(unSegmento, socketKernel);
+
+                pthread_mutex_lock(&mutexTamanioActualMemoria);
+                tamActualMemoria -= tamanio_de_segmento;
+                estado_encolar_segmento_atomic(tabla_segmentos,unSegmento);
+                pthread_mutex_unlock(&mutexTamanioActualMemoria);
+
                 log_info(memoriaLogger, "\e[1;93mSe crea nuevo segmento con id [%i] y tamanio [%i]\e[0m", id_de_segmento, tamanio_de_segmento);
 
-                sleep(5);
                 stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
-            
-                log_info(memoriaLogger,"socket kernel -> 2-<%i> ", socketKernel);
-
+                
+                if( (list_size((estado_get_list(tabla_segmentos))) == 3)){
+                for(int i = 0; i<(list_size((estado_get_list(tabla_segmentos)))); i++ ){
+                    Segmento* x = estado_desencolar_primer_segmento_atomic(tabla_segmentos);
+                    log_info(memoriaLogger, "id_segmento <%i> : ", x->segmento_id );
+                }
+                }
                 //buffer_destroy(buffer);
                 break;
             }
-           
+            /*case HEADER_delete_segment:{
+                uint32_t id_segmento;
+                buffer_unpack(buffer, &id_segmento, sizeof(id_segmento));
+
+                log_info(memoriaLogger,"Segmento a eliminar <%i> ", id_segmento);
+
+                if(!puedo_eliminar_segmento(id_segmento)){
+                    log_error(memoriaLogger, "No se puede elimnar el segmento"); //agregar razon de por que no se pudo?
+                    stream_send_empty_buffer(socketKernel, HANDSHAKE_seg_muy_grande);
+                    break;                    
+                }
+
+                Segmento* unSegmento = obtener_segmento(id_segmento);
+
+
+
+
+                break;
+            }*/
+            case HEADER_proceso_terminado:{
+                 
+            }
             default:
                 //exit(-1);
                 break;
