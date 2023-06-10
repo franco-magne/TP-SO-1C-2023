@@ -56,3 +56,24 @@ int fs_escuchando_en(int server_fs, t_filesystem* fs) {
     return 0;
 }
 
+/*
+APARENTEMENTE PARA LISTAR ARCHIVOS DE UN DIRECTORIO. PUEDE QUE LA NECESITE
+
+#include <dirent.h>
+#include <stdio.h>
+ 
+int main()
+{
+ DIR *d = opendir(".");
+ struct dirent *dentry;
+ size_t i=1;
+ 
+ while((dentry=readdir(d)!=NULL))
+ {
+  printf("%u. %s\n", i, dentry->d_name);
+ }
+ 
+return 0;
+}
+*/
+

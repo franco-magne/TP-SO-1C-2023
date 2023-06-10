@@ -40,11 +40,6 @@ typedef struct {
     uint32_t puntero_indirecto;
 } t_filesystem;
 
-typedef struct {
-    uint32_t block_size;
-    uint32_t block_count;
-} t_superbloque;
-
 /////////////////////// ESTRUCTURA PARA EL FCB ////////////////////////
 
 typedef struct {

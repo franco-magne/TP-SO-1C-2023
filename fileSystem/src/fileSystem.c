@@ -13,7 +13,7 @@ int main() {
    superbloque_config = config_create(FS_SUPERBLOQUE_UBICACION);
    fcb_config = config_create(FS_FCB_UBICACION);
 
-   // TODO: LLAMAR ACA A UNA FUNCION QUE INICIE LOS SEMAFOROS QUE VAYA A NECESITAR
+   // TODO: LLAMAR ACA A UNA FUNCION QUE INICIE LOS SEMAFOROS QUE VAYA A NECESITAR.
 
    cargar_t_filesystem(fs_config, superbloque_config, fcb_config, fs);
 
@@ -32,7 +32,7 @@ int main() {
    log_info(fs_logger, "Conexion con MEMORIA establecida");
 
    levantar_bitmap(fs, fs_logger);
-   //crear_estructuras_administrativas(fs, fs_logger);
+   crear_estructuras_administrativas(fs, fs_logger);
 
 
    ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////
