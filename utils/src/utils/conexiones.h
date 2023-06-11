@@ -42,7 +42,8 @@ typedef enum {
     HANDSHAKE_cpu,
     HANDSHAKE_interrupt,
     HANDSHAKE_dispatch,
-    HANDSHAKE_ok_continue
+    HANDSHAKE_ok_continue,
+    HANDSHAKE_seg_muy_grande
     
 } t_handshake;
 

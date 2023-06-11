@@ -40,8 +40,8 @@ int config_init(void* moduleConfig, char* pathToConfig, t_log* moduleLogger,
 
 */
 
-t_memoria_config* memoria_config_initializer(t_config* tempCfg);
-void memoria_config_destroy(t_memoria_config* self);
+t_memoria_config* memoria_config_initializer(t_config* );
+void memoria_config_destroy(t_memoria_config* );
 char* memoria_config_get_ip_escucha(t_memoria_config*);
 char* memoria_config_get_puerto_escucha(t_memoria_config*);
 uint32_t memoria_config_get_cant_de_segmentos(t_memoria_config*);

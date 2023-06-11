@@ -16,10 +16,8 @@ void mem_adapter_crear_segmento(t_pcb* pcbAIniciar, t_kernel_config* kernelConfi
 
     stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig), HEADER_create_segment ,bufferNuevoSegmento);
 
-    log_info(kernelLogger, "2- socket de kernel: %i", kernel_config_get_socket_memoria(kernelConfig));
-     sleep(5);
+     stream_recv_empty_buffer(kernel_config_get_socket_memoria(kernelConfig));
      uint8_t headerMemoria = stream_recv_header(kernel_config_get_socket_memoria(kernelConfig));
-    log_info(kernelLogger, "valor %i", headerMemoria);
     if (headerMemoria == HANDSHAKE_ok_continue) {
 
         //t_buffer* bufferTabla = buffer_create();

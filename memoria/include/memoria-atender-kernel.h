@@ -15,11 +15,9 @@
 #include <stdio.h>
 #include "memoria-estructuras.h"
 #include "memoria.h"
+#include "segmento-estado.h"
 
-#define MEMORIA_CONFIG_UBICACION "config/memoria.config"
-#define MEMORIA_LOG_UBICACION "logs/memoria.log"
-#define MEMORIA_PROCESS_NAME "Memoria"
-
-void atender_peticiones_kernel(int socketKernel);
+void atender_peticiones_kernel(int );
+bool puedo_crear_segmento(uint32_t );
 
 #endif
