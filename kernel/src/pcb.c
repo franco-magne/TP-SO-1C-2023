@@ -22,8 +22,52 @@ t_pcb* pcb_create(uint32_t pid)
    this->rafaga_anterior = -1;
    this->tamanio_de_segmento = -1;
    this->id_de_segmento = -1;
+   this->listaDeSegmento = list_create();
    return this;
 }
+
+//////////////////////////////////// SEGMENTO /////////////////////////////////////////
+
+t_segmento* segmento_create(uint32_t id_de_segmento, uint32_t tamanio_de_segmento){
+    t_segmento* this = malloc(sizeof(*this));
+    this->id_de_segmento = id_de_segmento;
+    this->tamanio_de_segmento = tamanio_de_segmento;
+
+    return this;
+}
+
+void segmento_destroy(t_segmento* this){
+    free(this);
+}
+
+uint32_t segmento_get_id_de_segmento(t_segmento* this){
+    return this->id_de_segmento;
+}
+
+uint32_t segmento_get_tamanio_de_segmento(t_segmento* this){
+    return this->tamanio_de_segmento;
+}
+
+bool es_el_segmento_por_id(t_segmento* unId, t_segmento* otroId){
+    return unId->id_de_segmento == otroId->id_de_segmento;
+}
+
+t_segmento* enviar_segmento_a_memoria(t_pcb* this, uint32_t id_segmento_search) {
+    t_segmento* aux1 = segmento_create(id_segmento_search, -1);
+    uint32_t index = list_get_index(pcb_get_lista_de_segmentos(this), es_el_segmento_por_id, aux1);
+    t_segmento* aux2 = NULL;
+    
+    if (index != -1) {
+        aux2 = list_get(pcb_get_lista_de_segmentos(this), index);
+    }
+    
+    segmento_destroy(aux1);
+    
+    return aux2;
+}
+//////////////////////////////////////////////////////////////////////////////////////
+
+
 //////////////////////// GETTERS /////////////////////
 
 t_registros_cpu* pcb_get_registros_cpu(t_pcb* this)
@@ -80,6 +124,10 @@ uint32_t pcb_get_tamanio_de_segmento(t_pcb* this){
 
 uint32_t pcb_get_id_de_segmento(t_pcb* this){
     return this->id_de_segmento;
+}
+
+t_list* pcb_get_lista_de_segmentos(t_pcb* this){
+    return this->listaDeSegmento;
 }
 /////////////////////// SETTER ////////////////////////
 
@@ -162,3 +210,8 @@ void pcb_set_tamanio_de_segmento(t_pcb* this, uint32_t tamanio){
 void pcb_set_id_de_segmento(t_pcb* this, uint32_t id){
     this->id_de_segmento = id;
 }
+
+void pcb_set_lista_de_segmentos(t_pcb* this, t_segmento* unSegmento){
+   list_add(this->listaDeSegmento,unSegmento);
+}
+

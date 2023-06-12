@@ -192,7 +192,9 @@ void encolar_en_new_a_nuevo_proceso(int cliente){
         pcb_set_rafaga_actual(newPcb, kernel_config_get_estimacion_inicial(kernelConfig));
         pcb_set_rafaga_anterior(newPcb, kernel_config_get_estimacion_inicial(kernelConfig));
         pcb_set_instructions_buffer(newPcb, instructionsBufferCopy);
+        
 
+        
         log_info(kernelLogger, "Creación de nuevo proceso ID %d mediante <socket %d>", pcb_get_pid(newPcb), cliente);
 
         //////// LE ENVIO A CONSOLA EL PID ///////
@@ -255,7 +257,10 @@ void* planificador_largo_plazo(void* args)
                                  
         t_pcb* pcbQuePasaAReady = estado_desencolar_primer_pcb_atomic(estadoNew);
         
-    
+        t_segmento* segmentoCero = segmento_create(0,0);
+        pcb_set_lista_de_segmentos(pcbQuePasaAReady,segmentoCero);
+        segmento_destroy(segmentoCero);
+
         
         //uint32_t* nuevaTablaPaginasSegmentos = mem_adapter_obtener_tabla_pagina(pcbQuePasaAReady, kernelConfig, kernelDevLogger);
 
@@ -343,6 +348,7 @@ void* atender_pcb(void* args)
 
                 procesoFueBloqueado = instruccion_wait(pcb, estadoBlocked, estadoExit);
 
+
                 break;
 
             case HEADER_proceso_devolver_recurso:
@@ -352,9 +358,14 @@ void* atender_pcb(void* args)
                 break;
 
             case HEADER_create_segment:
+                log_info(kernelLogger, "hola");
+                instruccion_create_segment( pcb,kernelConfig,kernelLogger);
 
-                mem_adapter_crear_segmento( pcb,kernelConfig,kernelLogger);
+                break;
+            
+            case HEADER_delete_segment:
 
+                instruccion_delete_segment( pcb,kernelConfig,kernelLogger);
                 break;
 
             default:
@@ -364,7 +375,14 @@ void* atender_pcb(void* args)
         }
 
 
-        if( (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado && pcb_get_estado_actual(pcb) != EXIT) || (cpuResponse == HEADER_proceso_devolver_recurso && pcb_get_estado_actual(pcb) == EXEC) || (cpuResponse == HEADER_create_segment) ){
+        if
+        ( 
+           (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado && pcb_get_estado_actual(pcb) != EXIT) 
+        || (cpuResponse == HEADER_proceso_devolver_recurso && pcb_get_estado_actual(pcb) == EXEC) 
+        || (cpuResponse == HEADER_create_segment) 
+         // Agrega otro mas
+        )
+        {
 
                 estado_encolar_pcb_atomic(estadoExec, pcb);
                 sem_post(estado_get_sem(estadoExec));

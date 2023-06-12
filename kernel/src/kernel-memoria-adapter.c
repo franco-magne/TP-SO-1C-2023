@@ -3,21 +3,28 @@
 
 
 
-void mem_adapter_crear_segmento(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger) {
-    uint32_t tamanio_de_segmento = pcb_get_tamanio_de_segmento(pcbAIniciar);
-    uint32_t id_de_segmento = pcb_get_id_de_segmento(pcbAIniciar);
+void instruccion_create_segment(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger) {
+    uint32_t id_de_segmento_search = pcb_get_id_de_segmento(pcbAIniciar);
     
-    log_info(kernelLogger, "1- socket de kernel: %i", kernel_config_get_socket_memoria(kernelConfig));
+    log_info(kernelLogger, "id <%i>", id_de_segmento_search);
 
+    //t_list* listaDeSegmentoPcb = pcb_get_lista_de_segmentos(pcbAIniciar);
+    t_segmento* unSegmentoAEnviar = enviar_segmento_a_memoria(pcbAIniciar,id_de_segmento_search);
+   
+    uint32_t id_de_segmento = segmento_get_id_de_segmento(unSegmentoAEnviar);
+    uint32_t tamanio_de_segmento = segmento_get_tamanio_de_segmento(unSegmentoAEnviar);
 
     t_buffer* bufferNuevoSegmento = buffer_create();
+
     buffer_pack(bufferNuevoSegmento, &id_de_segmento, sizeof(id_de_segmento));
     buffer_pack(bufferNuevoSegmento, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
 
     stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig), HEADER_create_segment ,bufferNuevoSegmento);
 
+
      stream_recv_empty_buffer(kernel_config_get_socket_memoria(kernelConfig));
      uint8_t headerMemoria = stream_recv_header(kernel_config_get_socket_memoria(kernelConfig));
+
     if (headerMemoria == HANDSHAKE_ok_continue) {
 
         //t_buffer* bufferTabla = buffer_create();
@@ -37,5 +44,9 @@ void mem_adapter_crear_segmento(t_pcb* pcbAIniciar, t_kernel_config* kernelConfi
         exit(-1);
     }
     buffer_destroy(bufferNuevoSegmento);
+
+}
+
+void instruccion_delete_segment(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger) {
 
 }

@@ -35,6 +35,8 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
     //char* dispositivoIoEnUso = NULL;
     uint32_t cantidadUnidadesTiemposIo = 0;
     //t_registro registroEnUsoIo = REGISTRO_null;
+      uint32_t id_de_segmento;
+      uint32_t tamanio_de_segmento;
 
     t_buffer* bufferPcb = buffer_create();
 
@@ -67,15 +69,29 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         break;
 
         case HEADER_create_segment:
-        uint32_t id_de_segmento;
-        uint32_t tamanio_de_segmento;
-        buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
-        buffer_unpack(bufferPcb, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
+      
 
-        pcb_set_id_de_segmento(pcbAActualizar,id_de_segmento);
-        pcb_set_tamanio_de_segmento(pcbAActualizar,tamanio_de_segmento );
+    buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
+    buffer_unpack(bufferPcb, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
+
+    t_segmento* unSegmento = segmento_create(id_de_segmento, tamanio_de_segmento);
+    
+    pcb_set_lista_de_segmentos(pcbAActualizar,unSegmento);
+    pcb_set_id_de_segmento(pcbAActualizar, id_de_segmento);
+    pcb_set_tamanio_de_segmento(pcbAActualizar, tamanio_de_segmento);
+
+    segmento_destroy(unSegmento);
+
+    break;
+
 
         break;
+
+        case HEADER_delete_segment:
+        
+        buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
+        pcb_set_id_de_segmento(pcbAActualizar,id_de_segmento);
+
     }
     
    if (pidRecibido == pcb_get_pid(pcbAActualizar)) {
@@ -86,7 +102,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
             case HEADER_proceso_pedir_recurso:
             case HEADER_proceso_devolver_recurso:
             case HEADER_create_segment:
-
+            case HEADER_delete_segment:
 
              pcb_set_program_counter(pcbAActualizar, programCounterActualizado);
 

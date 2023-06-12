@@ -102,7 +102,8 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
             break;
             case HEADER_create_segment: buffer_pack(buffer, &id_de_segmento, sizeof(id_de_segmento));
             buffer_pack(buffer, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
-
+            break;
+            case HEADER_delete_segment: buffer_pack(buffer, &id_de_segmento, sizeof(id_de_segmento));
             break;
             default: break;
         }   
@@ -271,7 +272,6 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <EXIT> ", cpu_pcb_get_pid(pcb));
 
         uint32_t pid = cpu_pcb_get_pid(pcb);
-      //  uint32_t* arrayTablaPaginasActualizado = cpu_pcb_get_array_tabla_paginas(pcb);
         t_registros_cpu* registrosCpuActualizado = cpu_pcb_get_registros(pcb);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
 
@@ -353,6 +353,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <CREATE_SEGMENT> - <%i> - <%i>", cpu_pcb_get_pid(pcb),id_de_segmento,tamanio_de_segmento);
 
         intervalo_de_pausa(retardoInstruccion);
+
         cpu_pcb_set_id_de_segmento(pcb,id_de_segmento);
         cpu_pcb_set_tamanio_de_segmento(pcb,tamanio_de_segmento);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
@@ -361,12 +362,17 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         shouldStopExec = true;
 
     } else if (tipoInstruccion == INSTRUCCION_DELETE_SEGMENT ) {
-        
+        uint32_t id_de_segmento = *((uint32_t*) operando1);
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <DELETE_SEGMENT> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <DELETE_SEGMENT> - <%i>", cpu_pcb_get_pid(pcb),id_de_segmento);
 
         intervalo_de_pausa(retardoInstruccion);
+
+        cpu_pcb_set_id_de_segmento(pcb,id_de_segmento);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+
+        empaquetar_instruccion(pcb, HEADER_delete_segment);
+        shouldStopExec = true;
 
     } else if (tipoInstruccion == INSTRUCCION_F_OPEN ) {
         
@@ -493,7 +499,8 @@ static bool cpu_ejecutar_ciclos_de_instruccion(t_cpu_pcb* pcb)
             shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &operando1, (void*) &operando2);
             break;
         case INSTRUCCION_DELETE_SEGMENT:
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);
+            operando1 = instruccion_get_operando1(nextInstruction);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &operando1 , NULL);
             break;
         case INSTRUCCION_F_OPEN:
             shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);

@@ -10,7 +10,7 @@
 #include <stdint.h>
 //////////////////////// BIBLOTECAS COMMONS /////////////////
 #include <commons/log.h>
-
+#include <commons/collections/list.h>
 //////////////////////// BIBLOTECAS UTILS NUESTRA /////////////////
 #include "../../utils/src/utils/serializacion.h"
 #include "../../utils/src/utils/instrucciones.h"
@@ -30,11 +30,28 @@ typedef struct {
     double rafaga_actual;
     uint32_t tamanio_de_segmento;
     uint32_t id_de_segmento;
+    t_list *listaDeSegmento;
 }t_pcb;
+
+typedef struct {
+    uint32_t tamanio_de_segmento;
+    uint32_t id_de_segmento;
+}t_segmento;
+
 
 ////////////////////////// DEFINICION DE LAS FUNCIONES ////////////////
 t_pcb* pcb_create(uint32_t pid);
 bool pcb_es_este_pcb_por_pid(void* unPcb, void* otroPcb);
+
+///////////////////////////// SEGMENTO ////////////////////////////////////////////
+
+t_segmento* segmento_create(uint32_t id_de_segmento, uint32_t tamanio_de_segmento);
+void segmento_destroy(t_segmento* this);
+uint32_t segmento_get_id_de_segmento(t_segmento* this);
+uint32_t segmento_get_tamanio_de_segmento(t_segmento* this);
+t_segmento* enviar_segmento_a_memoria(t_pcb* this, uint32_t id_segmento_search) ;
+
+
 /////////////////////// GETTERS ////////////////////////
 t_registros_cpu* pcb_get_registros_cpu(t_pcb* this);
 uint32_t pcb_get_program_counter(t_pcb* this);
@@ -49,6 +66,7 @@ double pcb_get_rafaga_actual(t_pcb* this);
 double pcb_get_rafaga_anterior(t_pcb* this);
 uint32_t pcb_get_tamanio_de_segmento(t_pcb* this);
 uint32_t pcb_get_id_de_segmento(t_pcb* this);
+t_list* pcb_get_lista_de_segmentos(t_pcb* this);
 
 /////////////////////// SETTERS ////////////////////////
 void pcb_set_program_counter(t_pcb* this, uint32_t programCounter); 
@@ -63,6 +81,7 @@ void pcb_set_rafaga_actual(t_pcb* this,double );
 void pcb_set_rafaga_anterior(t_pcb* this,double );
 void pcb_set_tamanio_de_segmento(t_pcb* this, uint32_t);
 void pcb_set_id_de_segmento(t_pcb* this, uint32_t);
+void pcb_set_lista_de_segmentos(t_pcb* this, t_segmento* unSegmento);
 
 
 #include "../../utils/src/utils/commons-nuestras.h"
