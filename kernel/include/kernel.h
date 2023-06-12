@@ -37,6 +37,10 @@
 #define KERNEL_LOG_UBICACION "logs/kernel.log"
 #define KERNEL_PROCESS_NAME "Kernel"
 
+void log_transition(const char* prev, const char* post, int pid);
+void setear_tiempo_ready(t_pcb* this);
+
+
 
 
 #endif
