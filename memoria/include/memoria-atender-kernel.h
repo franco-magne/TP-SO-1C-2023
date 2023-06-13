@@ -17,7 +17,7 @@
 #include "memoria.h"
 #include "segmento-estado.h"
 
-void atender_peticiones_kernel(int );
-bool puedo_crear_segmento(uint32_t );
+void atender_peticiones_kernel(int socketKernel);
+bool puedo_crear_segmento_o_proceso(uint32_t tamanio);
 
 #endif

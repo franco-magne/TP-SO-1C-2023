@@ -3,7 +3,8 @@
 extern t_memoria_config* memoriaConfig;
 void* memoriaPrincipal;
 uint32_t tamActualMemoria;
-extern Segmento* segCompartido;
+extern Segmento* segCompartido; // tipo lista enlazada (obligatorio)
+extern t_list* listaDeProcesos;
 
 /*
 inicializar mp
@@ -38,12 +39,12 @@ void segmento_set_base(Segmento* un_segmento, uint32_t* base){
     un_segmento->base = base;       //habria que hacer malloc???
 }
 
-int segmento_get_socket(Segmento* un_segmento){
-    return un_segmento->socket; 
+int segmento_get_pid(Segmento* un_segmento){
+    return un_segmento->pid; 
 }
 
-void segmento_set_socket(Segmento* un_segmento, int socket){
-    un_segmento->socket = socket;
+void segmento_set_pid(Segmento* un_segmento, int pid){
+    un_segmento->pid = pid;
 }
 
 int segmento_get_bit_validez(Segmento* un_segmento){
@@ -54,26 +55,41 @@ void segmento_set_bit_validez(Segmento* un_segmento, int validezValor){
     un_segmento->validez = validezValor;
 }
 
+Segmento* crear_segmento(int tamSegmento){
+    Segmento* this = malloc(sizeof(*this)); //no seria sizeof(limite)?? que pasa si limite es muy chico, no puedo guardar id_segmento...
+    this->segmento_id = -1;
+    this->base = NULL;
+    segmento_set_limite(this, tamSegmento);
+    this->pid = -1;
+    this->validez = -1;
+
+    return this;
+}
+////////////deberia estar en memoria
 void inicializar_memoria(){
     int tamanioMP = (int) memoria_config_get_tamanio_memoria(memoriaConfig); 
     memoriaPrincipal = malloc(tamanioMP);
     tamActualMemoria = tamanioMP;
 }
 
-Segmento* crear_segmento(int tamSegmento){
-    Segmento* this = malloc(sizeof(*this)); //no seria sizeof(limite)?? que pasa si limite es muy chico, no puedo guardar id_segmento...
-    this->segmento_id = -1;
-    this->base = NULL;
-    segmento_set_limite(this, tamSegmento);
-    this->socket = -1;
-    this->validez = -1;
+void inicializar_estructuras(){
+    segCompartido = crear_segmento(memoria_config_get_tamanio_segmento_0(memoriaConfig));
+    listaDeProcesos = list_create();
+}
+//----------------------------------------------
 
+Procesos* crear_proceso(int pid){ //la tabla de segmentos del proceso de pid: pid
+    Procesos* this = malloc(sizeof(*this));
+    this->tablaDeSegmentos = list_create();
+    this->pid = pid;
+    
+    //Inicializa la tabla de segmentos
+    list_add(this->tablaDeSegmentos, segCompartido);
+    //hay que restar tamActualMemoria
     return this;
 }
-void inicializar_estructuras(){
-    inicializar_memoria();
-    segCompartido = crear_segmento(memoria_config_get_tamanio_segmento_0(memoriaConfig));
-}
+
+
 
 
 

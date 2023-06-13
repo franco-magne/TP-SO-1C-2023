@@ -5,12 +5,16 @@ pthread_mutex_t mutexMemoriaData; //extern
 pthread_mutex_t mutexTamanioActualMemoria = PTHREAD_MUTEX_INITIALIZER; //extern
 
 extern t_log *memoriaLogger;
+extern t_memoria_config* memoriaConfig;
 extern uint32_t tamActualMemoria;
-extern tabla_de_segmentos* tabla_segmentos; //aca va con extern?
+extern t_estado* tabla_segmentos; 
+extern Segmento* segCompartido;
+
+extern t_list* listaDeProcesos;
 
 //t_config *memoriaConfig;
 
-bool puedo_crear_segmento(uint32_t tamanio){
+bool puedo_crear_segmento_o_proceso(uint32_t tamanio){
     return tamanio <= tamActualMemoria;  
 }
 
@@ -23,7 +27,28 @@ void atender_peticiones_kernel(int socketKernel) {
         stream_recv_buffer(socketKernel, buffer);
 
         switch (header) {
-            case HEADER_create_segment: { //no seria HEADER_iniciarProceso  xq kernel no usa la tabla??
+            case HEADER_iniciar_proceso:{
+                int pid;
+                t_list* tabla_segmentos_solicitada = list_create();
+                buffer_unpack(buffer, &pid, sizeof(pid));
+
+                if(!puedo_crear_segmento_o_proceso(memoria_config_get_tamanio_segmento_0(memoriaConfig))){ //+sizeof(*tabla_de_segmentos)
+                    log_error(memoriaLogger, "No se pudo crear el proceso, no hay espacio en memoria");
+                }
+                inicializar_estructuras();
+                Procesos* proceso = crear_proceso(); //proceso inicilizado con SegCompartido en la tabla de segmentos
+                list_add(listaDeProcesos, proceso);
+                tabla_segmentos_solicitada = proceso->tablaDeSegmentos;
+                //aca dentro deberia restar el tamActualMemoria
+                
+                t_buffer* buffer_rta = buffer_create();
+                buffer_pack(buffer_rta, tabla_segmentos_solicitada, sizeof(tabla_segmentos_solicitada));
+                stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
+                stream_send_buffer(socketKernel, HEADER_tabla_segmentos, buffer_rta);
+
+                //buffer_destroy(buffer);
+            }
+            case HEADER_create_segment: { 
                 log_info(memoriaLogger,"socket kernel -> 1- <%i> ", socketKernel);
 
                 uint32_t tamanio_de_segmento;  
@@ -34,9 +59,12 @@ void atender_peticiones_kernel(int socketKernel) {
 
                 log_info(memoriaLogger,"tamanio de segmento <%i> y tamActualMemoria <%i>", tamanio_de_segmento, tamActualMemoria);
 
-                if(!puedo_crear_segmento(tamanio_de_segmento)){
+                // (!) este if es clave, borrar todos los segments del Proceso que 
+                // se crearon antes si es que uno de sus segments no se puede crear.
+                if(!puedo_crear_segmento_o_proceso(tamanio_de_segmento)){//si no puedo crear otro segmento de ese proceso tengo que avisar a kernel y hacer un deleteSegment del resto
                     log_error(memoriaLogger, "No se puede crear el segmento, el tamanio supera espacio libre");
-                    stream_send_empty_buffer(socketKernel, HANDSHAKE_seg_muy_grande);
+
+                    stream_send_empty_buffer(socketKernel, HANDSHAKE_seg_muy_grande); //(!) hay que avisarle a kernel que no se puede
                     break;
                 }
                 Segmento* unSegmento = crear_segmento(tamanio_de_segmento);
@@ -69,13 +97,12 @@ void atender_peticiones_kernel(int socketKernel) {
 
                 if(!puedo_eliminar_segmento(id_segmento)){
                     log_error(memoriaLogger, "No se puede elimnar el segmento"); //agregar razon de por que no se pudo?
+                    //por que no se podria eliminar un segmento?
                     stream_send_empty_buffer(socketKernel, HANDSHAKE_seg_muy_grande);
                     break;                    
                 }
 
                 Segmento* unSegmento = obtener_segmento(id_segmento);
-
-
 
 
                 break;

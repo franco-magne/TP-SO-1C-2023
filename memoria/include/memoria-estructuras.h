@@ -19,9 +19,15 @@ typedef struct {
     int segmento_id; 
     uint32_t* limite; //tamanio
     uint32_t* base;
-    int socket; 
+    int pid; 
     int validez;
 } Segmento;
+
+
+typedef struct {
+    t_list* tablaDeSegmentos;
+    int pid;
+} Procesos;
 
 #include "memoria.h"
 
@@ -31,8 +37,8 @@ uint32_t* segmento_get_limite(Segmento* );
 void segmento_set_limite(Segmento* , uint32_t* );
 uint32_t* segmento_get_base(Segmento* );
 void segmento_set_base(Segmento* , uint32_t* );
-int segmento_get_socket(Segmento* );
-void segmento_set_socket(Segmento* , int );
+int segmento_get_pid(Segmento* );
+void segmento_set_pid(Segmento* , int );
 int segmento_get_bit_validez(Segmento* );
 void segmento_set_bit_validez(Segmento* , int );
 

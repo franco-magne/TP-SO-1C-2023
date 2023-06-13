@@ -5,7 +5,8 @@ t_log *memoriaLogger;
 static t_config *memoriaConfigInicial;
 t_memoria_config* memoriaConfig;
 Segmento* segCompartido;
-tabla_de_segmentos* tabla_segmentos;
+t_estado* tabla_segmentos; //antigua tabla_de_segmentos
+t_list* listaDeProcesos;
 
 static bool cpuSinAtender;
 static bool kernelSinAtender;
@@ -24,8 +25,8 @@ int main() {
 
    int serverMemoria = iniciar_servidor(memoria_config_get_ip_escucha(memoriaConfig), memoria_config_get_puerto_escucha(memoriaConfig) );
    log_info(memoriaLogger,"Servidor memoria listo para recibir al modulo\n");
+   inicializar_memoria();
    aceptar_conexiones_memoria(serverMemoria);
-   
 
 }  
 
@@ -75,8 +76,8 @@ void recibir_conexion(int socketCliente) {
 
     else if (handshake == HANDSHAKE_kernel) {
         log_info(memoriaLogger, "\e[1;92mSe acepta conexión de Kernel en socket [%d]\e[0m", socketCliente);
-        inicializar_estructuras();
-        estado_encolar_segmento_atomic(tabla_segmentos, segCompartido);
+        //inicializar_estructuras();
+        //estado_encolar_segmento_atomic(tabla_segmentos, segCompartido);
         stream_send_empty_buffer(socketCliente, HANDSHAKE_ok_continue);
         pthread_create(&threadAntencionCpu, NULL, atender_peticiones_kernel, socketCliente);
         pthread_detach(threadAntencionCpu);
