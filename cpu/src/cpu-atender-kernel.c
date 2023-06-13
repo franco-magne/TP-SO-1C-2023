@@ -376,19 +376,57 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
 
     } else if (tipoInstruccion == INSTRUCCION_F_OPEN ) {
         
+        char* recurso1 = string_duplicate((char*) operando1);
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_OPEN> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_OPEN> - <%s> - ", cpu_pcb_get_pid(pcb),recurso1);
 
         intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+
+        empaquetar_instruccion(pcb, HEADER_f_open);
+        shouldStopExec = true;
 
     } else if (tipoInstruccion == INSTRUCCION_F_CLOSE ) {
         
+        char* recurso1 = string_duplicate((char*) operando1);
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_CLOSE> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_CLOSE> - <%s>", cpu_pcb_get_pid(pcb), recurso1);
 
         intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+
+        empaquetar_instruccion(pcb, HEADER_f_close);
+        shouldStopExec = true;
+
+    } else if (tipoInstruccion == INSTRUCCION_F_SEEK ) {
+        
+        char* recurso1 = string_duplicate((char*) operando1);
+        uint32_t tamanio_archivo = *((uint32_t*) operando2);
+
+
+        uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_SEEK> - <%s> - <%i>", cpu_pcb_get_pid(pcb),recurso1,tamanio_archivo);
+
+        intervalo_de_pausa(retardoInstruccion);
+        cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+
+        empaquetar_instruccion(pcb, HEADER_f_seek);
+        shouldStopExec = true;
+
+    } else if (tipoInstruccion == INSTRUCCION_F_TRUNCATE ) {
+        
+        char* recurso1 = string_duplicate((char*) operando1);
+        uint32_t tamanio_archivo = *((uint32_t*) operando2);
+
+
+        uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_TRUNCATE> - <%s> - <%i>", cpu_pcb_get_pid(pcb),recurso1,tamanio_archivo);
+
+        intervalo_de_pausa(retardoInstruccion);
+        cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+
+        empaquetar_instruccion(pcb, HEADER_f_truncate);
+        shouldStopExec = true;
 
     } else if (tipoInstruccion == INSTRUCCION_F_READ ) {
         
@@ -398,23 +436,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
 
-    } else if (tipoInstruccion == INSTRUCCION_F_SEEK ) {
-        
-        uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_SEEK> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
-
-        intervalo_de_pausa(retardoInstruccion);
-        cpu_pcb_set_program_counter(pcb, programCounterActualizado);
-
-    } else if (tipoInstruccion == INSTRUCCION_F_TRUNCATE ) {
-        
-        uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_TRUNCATE> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
-
-        intervalo_de_pausa(retardoInstruccion);
-        cpu_pcb_set_program_counter(pcb, programCounterActualizado);
-
-    } else if (tipoInstruccion == INSTRUCCION_F_READ ) {
+    } else if (tipoInstruccion == INSTRUCCION_F_WRITE ) {
         
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_READ> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
@@ -503,18 +525,24 @@ static bool cpu_ejecutar_ciclos_de_instruccion(t_cpu_pcb* pcb)
             shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &operando1 , NULL);
             break;
         case INSTRUCCION_F_OPEN:
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);
+            dispositivo = instruccion_get_dispositivo(nextInstruction);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo, NULL);
             break;
         case INSTRUCCION_F_CLOSE:
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);
-            break;
-        case INSTRUCCION_F_READ:
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);
+            dispositivo = instruccion_get_dispositivo(nextInstruction);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo, NULL);
             break;
         case INSTRUCCION_F_SEEK:
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);
+            dispositivo = instruccion_get_dispositivo(nextInstruction);
+            operando2 = instruccion_get_operando2(nextInstruction);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo, (void*) &operando2);
             break;
         case INSTRUCCION_F_TRUNCATE:
+            dispositivo = instruccion_get_dispositivo(nextInstruction);
+            operando2 = instruccion_get_operando2(nextInstruction);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo,  (void*) &operando2);
+            break;
+        case INSTRUCCION_F_READ:
             shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);
             break;
         case INSTRUCCION_F_WRITE:

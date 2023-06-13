@@ -101,6 +101,10 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
             case HEADER_proceso_devolver_recurso:
             case HEADER_create_segment:
             case HEADER_delete_segment:
+            case HEADER_f_open:
+            case HEADER_f_close:
+            case HEADER_f_seek:
+            case HEADER_f_truncate:
 
              pcb_set_program_counter(pcbAActualizar, programCounterActualizado);
 

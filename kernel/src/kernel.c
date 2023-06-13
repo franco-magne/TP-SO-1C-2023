@@ -368,6 +368,18 @@ void* atender_pcb(void* args)
 
                 instruccion_delete_segment( pcb,kernelConfig,kernelLogger);
                 break;
+            case HEADER_f_open:
+                instruccion_f_open(pcb,kernelConfig, kernelLogger);
+                break;
+            case HEADER_f_close:
+                instruccion_f_close(pcb,kernelConfig, kernelLogger);
+                break;
+            case HEADER_f_seek:
+                instruccion_f_seek(pcb,kernelConfig, kernelLogger);
+                break;
+            case HEADER_f_truncate:
+                instruccion_f_truncate(pcb,kernelConfig, kernelLogger);
+                break;
 
             default:
 
@@ -381,7 +393,11 @@ void* atender_pcb(void* args)
            (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado && pcb_get_estado_actual(pcb) != EXIT) 
         || (cpuResponse == HEADER_proceso_devolver_recurso && pcb_get_estado_actual(pcb) == EXEC) 
         || (cpuResponse == HEADER_create_segment)
-        || (cpuResponse == HEADER_delete_segment) 
+        || (cpuResponse == HEADER_delete_segment)
+        || (cpuResponse == HEADER_f_open)
+        || (cpuResponse == HEADER_f_close)
+        || (cpuResponse == HEADER_f_seek)
+        || (cpuResponse == HEADER_f_truncate) 
          // Agrega otro mas
         )
         {
