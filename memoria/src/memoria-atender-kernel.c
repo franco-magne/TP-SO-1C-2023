@@ -61,25 +61,26 @@ void atender_peticiones_kernel(int socketKernel) {
                 //buffer_destroy(buffer);
                 break;
             }
-            /*case HEADER_delete_segment:{
+            case HEADER_delete_segment:
                 uint32_t id_segmento;
                 buffer_unpack(buffer, &id_segmento, sizeof(id_segmento));
 
                 log_info(memoriaLogger,"Segmento a eliminar <%i> ", id_segmento);
 
+                /*
                 if(!puedo_eliminar_segmento(id_segmento)){
                     log_error(memoriaLogger, "No se puede elimnar el segmento"); //agregar razon de por que no se pudo?
                     stream_send_empty_buffer(socketKernel, HANDSHAKE_seg_muy_grande);
                     break;                    
                 }
 
-                Segmento* unSegmento = obtener_segmento(id_segmento);
+                */
 
-
+                stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
 
 
                 break;
-            }*/
+            
             case HEADER_proceso_terminado:{
                  
             }

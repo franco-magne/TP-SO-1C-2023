@@ -258,6 +258,7 @@ void* planificador_largo_plazo(void* args)
         t_pcb* pcbQuePasaAReady = estado_desencolar_primer_pcb_atomic(estadoNew);
         
         t_segmento* segmentoCero = segmento_create(0,0);
+        segmento_set_victima(segmentoCero, false);
         pcb_set_lista_de_segmentos(pcbQuePasaAReady,segmentoCero);
         segmento_destroy(segmentoCero);
 
@@ -358,7 +359,7 @@ void* atender_pcb(void* args)
                 break;
 
             case HEADER_create_segment:
-                log_info(kernelLogger, "hola");
+
                 instruccion_create_segment( pcb,kernelConfig,kernelLogger);
 
                 break;
@@ -379,7 +380,8 @@ void* atender_pcb(void* args)
         ( 
            (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado && pcb_get_estado_actual(pcb) != EXIT) 
         || (cpuResponse == HEADER_proceso_devolver_recurso && pcb_get_estado_actual(pcb) == EXEC) 
-        || (cpuResponse == HEADER_create_segment) 
+        || (cpuResponse == HEADER_create_segment)
+        || (cpuResponse == HEADER_delete_segment) 
          // Agrega otro mas
         )
         {

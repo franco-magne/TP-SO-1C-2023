@@ -81,9 +81,9 @@ void instruccion_io(t_pcb* pcb, t_estado* estadoBlocked, t_estado* estadoReady)
 {
     
     log_transition("EXEC", "BLOCK", pcb_get_pid(pcb));
-    log_info(kernelLogger, "PCB <ID %d> - Bloqueado por: <%i> segundos", pcb_get_pid(pcb), pcb_get_tiempoIO(pcb));
+    log_info(kernelLogger, "PID: <%d> - Ejecuta IO: <%i>", pcb_get_pid(pcb), pcb_get_tiempoIO(pcb));
 
-    log_info(kernelLogger, "PCB <ID %d> ingresa a la cola de espera de I/O de %i", pcb_get_pid(pcb), pcb_get_tiempoIO(pcb));
+    log_info(kernelLogger, "PID: <%d> - Bloqueado por: IO", pcb_get_pid(pcb));
     
     pcb_set_estado_anterior(pcb, pcb_get_estado_actual(pcb));
     pcb_set_estado_actual(pcb, BLOCK);
@@ -137,7 +137,6 @@ void devolver_recurso(int posicion_recurso){
 
     pthread_mutex_lock(&mutexCantidadRecursos);
     *(recursoConfig[posicion_recurso].instancias_recurso) += 1;
-    log_info(kernelLogger, "valor recurso actual : <%i>",*(recursoConfig[posicion_recurso].instancias_recurso) );
     pthread_mutex_unlock(&mutexCantidadRecursos);
 
 }
@@ -151,7 +150,7 @@ bool instruccion_wait(t_pcb* pcb, t_estado* estadoBlocked, t_estado* estadoExit 
 
         if (recurso_disponible(posicion_recurso)) {
             asignar_recurso(posicion_recurso);
-            log_info(kernelLogger, "RECURSO ASIGNADO AL PROCESO <%i>. RECURSO: <%s>", pcb_get_pid(pcb), recursoConfig[posicion_recurso].recurso);
+            log_info(kernelLogger, "PID: <%i> - Wait: <%s> - Instancias: <%i> ",pcb_get_pid(pcb), recursoConfig[posicion_recurso].recurso , *recursoConfig[posicion_recurso].instancias_recurso );    
         } else {
             log_transition("EXEC", "BLOCK", pcb_get_pid(pcb));
             log_info(kernelLogger, "PID: <%i> - Bloqueado por: <%s>", pcb_get_pid(pcb), recursoConfig[posicion_recurso].recurso);
@@ -187,7 +186,6 @@ return (strcmp(pcb_get_recurso_utilizado(pcb), nombre_recurso) == 0);
 void asignar_recurso(int posicion_recurso){
     pthread_mutex_lock(&mutexCantidadRecursos);
     *(recursoConfig[posicion_recurso].instancias_recurso) -= 1;
-    log_info(kernelLogger, "valor recurso actual : <%i>",*(recursoConfig[posicion_recurso].instancias_recurso) );
     pthread_mutex_unlock(&mutexCantidadRecursos);
 
 }
@@ -225,17 +223,16 @@ void instruccion_signal(t_pcb* pcb, t_estado* estadoBlocked, t_estado* estadoRea
             
             int posicion_recurso = position_in_list(kernel_config_get_recurso(kernelConfig) , pcb_get_recurso_utilizado(pcb));
             devolver_recurso(posicion_recurso);
-                log_info(kernelLogger, "RECURSO DEVUELTO POR EL PROCESO <%i> . RECURSO: <%s> ",pcb_get_pid(pcb), recursoConfig[posicion_recurso].recurso  );    
+            log_info(kernelLogger, "PID: <%i> - Signal: <%s> - Instancias: <%i> ",pcb_get_pid(pcb), recursoConfig[posicion_recurso].recurso , *recursoConfig[posicion_recurso].instancias_recurso );    
             t_pcb* pcbPasaReady = primer_elemento_bloqueado_por_recurso(estado_get_list(estadoBlocked), pcb_get_recurso_utilizado(pcb), estadoBlocked);
             if(pcbPasaReady != NULL){
                 pcb_set_estado_anterior(pcbPasaReady, pcb_get_estado_actual(pcbPasaReady));
                 pcb_set_estado_actual(pcbPasaReady, READY);
                 setear_tiempo_ready(pcbPasaReady); // EMPIEZA A CONTAR EL TIEMPO 
                 estado_encolar_pcb_atomic(estadoReady, pcbPasaReady);
-                char* stringPidsReady = malloc(sizeof(*stringPidsReady));
-                stringPidsReady = string_pids_ready(estadoReady);
+                char* stringPidsReady = string_pids_ready(estadoReady);
                 log_transition("BLOCK", "READY", pcb_get_pid(pcbPasaReady));
-               // log_info(kernelLogger,  "Cola Ready <%s>: %s", kernel_config_get_algoritmo_planificacion(kernelConfig), stringPidsReady);
+               log_info(kernelLogger,  "Cola Ready <%s>: %s", kernel_config_get_algoritmo_planificacion(kernelConfig), stringPidsReady);
                 free(stringPidsReady);
                 sem_post(estado_get_sem(estadoReady));
                 

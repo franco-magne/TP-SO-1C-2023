@@ -36,6 +36,7 @@ typedef struct {
 typedef struct {
     uint32_t tamanio_de_segmento;
     uint32_t id_de_segmento;
+    bool victima;
 }t_segmento;
 
 
@@ -49,7 +50,10 @@ t_segmento* segmento_create(uint32_t id_de_segmento, uint32_t tamanio_de_segment
 void segmento_destroy(t_segmento* this);
 uint32_t segmento_get_id_de_segmento(t_segmento* this);
 uint32_t segmento_get_tamanio_de_segmento(t_segmento* this);
-t_segmento* enviar_segmento_a_memoria(t_pcb* this, uint32_t id_segmento_search) ;
+t_segmento* enviar_segmento_a_memoria(t_pcb* this, uint8_t header) ;
+void segmento_set_victima(t_segmento* this, bool cambioEstado);
+bool segmento_get_victima(t_segmento* this);
+void modificar_victima_lista_segmento(t_pcb* this, uint32_t id_victima);
 
 
 /////////////////////// GETTERS ////////////////////////
@@ -64,8 +68,6 @@ char* pcb_get_recurso_utilizado(t_pcb* this);
 struct timespec pcb_get_tiempo_en_ready(t_pcb* this);
 double pcb_get_rafaga_actual(t_pcb* this);
 double pcb_get_rafaga_anterior(t_pcb* this);
-uint32_t pcb_get_tamanio_de_segmento(t_pcb* this);
-uint32_t pcb_get_id_de_segmento(t_pcb* this);
 t_list* pcb_get_lista_de_segmentos(t_pcb* this);
 
 /////////////////////// SETTERS ////////////////////////
@@ -79,8 +81,6 @@ void pcb_set_recurso_utilizado(t_pcb* this, char* recurso);
 void pcb_set_tiempo_en_ready(t_pcb* this, struct timespec tiempo_en_ready);
 void pcb_set_rafaga_actual(t_pcb* this,double );
 void pcb_set_rafaga_anterior(t_pcb* this,double );
-void pcb_set_tamanio_de_segmento(t_pcb* this, uint32_t);
-void pcb_set_id_de_segmento(t_pcb* this, uint32_t);
 void pcb_set_lista_de_segmentos(t_pcb* this, t_segmento* unSegmento);
 
 

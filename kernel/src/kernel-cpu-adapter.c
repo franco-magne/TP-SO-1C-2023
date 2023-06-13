@@ -71,27 +71,25 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         case HEADER_create_segment:
       
 
-    buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
-    buffer_unpack(bufferPcb, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
+        buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
+        buffer_unpack(bufferPcb, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
 
-    t_segmento* unSegmento = segmento_create(id_de_segmento, tamanio_de_segmento);
+        t_segmento* unSegmento = segmento_create(id_de_segmento, tamanio_de_segmento);
     
-    pcb_set_lista_de_segmentos(pcbAActualizar,unSegmento);
-    pcb_set_id_de_segmento(pcbAActualizar, id_de_segmento);
-    pcb_set_tamanio_de_segmento(pcbAActualizar, tamanio_de_segmento);
+        pcb_set_lista_de_segmentos(pcbAActualizar,unSegmento);
 
-    segmento_destroy(unSegmento);
-
-    break;
-
+        //segmento_destroy(unSegmento);
 
         break;
+
 
         case HEADER_delete_segment:
         
         buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
-        pcb_set_id_de_segmento(pcbAActualizar,id_de_segmento);
+        modificar_victima_lista_segmento(pcbAActualizar,id_de_segmento);
 
+
+        break;
     }
     
    if (pidRecibido == pcb_get_pid(pcbAActualizar)) {
