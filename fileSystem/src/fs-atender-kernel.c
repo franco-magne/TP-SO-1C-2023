@@ -1,19 +1,24 @@
 #include "../include/fs-atender-kernel.h"
 
+t_list* lista_fcbs;
+
 void atender_kernel(t_filesystem* fs) {
 
+    t_header header;
     int cliente_socket = fs->socket_kernel;
 
-    t_header header;
+    lista_fcbs = crear_fcbs(fs->logger);
+    
     while (cliente_socket != -1) {
         
         if (recv(cliente_socket, &header, sizeof(t_header), 0) == 0) {
         	printf("ERROR en la comunicacion.");
-            return;
+            exit(1);
         }
 
         switch(header) {
             case HEADER_abrir_archivo:
+                // ACA TENGO QUE RECIBIR EL NOMBRE DEL ARCHIVO QUE ME PASA KERNEL
 
             break;
             case HEADER_crear_archivo:
@@ -39,6 +44,15 @@ void atender_kernel(t_filesystem* fs) {
     return;
 }
 
+int abrir_archivo(char* nombre_archivo) {
+
+    int encontrado = 0;
+    
+
+
+    return encontrado;
+}
+
 int fs_escuchando_en(int server_fs, t_filesystem* fs) {
 
     int socket_kernel = esperar_cliente(server_fs);
@@ -55,25 +69,3 @@ int fs_escuchando_en(int server_fs, t_filesystem* fs) {
 
     return 0;
 }
-
-/*
-APARENTEMENTE PARA LISTAR ARCHIVOS DE UN DIRECTORIO. PUEDE QUE LA NECESITE
-
-#include <dirent.h>
-#include <stdio.h>
- 
-int main()
-{
- DIR *d = opendir(".");
- struct dirent *dentry;
- size_t i=1;
- 
- while((dentry=readdir(d)!=NULL))
- {
-  printf("%u. %s\n", i, dentry->d_name);
- }
- 
-return 0;
-}
-*/
-
