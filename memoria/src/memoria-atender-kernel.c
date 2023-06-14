@@ -2,7 +2,7 @@
 
 
 pthread_mutex_t mutexMemoriaData; //extern
-pthread_mutex_t mutexTamanioActualMemoria = PTHREAD_MUTEX_INITIALIZER; //extern
+pthread_mutex_t mutexTamMemoriaActual = PTHREAD_MUTEX_INITIALIZER; //extern
 
 extern t_log *memoriaLogger;
 extern t_memoria_config* memoriaConfig;
@@ -14,7 +14,7 @@ extern t_list* listaDeProcesos;
 
 //t_config *memoriaConfig;
 
-bool puedo_crear_segmento_o_proceso(uint32_t tamanio){
+bool puedo_crear_proceso_o_segmento(uint32_t tamanio){
     return tamanio <= tamActualMemoria;  
 }
 
@@ -32,7 +32,7 @@ void atender_peticiones_kernel(int socketKernel) {
                 t_list* tabla_segmentos_solicitada = list_create();
                 buffer_unpack(buffer, &pid, sizeof(pid));
 
-                if(!puedo_crear_segmento_o_proceso(memoria_config_get_tamanio_segmento_0(memoriaConfig))){ //+sizeof(*tabla_de_segmentos)
+                if(!puedo_crear_proceso_o_segmento(memoria_config_get_tamanio_segmento_0(memoriaConfig))){ //+sizeof(*tabla_de_segmentos)
                     log_error(memoriaLogger, "No se pudo crear el proceso, no hay espacio en memoria");
                 }
                 inicializar_estructuras();
@@ -53,15 +53,25 @@ void atender_peticiones_kernel(int socketKernel) {
 
                 uint32_t tamanio_de_segmento;  
                 uint32_t id_de_segmento;
+                int pid;
                 
                 buffer_unpack(buffer, &id_de_segmento, sizeof(id_de_segmento));
                 buffer_unpack(buffer, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
+                buffer_unpack(buffer, &pid, sizeof(pid));
 
                 log_info(memoriaLogger,"tamanio de segmento <%i> y tamActualMemoria <%i>", tamanio_de_segmento, tamActualMemoria);
 
                 // (!) este if es clave, borrar todos los segments del Proceso que 
                 // se crearon antes si es que uno de sus segments no se puede crear.
-                if(!puedo_crear_segmento_o_proceso(tamanio_de_segmento)){//si no puedo crear otro segmento de ese proceso tengo que avisar a kernel y hacer un deleteSegment del resto
+                if(!puedo_crear_proceso_o_segmento(tamanio_de_segmento)){//si no puedo crear otro segmento de ese proceso tengo que avisar a kernel y hacer un deleteSegment del resto
+                    Procesos* miProceso = obtener_proceso_por_pid(pid);
+                    Segmento* segABorrar = NULL;
+                    while(list_size(miProceso->tablaDeSegmentos) > 0){//para no desencolar seg0
+                        segABorrar = desencolar_segmento_por_id(miProceso, id_de_segmento);//falla xq el id siempre es mismo, deberia liberar la tablaDeSegmentos con list_destroy
+                        free(segABorrar); 
+                        log_info(memoriaLogger, "Borramos el segmento <%i> del proceos <%i>", id_de_segmento, pid);
+                    }
+
                     log_error(memoriaLogger, "No se puede crear el segmento, el tamanio supera espacio libre");
 
                     stream_send_empty_buffer(socketKernel, HANDSHAKE_seg_muy_grande); //(!) hay que avisarle a kernel que no se puede
@@ -71,10 +81,10 @@ void atender_peticiones_kernel(int socketKernel) {
                 segmento_set_id(unSegmento, id_de_segmento);
                 segmento_set_socket(unSegmento, socketKernel);
 
-                pthread_mutex_lock(&mutexTamanioActualMemoria);
+                pthread_mutex_lock(&mutexTamMemoriaActual);
                 tamActualMemoria -= tamanio_de_segmento;
                 estado_encolar_segmento_atomic(tabla_segmentos,unSegmento);
-                pthread_mutex_unlock(&mutexTamanioActualMemoria);
+                pthread_mutex_unlock(&mutexTamMemoriaActual);
 
                 log_info(memoriaLogger, "\e[1;93mSe crea nuevo segmento con id [%i] y tamanio [%i]\e[0m", id_de_segmento, tamanio_de_segmento);
 

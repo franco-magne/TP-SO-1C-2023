@@ -11,6 +11,7 @@
 #include <commons/collections/list.h>
 #include <commons/config.h>
 #include <pthread.h>
+#include <../../utils/src/utils/commons-nuestras.h>
 
 #include <stdio.h>
 #include "memoria-config.h"
