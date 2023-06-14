@@ -108,11 +108,6 @@ int main(int argc, char* argv[]) {
       }
 
     
-    stream_send_empty_buffer(kernelSocketMemoria,HANDSHAKE_kernel);
-    uint8_t headerMemoria = stream_recv_header(kernelSocketMemoria);
-    if(headerMemoria == HANDSHAKE_ok_continue){
-        log_info(kernelLogger,"Entre");
-    }
 
     kernel_config_set_socket_memoria(kernelConfig,kernelSocketMemoria);
    

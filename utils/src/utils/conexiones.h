@@ -33,7 +33,9 @@ typedef enum {
     HEADER_f_open,
     HEADER_f_close,
     HEADER_f_seek,
-    HEADER_f_truncate
+    HEADER_f_truncate,
+    HEADER_movin,
+    HEADER_movout
 
 
 
