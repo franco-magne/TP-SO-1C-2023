@@ -1,5 +1,5 @@
 #include <../include/segmento-estado.h>
-
+/*
 t_estado* estado_create() 
 {
     t_estado* this = malloc(sizeof(*this));
@@ -73,4 +73,4 @@ Segmento* estado_remover_segmento_de_cola_atomic(t_estado* self, Segmento* targe
     Segmento* segmento = estado_remover_segmento_de_cola(self, targetSegmento);
     pthread_mutex_unlock(estado_get_mutex(self));
     return segmento;
-}
+}*/

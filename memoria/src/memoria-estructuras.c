@@ -6,6 +6,7 @@ uint32_t tamActualMemoria;
 extern Segmento* segCompartido; // tipo lista enlazada (obligatorio)
 extern t_list* listaDeProcesos;
 extern pthread_mutex_t* mutexTamMemoriaActual;
+pthread_mutex_t* mutexMemoriaEstruct; //seria mutexMemoriaData
 
 /*
 inicializar mp
@@ -85,10 +86,10 @@ Procesos* crear_proceso(int pid){ //la tabla de segmentos del proceso de pid: pi
     this->pid = pid;
     
     //Inicializa la tabla de segmentos
-    pthread_mutex_lock(mutexTamMemoriaActual);
+    pthread_mutex_lock(&mutexTamMemoriaActual);
     list_add(this->tablaDeSegmentos, segCompartido);
     tamActualMemoria -= memoria_config_get_tamanio_segmento_0(memoriaConfig);
-    pthread_mutex_unlock(mutexTamMemoriaActual);
+    pthread_mutex_unlock(&mutexTamMemoriaActual);
 
     return this;
 }
@@ -124,8 +125,41 @@ Segmento* desencolar_segmento_por_id(Procesos* proceso, int id_segmento){
       exit(EXIT_FAILURE);
     }
     else{
+        pthread_mutex_lock(&mutexMemoriaEstruct);
         return list_remove(proceso->tablaDeSegmentos, obtener_segmento_por_id(proceso, id_segmento));
+        pthread_mutex_unlock(&mutexMemoriaEstruct);
     }
+}
+
+Segmento* desencolar_segmento_primer_segmento_atomic(Procesos* proceso){
+    if(list_is_empty(proceso->tablaDeSegmentos)){
+      exit(EXIT_FAILURE);
+    }
+    else{
+        pthread_mutex_lock(&mutexMemoriaEstruct);
+        return list_remove(proceso->tablaDeSegmentos, 1);
+        pthread_mutex_unlock(&mutexMemoriaEstruct);
+    }
+}
+
+void sumar_memoriaRecuperada_a_tamMemoriaActual(uint32_t tamMemorRecuperada){
+    pthread_mutex_lock(&mutexTamMemoriaActual);
+    tamActualMemoria += tamMemorRecuperada;
+    pthread_mutex_unlock(&mutexTamMemoriaActual);
+}
+
+void liberar_tabla_segmentos(int pid){
+    Procesos* unProceso = obtener_proceso_por_pid(pid);
+    pthread_mutex_lock(&mutexMemoriaEstruct);
+    tamActualMemoria -= list_size(unProceso->tablaDeSegmentos);
+    pthread_mutex_unlock(&mutexMemoriaEstruct);
+    list_destroy(unProceso->tablaDeSegmentos);
+}
+void encolar_segmento_atomic(t_list* tablaDeSegmentos, Segmento* targetSegmento) 
+{
+  pthread_mutex_lock(&mutexMemoriaEstruct);
+  list_add(tablaDeSegmentos, targetSegmento);
+  pthread_mutex_unlock(&mutexMemoriaEstruct);
 }
 
 /*Segmento* estado_desencolar_primer_segmento(Segmento* this){

@@ -21,7 +21,7 @@ int main() {
    memoriaLogger = log_create(MEMORIA_LOG_UBICACION,MEMORIA_PROCESS_NAME,true,LOG_LEVEL_INFO);
    memoriaConfigInicial = config_create(MEMORIA_CONFIG_UBICACION);
    memoriaConfig = memoria_config_initializer(memoriaConfigInicial);
-   tabla_segmentos = estado_create();
+   //tabla_segmentos = estado_create();
 
    int serverMemoria = iniciar_servidor(memoria_config_get_ip_escucha(memoriaConfig), memoria_config_get_puerto_escucha(memoriaConfig) );
    log_info(memoriaLogger,"Servidor memoria listo para recibir al modulo\n");

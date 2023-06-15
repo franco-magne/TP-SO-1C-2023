@@ -64,61 +64,62 @@ void atender_peticiones_kernel(int socketKernel) {
                 // (!) este if es clave, borrar todos los segments del Proceso que 
                 // se crearon antes si es que uno de sus segments no se puede crear.
                 if(!puedo_crear_proceso_o_segmento(tamanio_de_segmento)){//si no puedo crear otro segmento de ese proceso tengo que avisar a kernel y hacer un deleteSegment del resto
-                    Procesos* miProceso = obtener_proceso_por_pid(pid);
-                    Segmento* segABorrar = NULL;
-                    while(list_size(miProceso->tablaDeSegmentos) > 0){//para no desencolar seg0
-                        segABorrar = desencolar_segmento_por_id(miProceso, id_de_segmento);//falla xq el id siempre es mismo, deberia liberar la tablaDeSegmentos con list_destroy
-                        free(segABorrar); 
-                        log_info(memoriaLogger, "Borramos el segmento <%i> del proceos <%i>", id_de_segmento, pid);
-                    }
-
-                    log_error(memoriaLogger, "No se puede crear el segmento, el tamanio supera espacio libre");
+                    liberar_tabla_segmentos(pid);
+                    log_error(memoriaLogger, "No se puede crear el segmento, el tamanio supera espacio libre, liberamos la tabla de segmentos");
 
                     stream_send_empty_buffer(socketKernel, HANDSHAKE_seg_muy_grande); //(!) hay que avisarle a kernel que no se puede
                     break;
                 }
                 Segmento* unSegmento = crear_segmento(tamanio_de_segmento);
                 segmento_set_id(unSegmento, id_de_segmento);
-                segmento_set_socket(unSegmento, socketKernel);
+                segmento_set_pid(unSegmento, pid);
+                Procesos* unProceso = obtener_proceso_por_pid(pid);
 
                 pthread_mutex_lock(&mutexTamMemoriaActual);
                 tamActualMemoria -= tamanio_de_segmento;
-                estado_encolar_segmento_atomic(tabla_segmentos,unSegmento);
+                encolar_segmento_atomic(unProceso->tablaDeSegmentos,unSegmento);
                 pthread_mutex_unlock(&mutexTamMemoriaActual);
 
                 log_info(memoriaLogger, "\e[1;93mSe crea nuevo segmento con id [%i] y tamanio [%i]\e[0m", id_de_segmento, tamanio_de_segmento);
 
                 stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
                 
-                if( (list_size((estado_get_list(tabla_segmentos))) == 4)){
-                for(int i = 0; i<(list_size((estado_get_list(tabla_segmentos)))); i++ ){
-                    Segmento* x = estado_desencolar_primer_segmento_atomic(tabla_segmentos);
+                if( (list_size(unProceso->tablaDeSegmentos) == 4)){
+                for(int i = 0; i<(list_size(unProceso->tablaDeSegmentos)); i++ ){
+                    Segmento* x = desencolar_segmento_primer_segmento_atomic(unProceso);
                     log_info(memoriaLogger, "id_segmento <%i> : ", x->segmento_id );
                 }
                 }
                 //buffer_destroy(buffer);
                 break;
             }
-            /*case HEADER_delete_segment:{
-                uint32_t id_segmento;
-                buffer_unpack(buffer, &id_segmento, sizeof(id_segmento));
+            case HEADER_delete_segment:{
+                uint32_t id_de_segmento;
+                int pid;
+                buffer_unpack(buffer, &id_de_segmento, sizeof(id_de_segmento));
+                buffer_unpack(buffer, &pid, sizeof(pid));
 
-                log_info(memoriaLogger,"Segmento a eliminar <%i> ", id_segmento);
+                log_info(memoriaLogger,"Segmento a eliminar <%i> ", id_de_segmento);
 
-                if(!puedo_eliminar_segmento(id_segmento)){
-                    log_error(memoriaLogger, "No se puede elimnar el segmento"); //agregar razon de por que no se pudo?
-                    //por que no se podria eliminar un segmento?
-                    stream_send_empty_buffer(socketKernel, HANDSHAKE_seg_muy_grande);
-                    break;                    
-                }
+                Procesos* miProceso = obtener_proceso_por_pid(pid);
+                Segmento* segABorrar = desencolar_segmento_por_id(miProceso, id_de_segmento);
+                free(segABorrar); 
+                sumar_memoriaRecuperada_a_tamMemoriaActual(segABorrar->limite); //limite es el tamanio???
+                log_info(memoriaLogger, "Borramos el segmento <%i> del proceos <%i>", id_de_segmento, pid);
 
-                Segmento* unSegmento = obtener_segmento(id_segmento);
-
-
+                t_buffer* buffer_rta = buffer_create();
+                buffer_pack(buffer_rta, miProceso->tablaDeSegmentos, sizeof(miProceso->tablaDeSegmentos)); //tablaDeSegmentos Actualizada
+                stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
+                stream_send_buffer(socketKernel, HEADER_tabla_segmentos, buffer_rta);
+                //buffer_destroy(buffer);
                 break;
-            }*/
-            case HEADER_proceso_terminado:{
-                 
+            }
+            case HEADER_proceso_terminado: {
+                int pid;
+                buffer_unpack(buffer, &pid, sizeof(pid));
+                liberar_tabla_segmentos(pid);
+                stream_send_empty_buffer(socketKernel, HEADER_proceso_terminado);
+                //buffer_destroy(buffer);
             }
             default:
                 //exit(-1);

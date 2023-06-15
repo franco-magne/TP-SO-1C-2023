@@ -47,6 +47,7 @@ void inicializar_memoria();
 Segmento* crear_segmento(int );
 void inicializar_estructuras();
 void eliminar_segmento(Segmento* );
-
+void sumar_memoriaRecuperada_a_tamMemoriaActual(uint32_t tamMemorRecuperada);
+void liberar_tabla_segmentos(int pid);
 
 #endif
