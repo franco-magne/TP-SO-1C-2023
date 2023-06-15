@@ -35,8 +35,9 @@ void atender_peticiones_cpu(int socketCpu) {
                 log_info(memoriaLogger, "Direccion Fisica + Desplazamiento : <%i> ", dirFisica);
 
                 t_buffer* bufferContenido = buffer_create();
-                uint32_t contenido = 20;
-                buffer_pack(bufferContenido, &contenido, sizeof(contenido));
+                char* hola = malloc(strlen("hola") + 1);
+                strcpy(hola, "hola");;
+                buffer_pack_string(bufferContenido, hola);
 
                 stream_send_buffer(socketCpu, HEADER_movin, bufferContenido);
                 buffer_destroy(bufferContenido);

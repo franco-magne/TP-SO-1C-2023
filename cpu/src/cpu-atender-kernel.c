@@ -137,17 +137,17 @@ static bool cpu_decode_instruction(uint32_t pid, t_instruccion* instruction)
     return false;
 }
 
-static uint32_t cpu_fetch_operands(t_instruccion* nextInstruction, t_cpu_pcb* pcb) 
+static char* cpu_fetch_operands(t_instruccion* nextInstruction, t_cpu_pcb* pcb) 
 {
     
     uint32_t direccionLogicaOrigen = instruccion_get_operando2(nextInstruction);
     
-    uint32_t fetchedValue = cpu_leer_en_memoria(cpu_config_get_socket_memoria(cpuConfig), direccionLogicaOrigen, cpu_pcb_get_pid(pcb) );
-    log_info(cpuLogger, "FETCH OPERANDS: PCB <ID %d> MOVIN  Fetched Value: %i",cpu_pcb_get_pid(pcb), fetchedValue);
+    char* fetchedValue = cpu_leer_en_memoria(cpu_config_get_socket_memoria(cpuConfig), direccionLogicaOrigen, cpu_pcb_get_pid(pcb) );
+    //log_info(cpuLogger, "FETCH OPERANDS: PCB <ID %d> MOVIN  Fetched Value: %s",cpu_pcb_get_pid(pcb), fetchedValue);
     return fetchedValue;
     
 
-   return 0;
+
 }
 
 
@@ -446,22 +446,27 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
     } else if (tipoInstruccion == INSTRUCCION_MOV_IN ) {
         
         t_registro registroASetear = *((t_registro*) operando1);
-        uint32_t valorASetear = *((uint32_t*) operando2);
+        char* valorASetear = string_duplicate((char*) operando2);
+
 
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);
 
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <MOV_IN> - <%s> - <%i>", cpu_pcb_get_pid(pcb), t_registro_to_char(registroASetear), valorASetear);
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <MOV_IN> - <%s> - <%s>", cpu_pcb_get_pid(pcb), t_registro_to_char(registroASetear), valorASetear);
 
         intervalo_de_pausa(retardoInstruccion);
         
-        //set_registro_segun_tipo(registroASetear,valorASetear, pcb);
+        set_registro_segun_tipo(registroASetear,valorASetear, pcb);
         
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
 
     } else if (tipoInstruccion == INSTRUCCION_MOV_OUT ) {
-        
+
+        uint32_t valorAEscribir = *((uint32_t*) operando1);
+        t_registro registroASetear = *((t_registro*) operando2);
+
+        cpu_escribir_en_memoria(cpu_config_get_socket_memoria(pcb) , valorAEscribir, registroASetear, cpu_pcb_get_pid(pcb));
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <MOV_OUT> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <MOV_OUT> - <%i> - <%s>", cpu_pcb_get_pid(pcb), valorAEscribir,  t_registro_to_char(registroASetear));
 
         intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
@@ -546,13 +551,14 @@ static bool cpu_ejecutar_ciclos_de_instruccion(t_cpu_pcb* pcb)
             break;
         case INSTRUCCION_MOV_IN:
             registro1 = instruccion_get_registro1(nextInstruction);
-            operando2 = cpu_fetch_operands(nextInstruction, pcb);
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &registro1, (void*) &operando2);
+            operando2 = instruccion_get_operando2(nextInstruction);
+            dispositivo = cpu_fetch_operands(nextInstruction, pcb);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &registro1, dispositivo);
             break;
         case INSTRUCCION_MOV_OUT:
             operando1 = instruccion_get_operando1(nextInstruction);
             registro2 = instruccion_get_registro2(nextInstruction);
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &operando1, (void*) &registro2 );
             break;
             
         default:

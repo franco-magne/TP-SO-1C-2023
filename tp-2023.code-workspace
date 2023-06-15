@@ -50,7 +50,8 @@
 			"semaphore.h": "c",
 			"kernel-memoria-adapter.h": "c",
 			"cmath": "c",
-			"*.tcc": "c"
+			"*.tcc": "c",
+			"cpu-pcb.h": "c"
 		}
 	}
 }

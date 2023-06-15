@@ -6,7 +6,8 @@
 void instruccion_create_segment(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger) {
     
     t_segmento* unSegmentoAEnviar = enviar_segmento_a_memoria(pcbAIniciar, HEADER_create_segment);
-   
+
+
     uint32_t id_de_segmento = segmento_get_id_de_segmento(unSegmentoAEnviar);
     uint32_t tamanio_de_segmento = segmento_get_tamanio_de_segmento(unSegmentoAEnviar);
 
@@ -17,9 +18,8 @@ void instruccion_create_segment(t_pcb* pcbAIniciar, t_kernel_config* kernelConfi
 
     stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig), HEADER_create_segment ,bufferNuevoSegmento);
 
-    
-     stream_recv_empty_buffer(kernel_config_get_socket_memoria(kernelConfig));
      uint8_t headerMemoria = stream_recv_header(kernel_config_get_socket_memoria(kernelConfig));
+    stream_recv_empty_buffer(kernel_config_get_socket_memoria(kernelConfig));
 
     if (headerMemoria == HANDSHAKE_ok_continue) {
 

@@ -107,7 +107,7 @@ int main(int argc, char* argv[]) {
         return -2;
       }
 
-    
+    stream_send_empty_buffer(kernelSocketMemoria, HANDSHAKE_kernel);
 
     kernel_config_set_socket_memoria(kernelConfig,kernelSocketMemoria);
    
@@ -399,7 +399,9 @@ void* atender_pcb(void* args)
 
                 estado_encolar_pcb_atomic(estadoExec, pcb);
                 sem_post(estado_get_sem(estadoExec));
-        } 
+        }else if(cpuResponse == HEADER_proceso_bloqueado){
+            
+        }
         else{
                 sem_post(&dispatchPermitido);
         }

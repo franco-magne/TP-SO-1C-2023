@@ -29,7 +29,7 @@ static uint32_t cpu_obtener_marco(int toSocket, uint32_t direccionLogica, uint32
 
     uint32_t num_segmento  = floor(direccionLogica / tamanioMaximoSegmento);
     uint32_t desplazamiento_segmento = direccionLogica % tamanioMaximoSegmento;
-   
+    
 
     int marco = cpu_solicitar_a_memoria(toSocket, num_segmento, pid, HEADER_marco);
     
@@ -38,7 +38,7 @@ static uint32_t cpu_obtener_marco(int toSocket, uint32_t direccionLogica, uint32
 }
 
 // Write
-void cpu_escribir_en_memoria(int toSocket, uint32_t direccionAEscribir, uint32_t contenidoAEscribir, uint32_t pid) {
+void cpu_escribir_en_memoria(int toSocket, uint32_t direccionAEscribir, t_registro contenidoAEscribir, uint32_t pid) {
     int marco = cpu_obtener_marco(toSocket, direccionAEscribir, pid);
     t_buffer *buffer = buffer_create();
     uint32_t marcoSend = marco;
@@ -49,7 +49,7 @@ void cpu_escribir_en_memoria(int toSocket, uint32_t direccionAEscribir, uint32_t
 }
 
 // Read
-uint32_t cpu_leer_en_memoria( int toSocket, uint32_t direccionALeer, uint32_t pid ) {
+char* cpu_leer_en_memoria( int toSocket, uint32_t direccionALeer, uint32_t pid ) {
     int marco = cpu_obtener_marco(toSocket, direccionALeer, pid);
     t_buffer *requestBuffer = buffer_create();
     uint32_t marcoAEnviar = marco;
@@ -64,8 +64,7 @@ uint32_t cpu_leer_en_memoria( int toSocket, uint32_t direccionALeer, uint32_t pi
     }
     t_buffer *responseBuffer = buffer_create();
     stream_recv_buffer(toSocket, responseBuffer);
-    uint32_t contenidoLeido = -1;
-    buffer_unpack(responseBuffer, &contenidoLeido, sizeof(contenidoLeido));
+    char* contenidoLeido = buffer_unpack_string(responseBuffer);
     buffer_destroy(responseBuffer);
     return contenidoLeido;
 }

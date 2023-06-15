@@ -24,7 +24,6 @@ void atender_peticiones_kernel(int socketKernel) {
 
         switch (header) {
             case HEADER_create_segment: { //no seria HEADER_iniciarProceso  xq kernel no usa la tabla??
-                log_info(memoriaLogger,"socket kernel -> 1- <%i> ", socketKernel);
 
                 uint32_t tamanio_de_segmento;  
                 uint32_t id_de_segmento;
@@ -51,13 +50,8 @@ void atender_peticiones_kernel(int socketKernel) {
                 log_info(memoriaLogger, "\e[1;93mSe crea nuevo segmento con id [%i] y tamanio [%i]\e[0m", id_de_segmento, tamanio_de_segmento);
 
                 stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
-                
-                if( (list_size((estado_get_list(tabla_segmentos))) == 4)){
-                for(int i = 0; i<(list_size((estado_get_list(tabla_segmentos)))); i++ ){
-                    Segmento* x = estado_desencolar_primer_segmento_atomic(tabla_segmentos);
-                    log_info(memoriaLogger, "id_segmento <%i> : ", x->segmento_id );
-                }
-                }
+               
+
                 //buffer_destroy(buffer);
                 break;
             }

@@ -62,6 +62,7 @@ bool es_el_segmento_victima(t_segmento* element, t_segmento* target) {
 
 t_segmento* enviar_segmento_a_memoria(t_pcb* this, uint8_t header) {
     t_segmento* aux1 = segmento_create(-1, -1);
+    segmento_set_victima(aux1, false);
     uint32_t index = list_get_index(pcb_get_lista_de_segmentos(this), es_el_segmento_victima, aux1);
     t_segmento* aux2 = NULL;
     

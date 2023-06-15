@@ -78,6 +78,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
     
         pcb_set_lista_de_segmentos(pcbAActualizar,unSegmento);
 
+
         //segmento_destroy(unSegmento);
 
         break;

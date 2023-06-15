@@ -89,6 +89,9 @@ void instruccion_io(t_pcb* pcb, t_estado* estadoBlocked, t_estado* estadoReady)
     pcb_set_estado_actual(pcb, BLOCK);
     estado_encolar_pcb_atomic(estadoBlocked, pcb);
     
+    // MANDAR A EJECUTAR ALGO
+  //  sem_post(&dispatchPermitido);
+
     sleep(pcb_get_tiempoIO(pcb));
     int cantidadPcbsEnLista = list_size(estado_get_list(estadoBlocked));
     
