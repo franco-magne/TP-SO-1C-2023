@@ -36,7 +36,8 @@ void atender_peticiones_kernel(int socketKernel) {
                     log_error(memoriaLogger, "No se pudo crear el proceso, no hay espacio en memoria");
                 }
                 inicializar_estructuras();
-                Procesos* proceso = crear_proceso(); //proceso inicilizado con SegCompartido en la tabla de segmentos
+                // agrego pid como param a crear_proceso 
+                Procesos* proceso = crear_proceso(pid); //proceso inicilizado con SegCompartido en la tabla de segmentos
                 list_add(listaDeProcesos, proceso);
                 tabla_segmentos_solicitada = proceso->tablaDeSegmentos;
                 //aca dentro deberia restar el tamActualMemoria
@@ -66,10 +67,16 @@ void atender_peticiones_kernel(int socketKernel) {
                 if(!puedo_crear_proceso_o_segmento(tamanio_de_segmento)){//si no puedo crear otro segmento de ese proceso tengo que avisar a kernel y hacer un deleteSegment del resto
                     Procesos* miProceso = obtener_proceso_por_pid(pid);
                     Segmento* segABorrar = NULL;
+
+                    // Iterar mientras haya segmentos en la tabla de segmentos del proceso (excepto el segmento 0).
                     while(list_size(miProceso->tablaDeSegmentos) > 0){//para no desencolar seg0
                         segABorrar = desencolar_segmento_por_id(miProceso, id_de_segmento);//falla xq el id siempre es mismo, deberia liberar la tablaDeSegmentos con list_destroy
                         free(segABorrar); 
-                        log_info(memoriaLogger, "Borramos el segmento <%i> del proceos <%i>", id_de_segmento, pid);
+
+                        //list_destroy(miProceso->tablaDeSegmentos); Pero si se destruye la tablaSegmentos rompe al volver a hacer el while no?
+
+
+                        log_info(memoriaLogger, "Borramos el segmento <%i> del proceso <%i>", id_de_segmento, pid);
                     }
 
                     log_error(memoriaLogger, "No se puede crear el segmento, el tamanio supera espacio libre");
@@ -77,6 +84,7 @@ void atender_peticiones_kernel(int socketKernel) {
                     stream_send_empty_buffer(socketKernel, HANDSHAKE_seg_muy_grande); //(!) hay que avisarle a kernel que no se puede
                     break;
                 }
+
                 Segmento* unSegmento = crear_segmento(tamanio_de_segmento);
                 segmento_set_id(unSegmento, id_de_segmento);
                 segmento_set_socket(unSegmento, socketKernel);

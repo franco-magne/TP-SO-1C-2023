@@ -108,6 +108,9 @@ Procesos* obtener_proceso_por_pid(int pid_victima){
     
     return aux2;
 }
+
+
+
 Segmento* obtener_segmento_por_id(Procesos* proceso, int id_victima){
     Segmento* aux1 = crear_segmento(-1);
     segmento_set_id(aux1, id_victima);
