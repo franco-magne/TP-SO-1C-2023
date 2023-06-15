@@ -50,4 +50,40 @@ void eliminar_segmento(Segmento* );
 void sumar_memoriaRecuperada_a_tamMemoriaActual(uint32_t tamMemorRecuperada);
 void liberar_tabla_segmentos(int pid);
 
+//////////////////////// PROCESOS ////////////////////////
+
+/**
+ * @brief Crea un nuevo proceso con el ID especificado.
+ * @param pid El ID del proceso a crear.
+ * @return Un puntero al proceso creado.
+ */ 
+Procesos* crear_proceso(int pid);
+
+/**
+ * @brief Obtiene un proceso por su ID.
+ * @param pid_victima El ID del proceso a buscar.
+ * @return Un puntero al proceso encontrado o NULL si no se encontró.
+ */
+Procesos* obtener_proceso_por_pid(int pid_victima);
+
+
+//////////////////////// SEGMENTO ////////////////////////
+
+/**
+ * @brief Obtiene un segmento de un proceso por su ID.
+ * @param proceso El proceso del cual se desea obtener el segmento.
+ * @param id_victima El ID del segmento a buscar.
+ * @return Un puntero al segmento encontrado o NULL si no se encontró.
+ */
+Segmento* obtener_segmento_por_id(Procesos* proceso, int id_victima);
+
+/**
+ * @brief Desencola y retorna un segmento de un proceso por su ID.
+ * @param proceso El proceso del cual se desea desencolar el segmento.
+ * @param id_segmento El ID del segmento a desencolar.
+ * @return Un puntero al segmento desencolado o NULL si no se encontró.
+ */
+Segmento* desencolar_segmento_por_id(Procesos* proceso, int id_segmento);
+
+
 #endif

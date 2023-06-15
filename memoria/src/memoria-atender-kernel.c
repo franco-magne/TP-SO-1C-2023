@@ -36,7 +36,8 @@ void atender_peticiones_kernel(int socketKernel) {
                     log_error(memoriaLogger, "No se pudo crear el proceso, no hay espacio en memoria");
                 }
                 inicializar_estructuras();
-                Procesos* proceso = crear_proceso(); //proceso inicilizado con SegCompartido en la tabla de segmentos
+                // agrego pid como param a crear_proceso 
+                Procesos* proceso = crear_proceso(pid); //proceso inicilizado con SegCompartido en la tabla de segmentos
                 list_add(listaDeProcesos, proceso);
                 tabla_segmentos_solicitada = proceso->tablaDeSegmentos;
                 //aca dentro deberia restar el tamActualMemoria
@@ -64,12 +65,15 @@ void atender_peticiones_kernel(int socketKernel) {
                 // (!) este if es clave, borrar todos los segments del Proceso que 
                 // se crearon antes si es que uno de sus segments no se puede crear.
                 if(!puedo_crear_proceso_o_segmento(tamanio_de_segmento)){//si no puedo crear otro segmento de ese proceso tengo que avisar a kernel y hacer un deleteSegment del resto
+
                     liberar_tabla_segmentos(pid);
                     log_error(memoriaLogger, "No se puede crear el segmento, el tamanio supera espacio libre, liberamos la tabla de segmentos");
+
 
                     stream_send_empty_buffer(socketKernel, HANDSHAKE_seg_muy_grande); //(!) hay que avisarle a kernel que no se puede
                     break;
                 }
+
                 Segmento* unSegmento = crear_segmento(tamanio_de_segmento);
                 segmento_set_id(unSegmento, id_de_segmento);
                 segmento_set_pid(unSegmento, pid);
@@ -129,24 +133,3 @@ void atender_peticiones_kernel(int socketKernel) {
     }
 }
 
-
-/*
-                        t_buffer* buffer = buffer_create();
-
-                
-                //puedo obtener el tamanio de tabla de segmentos??? Si, sizeof(Segmento)*list_size(TdeSeg)
-                buffer_unpack()
-                buffer_unpack(buffer, &tamanioTdeSeg, sizeof(tamanio));
-                if (puedo_crear_proceso(tamanioTdeSeg, memoriaData)) {
-    
-                    t_buffer* buffer_rta = buffer_create();
-                    buffer_pack(buffer_rta, tablaDeSegmentos??, sizeof(tablaDeSegmentos)); DUDAS???
-
-                    stream_send_buffer(socket, HANDSHAKE_ok_continue, buffer_rta);
-                    buffer_destroy(buffer_rta);Segmento *segCompartido = malloc(sizeof(*segCompartido));
-                    log_info(memoriaLogger, "Se asigno correctamente una tabla de segmentos con tamaño [%d]", tamanioTdeSeg);
-                } else {
-                    stream_send_empty_buffer(socket, HEADER_error);
-                    log_error(memoriaLogger, "No se pudo asignar tabla de segmentos con tamaño [%d]", tamanioTdeSeg);
-                }
-                buffer_destroy(buffer);*/

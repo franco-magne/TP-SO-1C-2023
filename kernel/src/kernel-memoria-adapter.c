@@ -6,13 +6,15 @@
 void mem_adapter_crear_segmento(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger) {
     uint32_t tamanio_de_segmento = pcb_get_tamanio_de_segmento(pcbAIniciar);
     uint32_t id_de_segmento = pcb_get_id_de_segmento(pcbAIniciar);
-    
+    uint32_t pid = pcb_get_pid(pcbAIniciar);
+
     log_info(kernelLogger, "1- socket de kernel: %i", kernel_config_get_socket_memoria(kernelConfig));
 
 
     t_buffer* bufferNuevoSegmento = buffer_create();
     buffer_pack(bufferNuevoSegmento, &id_de_segmento, sizeof(id_de_segmento));
     buffer_pack(bufferNuevoSegmento, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
+    buffer_pack(bufferNuevoSegmento, &pid, sizeof(pid));
 
     stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig), HEADER_create_segment ,bufferNuevoSegmento);
 
