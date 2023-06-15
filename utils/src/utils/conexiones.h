@@ -33,11 +33,11 @@ typedef enum {
     HEADER_instruccion_io_teclado,
     HEADER_instruccion_io_pantalla,
 
-    HEADER_abrir_archivo,
-    HEADER_crear_archivo,
-    HEADER_truncar_archivo,
-    HEADER_leer_archivo,
-    HEADER_escribir_archivo
+    HEADER_f_open,
+    HEADER_f_create,
+    HEADER_f_truncate,
+    HEADER_f_read,
+    HEADER_f_write
 
 } t_header;
 
