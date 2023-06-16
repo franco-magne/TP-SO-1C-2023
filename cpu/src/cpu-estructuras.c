@@ -10,6 +10,7 @@ t_cpu_config* cpu_config_initializer(t_config* tempCfg)
     self->PUERTO_MEMORIA = strdup(config_get_string_value(tempCfg, "PUERTO_MEMORIA"));
     self->IP_ESCUCHA = strdup(config_get_string_value(tempCfg, "IP_ESCUCHA"));
     self->PUERTO_ESCUCHA_DISPATCH = strdup(config_get_string_value(tempCfg, "PUERTO_ESCUCHA"));
+    self-> TAMANIO_MAXIMO_SEGMENTO = config_get_int_value(tempCfg, "TAM_MAX_SEGMENTO");
     self->SOCKET_MEMORIA = -1;
     self->SOCKET_DISPATCH_CPU = -1;
     
@@ -62,6 +63,10 @@ int cpu_config_get_socket_memoria(t_cpu_config* self)
     return self->SOCKET_MEMORIA;
 }
 
+int cpu_config_get_tamanio_maximo_segmento(t_cpu_config* self)
+{
+    return self->TAMANIO_MAXIMO_SEGMENTO;
+}
 ///////////////////////////// SETTERS ////////////////////////////////////
 
 void cpu_config_set_socket_memoria(t_cpu_config* self, int socketMemoria) 
