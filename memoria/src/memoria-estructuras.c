@@ -67,7 +67,7 @@ Segmento* crear_segmento(int tamSegmento){
 
     return this;
 }
-////////////deberia estar en memoria
+////////////deberia estar en memoria.c
 void inicializar_memoria(){
     int tamanioMP = (int) memoria_config_get_tamanio_memoria(memoriaConfig); 
     memoriaPrincipal = malloc(tamanioMP);
@@ -154,7 +154,7 @@ void sumar_memoriaRecuperada_a_tamMemoriaActual(uint32_t tamMemorRecuperada){
 void liberar_tabla_segmentos(int pid){
     Procesos* unProceso = obtener_proceso_por_pid(pid);
     pthread_mutex_lock(&mutexMemoriaEstruct);
-    tamActualMemoria -= list_size(unProceso->tablaDeSegmentos);
+    tamActualMemoria += list_size(unProceso->tablaDeSegmentos); //habria q hacer una sumatoria del "limite" de todos los segmentos
     pthread_mutex_unlock(&mutexMemoriaEstruct);
     list_destroy(unProceso->tablaDeSegmentos);
 }

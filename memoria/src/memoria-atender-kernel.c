@@ -1,13 +1,12 @@
 #include <../include/memoria-atender-kernel.h>
 
 
-pthread_mutex_t mutexMemoriaData; //extern
+pthread_mutex_t mutexMemoriaData = PTHREAD_MUTEX_INITIALIZER; //extern
 pthread_mutex_t mutexTamMemoriaActual = PTHREAD_MUTEX_INITIALIZER; //extern
 
 extern t_log *memoriaLogger;
 extern t_memoria_config* memoriaConfig;
 extern uint32_t tamActualMemoria;
-extern t_estado* tabla_segmentos; 
 extern Segmento* segCompartido;
 
 extern t_list* listaDeProcesos;
@@ -69,7 +68,6 @@ void atender_peticiones_kernel(int socketKernel) {
                     liberar_tabla_segmentos(pid);
                     log_error(memoriaLogger, "No se puede crear el segmento, el tamanio supera espacio libre, liberamos la tabla de segmentos");
 
-
                     stream_send_empty_buffer(socketKernel, HANDSHAKE_seg_muy_grande); //(!) hay que avisarle a kernel que no se puede
                     break;
                 }
@@ -98,6 +96,7 @@ void atender_peticiones_kernel(int socketKernel) {
                 break;
             }
             case HEADER_delete_segment:{
+                //en caso de que tenga huecos libres aledaños, los deberá CONSOLIDAR actualizando sus estructuras administrativas.
                 uint32_t id_de_segmento;
                 int pid;
                 buffer_unpack(buffer, &id_de_segmento, sizeof(id_de_segmento));

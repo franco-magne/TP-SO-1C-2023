@@ -20,6 +20,8 @@ typedef enum {
     HEADER_lista_instrucciones,
     HEADER_interrumpir_ejecucion,
     HEADER_marco,
+    HEADER_move_in,
+    HEADER_move_out,
     HEADER_memoria_insuficiente,
     HEADER_pcb_a_ejecutar,
     HEADER_iniciar_proceso,
@@ -32,7 +34,6 @@ typedef enum {
     HEADER_proceso_devolver_recurso,
     HEADER_create_segment,
     HEADER_delete_segment
-
 
 } t_header;
 
