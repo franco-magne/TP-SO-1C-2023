@@ -21,6 +21,7 @@ t_pcb* pcb_create(uint32_t pid)
    this->rafaga_actual = -1;
    this->rafaga_anterior = -1;
    this->listaDeSegmento = list_create();
+   this->listaArchivosAbiertos = list_create();
    return this;
 }
 
@@ -156,6 +157,11 @@ double pcb_get_rafaga_actual(t_pcb* this){
 t_list* pcb_get_lista_de_segmentos(t_pcb* this){
     return this->listaDeSegmento;
 }
+
+t_list* pcb_get_lista_de_archivos_abiertos(t_pcb* this){
+    return this->listaArchivosAbiertos;
+}
+
 /////////////////////// SETTER ////////////////////////
 
 void pcb_set_program_counter(t_pcb* this, uint32_t programCounter) 
@@ -235,3 +241,6 @@ void pcb_set_lista_de_segmentos(t_pcb* this, t_segmento* unSegmento){
    list_add(this->listaDeSegmento,unSegmento);
 }
 
+void pcb_add_lista_de_archivos(t_pcb* this,t_pcb_archivo* unArchivo ){
+    list_add(this->listaArchivosAbiertos,unArchivo);
+}

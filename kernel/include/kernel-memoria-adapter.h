@@ -3,6 +3,7 @@
 
 ////////////////////////////////// BIBLOTECA STANDAR ///////////////////
 #include <string.h>
+#include <pthread.h>
 
 
 ///////////////////////////////// BIBLOTECAS COMMONS /////////////////
@@ -11,6 +12,7 @@
 //////////////// BIBLOTECAS NUESTRAS /////////////////////////////////
 #include "pcb.h"
 #include "kernel-config.h"
+#include "kernel.h"
 
 #include "../../utils/src/utils/conexiones.h"
 

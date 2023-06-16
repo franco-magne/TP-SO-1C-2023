@@ -5,6 +5,7 @@ t_log* kernelLogger;
 t_kernel_config* kernelConfig;
 t_kernel_recurso* recursoConfig;
 static t_estado* elegir_pcb;
+t_list* tablaGlobalDeArchivosAbiertos;
 
 //static t_preemption_handler evaluar_desalojo;
 
@@ -364,7 +365,14 @@ void* atender_pcb(void* args)
                 instruccion_delete_segment( pcb,kernelConfig,kernelLogger);
                 break;
             case HEADER_f_open:
-                instruccion_f_open(pcb,kernelConfig, kernelLogger);
+                
+                procesoFueBloqueado = instruccion_f_open(pcb,kernelConfig, kernelLogger);
+
+                if(procesoFueBloqueado){
+                    char* nombreArchivo = archivo_motivo_de_bloqueo(pcb_get_lista_de_archivos_abiertos(pcb) );
+                    mandar_cola_bloqueados_archivo(pcb,nombreArchivo); // TODO HACER LA FUNCION 
+                } // HACERLO EN LA FUNCION DE FILESYSTEM ADAPTER
+
                 break;
             case HEADER_f_close:
                 instruccion_f_close(pcb,kernelConfig, kernelLogger);
@@ -389,7 +397,7 @@ void* atender_pcb(void* args)
         || (cpuResponse == HEADER_proceso_devolver_recurso && pcb_get_estado_actual(pcb) == EXEC) 
         || (cpuResponse == HEADER_create_segment)
         || (cpuResponse == HEADER_delete_segment)
-        || (cpuResponse == HEADER_f_open)
+        || (cpuResponse == HEADER_f_open) && !procesoFueBloqueado
         || (cpuResponse == HEADER_f_close)
         || (cpuResponse == HEADER_f_seek)
         || (cpuResponse == HEADER_f_truncate) 

@@ -4,7 +4,7 @@
 
 #include "cpu.h"
 
-void cpu_escribir_en_memoria(int toSocket, uint32_t direccionAEscribir, uint32_t contenidoAEscribir, uint32_t pid);
+void cpu_escribir_en_memoria(int toSocket, uint32_t direccionAEscribir, char* contenidoAEscribir, uint32_t pid);
 char* cpu_leer_en_memoria( int toSocket, uint32_t direccionALeer, uint32_t pid );
 
 #endif

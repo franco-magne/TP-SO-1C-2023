@@ -14,7 +14,8 @@
 //////////////////////// BIBLOTECAS UTILS NUESTRA /////////////////
 #include "../../utils/src/utils/serializacion.h"
 #include "../../utils/src/utils/instrucciones.h"
-
+#include "../../utils/src/utils/commons-nuestras.h"
+#include "kernel-estructura-archivos.h"
 /////////////////////// ESTRUCTURA DEL PCB ////////////////////////
 typedef struct {
     uint32_t pid;
@@ -31,6 +32,7 @@ typedef struct {
     uint32_t tamanio_de_segmento;
     uint32_t id_de_segmento;
     t_list *listaDeSegmento;
+    t_list *listaArchivosAbiertos;
 }t_pcb;
 
 typedef struct {
@@ -69,7 +71,7 @@ struct timespec pcb_get_tiempo_en_ready(t_pcb* this);
 double pcb_get_rafaga_actual(t_pcb* this);
 double pcb_get_rafaga_anterior(t_pcb* this);
 t_list* pcb_get_lista_de_segmentos(t_pcb* this);
-
+t_list* pcb_get_lista_de_archivos_abiertos(t_pcb* this);
 /////////////////////// SETTERS ////////////////////////
 void pcb_set_program_counter(t_pcb* this, uint32_t programCounter); 
 void pcb_set_instructions_buffer(t_pcb* this, t_buffer* instructionsBuffer);
@@ -82,9 +84,8 @@ void pcb_set_tiempo_en_ready(t_pcb* this, struct timespec tiempo_en_ready);
 void pcb_set_rafaga_actual(t_pcb* this,double );
 void pcb_set_rafaga_anterior(t_pcb* this,double );
 void pcb_set_lista_de_segmentos(t_pcb* this, t_segmento* unSegmento);
+void pcb_add_lista_de_archivos(t_pcb* this,t_pcb_archivo* unArchivo );
 
-
-#include "../../utils/src/utils/commons-nuestras.h"
 
 
 #endif
