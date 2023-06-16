@@ -22,6 +22,7 @@ typedef struct {
     uint32_t* base;
     int pid; 
     int validez;
+    char* contenido;
 } Segmento;
 
 

@@ -62,22 +62,13 @@ void recibir_conexion(int socketCliente) {
 
     if (handshake == HANDSHAKE_cpu) {  //solic tabla de segmentos   
         log_info(memoriaLogger, "\e[1;92mSe acepta conexión de CPU en socket [%d]\e[0m", socketCliente);
-    
-        /*t_buffer* buffer = buffer_create();
-        uint32_t tamanioSegmento = memoria_config_get_tamanio_segmento_0(memoriaConfig);
-        buffer_pack(buffer, &tamanioSegmento, sizeof(tamanioSegmento));
-        stream_send_buffer(socketCliente, HANDSHAKE_ok_continue, buffer);
-        buffer_destroy(buffer);
         pthread_create(&threadAntencionCpu, NULL, atender_peticiones_cpu(), socketCliente);
         pthread_detach(threadAntencionCpu);
         cpuSinAtender = false;
-        */
     } 
 
     else if (handshake == HANDSHAKE_kernel) {
         log_info(memoriaLogger, "\e[1;92mSe acepta conexión de Kernel en socket [%d]\e[0m", socketCliente);
-        //inicializar_estructuras();
-        //estado_encolar_segmento_atomic(tabla_segmentos, segCompartido);
         stream_send_empty_buffer(socketCliente, HANDSHAKE_ok_continue);
         pthread_create(&threadAntencionCpu, NULL, atender_peticiones_kernel, socketCliente);
         pthread_detach(threadAntencionCpu);

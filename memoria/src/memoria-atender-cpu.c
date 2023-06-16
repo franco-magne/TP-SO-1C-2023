@@ -18,12 +18,17 @@ void atender_peticiones_cpu(int socketCpu) {
             log_info(memoriaLogger, "\e[1;93mPetición de marco\e[0m");
             uint32_t id_segmento;
             int pid;
+            uint32_t desplazamiento_segmento;
             buffer_unpack(buffer, &id_segmento, sizeof(id_segmento));
             buffer_unpack(buffer, &pid, sizeof(pid));
-            
+            buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
+
+            //Logica de desplazamiento ...          base < limite
+
+
             log_info(memoriaLogger, "Se quiere la dirección física del segmento <%i>",id_segmento);
             
-            uint32_t marco = obtener_marco(pid, id_segmento);
+            uint32_t marco = 0;//obtener_marco(pid, id_segmento); //base y limite no +
             
             t_buffer* buffer_rta = buffer_create();
             buffer_pack(buffer_rta, &marco, sizeof(marco));
@@ -35,34 +40,54 @@ void atender_peticiones_cpu(int socketCpu) {
         }
         break;
         case HEADER_move_in :{ //"leer"
+            uint32_t pid;
+            uint32_t id_segmento;
 
+            buffer_unpack(buffer, &id_segmento, sizeof(id_segmento));
+            buffer_unpack(buffer, &pid, sizeof(pid));
+
+            Procesos* unProceso = obtener_proceso_por_pid(pid);
+            Segmento* unSegmento = obtener_segmento_por_id(unProceso, id_segmento);
+    
+            char* contenidoAenviar = segmento_get_contenido(unSegmento);
+
+            t_buffer* bufferContenido = buffer_create();        
         
+            buffer_pack_string(bufferContenido, contenidoAenviar);
+
+            stream_send_buffer(socketCpu, HEADER_move_in, bufferContenido);
+
+            buffer_destroy(bufferContenido);    
+
             //buffer_destroy(buffer);
         }
         break;
         case HEADER_move_out : {//"escribir"
             log_info(memoriaLogger, "\e[1;93mPetición de escritura\e[0m");
             
-            uint32_t direccFisica;
-            t_registro contenidoAEscribir;
-            buffer_unpack(buffer, &direccFisica, sizeof(direccFisica));
-            buffer_unpack(buffer, &contenidoAEscribir, sizeof(contenidoAEscribir));
+            uint32_t pid;
+            uint32_t id_segmento;            
+            char* contenidoAEscribir;
+            buffer_unpack(buffer, &id_segmento, sizeof(id_segmento));
+            buffer_unpack(buffer, &pid, sizeof(pid));
+            contenidoAEscribir = buffer_unpack_string(buffer);
             
-            //validar que no supere el espacio disponible?
-            memcpy((void*)&direccFisica,(void*)&contenidoAEscribir,sizeof(contenidoAEscribir));
+            Procesos* unProceso = obtener_proceso_por_pid(pid);
+            Segmento* unSegmento = obtener_segmento_por_id(unProceso, id_segmento);
+            //cada vez que hago un obtener segmento hago un list_replace
+            segmento_set_contenido(unSegmento, contenidoAEscribir);
 
+            log_info(memoriaLogger, "Contenido escrito : <%s> - En el segmento ID : <%i> ", contenidoAEscribir, id_segmento);
 
-
-
-
-            
-            break;
             //buffer_destroy(buffer);
+            break;
+            
         }
         break;
         default:
         break;
-        }
+        pthread_mutex_unlock(&mutexMemoriaData);
+    }
     }
 }
 /*
@@ -87,7 +112,7 @@ log_info(memoriaData->memoriaLogger, "\e[1;93mPetición de escritura\e[0m");
     __loggear_paginas_en_memoria_del_proceso(nroTablaNivel2, memoriaData);
 }
 
-*/
+
 uint32_t obtener_direccFisica(int pid, uint32_t id_segmento){
     Procesos* miProceso = obtener_proceso_por_pid(pid);
     Segmento* segBuscado = obtener_segmento_por_id(miProceso, id_segmento);
@@ -100,3 +125,4 @@ uint32_t obtener_direccFisica(int pid, uint32_t id_segmento){
 
 
 
+*/

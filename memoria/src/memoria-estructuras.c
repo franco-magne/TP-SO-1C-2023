@@ -57,6 +57,14 @@ void segmento_set_bit_validez(Segmento* un_segmento, int validezValor){
     un_segmento->validez = validezValor;
 }
 
+int segmento_get_contenido(Segmento* un_segmento){
+    return un_segmento->contenido; 
+}
+
+void segmento_set_contenido(Segmento* un_segmento, char* contenido){
+    un_segmento->contenido = contenido;
+}
+
 Segmento* crear_segmento(int tamSegmento){
     Segmento* this = malloc(sizeof(*this)); //no seria sizeof(limite)?? que pasa si limite es muy chico, no puedo guardar id_segmento...
     this->segmento_id = -1;
@@ -64,6 +72,7 @@ Segmento* crear_segmento(int tamSegmento){
     segmento_set_limite(this, tamSegmento);
     this->pid = -1;
     this->validez = -1;
+    this->contenido = NULL;
 
     return this;
 }

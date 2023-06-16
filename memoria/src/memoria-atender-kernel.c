@@ -43,10 +43,9 @@ void atender_peticiones_kernel(int socketKernel) {
                 
                 t_buffer* buffer_rta = buffer_create();
                 buffer_pack(buffer_rta, tabla_segmentos_solicitada, sizeof(tabla_segmentos_solicitada));
-                stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
                 stream_send_buffer(socketKernel, HEADER_tabla_segmentos, buffer_rta);
-
-                //buffer_destroy(buffer);
+                buffer_destroy(buffer_rta);
+             
             }
             case HEADER_create_segment: { 
                 log_info(memoriaLogger,"socket kernel -> 1- <%i> ", socketKernel);
@@ -92,7 +91,6 @@ void atender_peticiones_kernel(int socketKernel) {
                     log_info(memoriaLogger, "id_segmento <%i> : ", x->segmento_id );
                 }
                 }
-                //buffer_destroy(buffer);
                 break;
             }
             case HEADER_delete_segment:{
@@ -112,9 +110,9 @@ void atender_peticiones_kernel(int socketKernel) {
 
                 t_buffer* buffer_rta = buffer_create();
                 buffer_pack(buffer_rta, miProceso->tablaDeSegmentos, sizeof(miProceso->tablaDeSegmentos)); //tablaDeSegmentos Actualizada
-                stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
                 stream_send_buffer(socketKernel, HEADER_tabla_segmentos, buffer_rta);
-                //buffer_destroy(buffer);
+
+                buffer_destroy(buffer_rta);
                 break;
             }
             case HEADER_proceso_terminado: {
@@ -122,7 +120,6 @@ void atender_peticiones_kernel(int socketKernel) {
                 buffer_unpack(buffer, &pid, sizeof(pid));
                 liberar_tabla_segmentos(pid);
                 stream_send_empty_buffer(socketKernel, HEADER_proceso_terminado);
-                //buffer_destroy(buffer);
             }
             default:
                 //exit(-1);
