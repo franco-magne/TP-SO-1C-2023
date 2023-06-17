@@ -167,8 +167,6 @@ bool instruccion_wait(t_pcb* pcb) {
             proceso_pasa_a_bloqueado(pcb,recursoConfig[posicion_recurso].recurso);
             return true;
         }
-
-
     } else {
         log_error(kernelLogger, "RECURSO NO EXISTE POR EL PROCESO QUE PIDE ");    
         proceso_pasa_a_exit(pcb);
@@ -233,7 +231,7 @@ void instruccion_signal(t_pcb* pcb){
         } 
         else {
             log_error(kernelLogger, "RECURSO NO EXISTE POR EL PROCESO QUE LO DEVUELVE ");    
-            instruccion_exit(pcb);
+            proceso_pasa_a_exit(pcb);
         }
 
 }

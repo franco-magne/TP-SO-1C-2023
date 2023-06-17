@@ -256,7 +256,7 @@ void* planificador_largo_plazo(void* args)
         t_segmento* segmentoCero = segmento_create(0,0);
         segmento_set_victima(segmentoCero, false);
         pcb_set_lista_de_segmentos(pcbQuePasaAReady,segmentoCero);
-        segmento_destroy(segmentoCero);
+     //   segmento_destroy(segmentoCero);
 
         
         //uint32_t* nuevaTablaPaginasSegmentos = mem_adapter_obtener_tabla_pagina(pcbQuePasaAReady, kernelConfig, kernelDevLogger);
@@ -359,7 +359,7 @@ void* atender_pcb(void* args)
             
             case HEADER_delete_segment:
 
-                instruccion_delete_segment( pcb);
+                instruccion_delete_segment(pcb);
                 break;
             case HEADER_f_open:
                 

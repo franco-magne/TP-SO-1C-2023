@@ -63,6 +63,12 @@ bool es_el_segmento_victima(t_segmento* element, t_segmento* target) {
     return false;
 }
 
+bool es_el_segmento_victimaok(t_segmento* element) {
+    if(element->victima)
+    return true;
+    return false;
+}
+
 
 uint32_t index_posicion_del_segmento_victima(t_pcb* this){
     t_segmento* aux1 = segmento_create(-1, -1);
@@ -74,8 +80,9 @@ uint32_t index_posicion_del_segmento_victima(t_pcb* this){
 
 
 t_segmento* segmento_victima(t_pcb* this) {
-    uint32_t index = index_posicion_del_segmento_victima(this);
-    t_segmento* aux2 = list_get(pcb_get_lista_de_segmentos(this),index);
+    //uint32_t index = index_posicion_del_segmento_victima(this);
+    t_segmento* aux2 = list_find(pcb_get_lista_de_segmentos(this), es_el_segmento_victimaok);
+
     
     return aux2;
 }

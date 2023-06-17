@@ -10,6 +10,7 @@ void memoria_adapter_enviar_create_segment(t_pcb* pcbAIniciar, t_kernel_config* 
     uint32_t id_de_segmento = segmento_get_id_de_segmento(unSegmentoAEnviar);
     uint32_t tamanio_de_segmento = segmento_get_tamanio_de_segmento(unSegmentoAEnviar);
 
+    printf("ID <%i>", id_de_segmento);
     t_buffer* bufferNuevoSegmento = buffer_create();
 
     buffer_pack(bufferNuevoSegmento, &id_de_segmento, sizeof(id_de_segmento));
