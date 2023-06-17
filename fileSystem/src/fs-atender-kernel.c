@@ -5,7 +5,7 @@ t_list* lista_fcbs;
 void atender_kernel(t_filesystem* fs) {
 
     int operacion_OK = 0;
-    lista_fcbs = crear_fcbs(fs->logger);
+    //lista_fcbs = crear_fcbs(fs->logger);
     
     while (fs->socket_kernel != -1) {
 
@@ -20,9 +20,9 @@ void atender_kernel(t_filesystem* fs) {
                 stream_recv_buffer(fs->socket_kernel, buffer_nombre_archivo_open); // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
                 nombre_archivo_open = buffer_unpack_string(buffer_nombre_archivo_open); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
 
-                operacion_OK = abrir_archivo(nombre_archivo_open);
+                //operacion_OK = abrir_archivo(nombre_archivo_open);
 
-                if (operacion_OK) {
+                if (1) {
                     log_info(fs->logger, "Abrir archivo: <%s>", nombre_archivo_open);
                     stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO EXISTE Y LO AGREGUE A SU TABLA GLOBAL
                 } else {

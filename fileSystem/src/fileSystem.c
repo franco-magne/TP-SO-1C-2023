@@ -7,6 +7,7 @@ t_filesystem* fs;
 
 int main() {
    
+   fs = malloc(sizeof(t_filesystem));
    fs_logger = log_create(FS_LOG_UBICACION, FS_PROCESS_NAME, true, LOG_LEVEL_INFO);
    fs_config = config_create(FS_CONFIG_UBICACION);
    superbloque_config = config_create(FS_SUPERBLOQUE_UBICACION);
@@ -30,8 +31,8 @@ int main() {
    fs->socket_memoria = fsSocketMemoria;
    log_info(fs->logger, "Conexion con MEMORIA establecida");
    */
-   levantar_bitmap(fs);
-   crear_archivo_de_bloques(fs);
+   //levantar_bitmap(fs);
+   //crear_archivo_de_bloques(fs);
 
 
    ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////

@@ -102,7 +102,7 @@ t_list* crear_fcbs(t_log* fs_logger) {
 
 void cargar_t_filesystem(t_config* config, t_config* sb_config, t_filesystem* fs) {
 
-    fs->ip_memoria = config_get_string_value(config, "IP");
+    fs->ip_memoria = config_get_string_value(config, "IP_MEMORIA");
     fs->puerto_memoria = config_get_string_value(config,"PUERTO_MEMORIA");
     fs->puerto_escucha = config_get_string_value(config,"PUERTO_ESCUCHA");
     fs->superbloque_path = config_get_string_value(config, "PATH_SUPERBLOQUE");
