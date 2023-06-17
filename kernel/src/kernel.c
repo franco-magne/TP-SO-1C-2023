@@ -24,11 +24,11 @@ static sem_t hayPcbsParaAgregarAlSistema;
 static sem_t gradoMultiprog;
 static sem_t dispatchPermitido;
 //Estados
-static t_estado* estadoNew;
-static t_estado* estadoReady;
-static t_estado* estadoExec;
-static t_estado* estadoBlocked;
-static t_estado* estadoExit;
+ t_estado* estadoNew;
+ t_estado* estadoReady;
+ t_estado* estadoExec;
+ t_estado* estadoBlocked;
+ t_estado* estadoExit;
 
 ///////////////////////// FUNCIONES UTILITARIAS /////////////////////////
 
@@ -275,9 +275,6 @@ void* planificador_largo_plazo(void* args)
                 pcb_set_estado_actual(pcbQuePasaAReady, READY);     
                 estado_encolar_pcb_atomic(estadoReady, pcbQuePasaAReady);
                 setear_tiempo_ready(pcbQuePasaAReady); // EMPIEZA A CONTAR EL TIEMPO 
-
-               
-
                 char* stringPidsReady = string_pids_ready(estadoReady);
                 log_transition("NEW", "READY", pcb_get_pid(pcbQuePasaAReady));
 
@@ -325,44 +322,44 @@ void* atender_pcb(void* args)
             
             case HEADER_proceso_desalojado:
 
-                instruccion_yield(pcb,estadoReady);
+                instruccion_yield(pcb);
 
                 break;
                 
             case HEADER_proceso_terminado:
                 
-                instruccion_exit(pcb,estadoExit);
+                instruccion_exit(pcb);
 
                 break;
 
             case HEADER_proceso_bloqueado:
-
-                instruccion_io(pcb,estadoBlocked, estadoReady);
+                sem_post(&dispatchPermitido);
+                instruccion_io(pcb);
 
                 break;
 
             case HEADER_proceso_pedir_recurso:
 
-                procesoFueBloqueado = instruccion_wait(pcb, estadoBlocked, estadoExit);
+                procesoFueBloqueado = instruccion_wait(pcb);
 
 
                 break;
 
             case HEADER_proceso_devolver_recurso:
 
-                instruccion_signal(pcb, estadoBlocked, estadoReady, estadoExit);
+                instruccion_signal(pcb);
 
                 break;
 
             case HEADER_create_segment:
 
-                instruccion_create_segment( pcb,kernelConfig,kernelLogger);
+                instruccion_create_segment(pcb);
 
                 break;
             
             case HEADER_delete_segment:
 
-                instruccion_delete_segment( pcb,kernelConfig,kernelLogger);
+                instruccion_delete_segment( pcb);
                 break;
             case HEADER_f_open:
                 
@@ -370,7 +367,6 @@ void* atender_pcb(void* args)
 
                 if(procesoFueBloqueado){
                     char* nombreArchivo = archivo_motivo_de_bloqueo(pcb_get_lista_de_archivos_abiertos(pcb) );
-                    mandar_cola_bloqueados_archivo(pcb,nombreArchivo); // TODO HACER LA FUNCION 
                 } // HACERLO EN LA FUNCION DE FILESYSTEM ADAPTER
 
                 break;

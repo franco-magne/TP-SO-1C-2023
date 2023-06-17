@@ -9,6 +9,14 @@ extern char* nombre_recurso;
 extern pthread_mutex_t mutexCantidadRecursos;
 extern pthread_mutex_t mutexNombreRecurso;
 
+extern t_estado* estadoNew;
+extern t_estado* estadoReady;
+extern t_estado* estadoExec;
+extern t_estado* estadoBlocked;
+extern t_estado* estadoExit;
+
+
+
 
 static void pid_destroyer(void* pidADestruir)
 {
@@ -60,38 +68,54 @@ char* string_pids_ready(t_estado* estadoReady)
 }
 
 
+void proceso_pasa_a_ready(t_pcb* pcb, char* estadoActual){
+    pcb_set_estado_anterior(pcb, pcb_get_estado_actual(pcb));
+    pcb_set_estado_actual(pcb, READY);
+    setear_tiempo_ready(pcb); // EMPIEZA A CONTAR EL TIEMPO 
+    estado_encolar_pcb_atomic(estadoReady, pcb);
+    
+    char* stringPidsReady = string_pids_ready(estadoReady);
+    log_transition(estadoActual, "READY", pcb_get_pid(pcb));
+    log_info(kernelLogger,  "Cola Ready <%s>: %s", kernel_config_get_algoritmo_planificacion(kernelConfig), stringPidsReady);
+    free(stringPidsReady);
+    sem_post(estado_get_sem(estadoReady));
+}
 
+void proceso_pasa_a_bloqueado(t_pcb* pcb, char* motivoDelBloqueo){
+      log_transition("EXEC", "BLOCK", pcb_get_pid(pcb));
+      log_info(kernelLogger, "PID: <%i> - Bloqueado por: <%s>", pcb_get_pid(pcb), motivoDelBloqueo);
+
+      pcb_set_estado_anterior(pcb, pcb_get_estado_actual(pcb));
+      pcb_set_estado_actual(pcb, BLOCK);
+      estado_encolar_pcb_atomic(estadoBlocked, pcb);
+}
+
+void proceso_pasa_a_exit(t_pcb* pcbAExit){
+    pcb_set_estado_actual(pcbAExit, EXIT);
+    estado_encolar_pcb_atomic(estadoExit, pcbAExit);
+    log_transition("EXEC", "EXIT", pcb_get_pid(pcbAExit));
+    //stream_send_empty_buffer(pcb_get_socket(pcb), HEADER_proceso_terminado);
+    sem_post(estado_get_sem(estadoExit));
+    //pcb_set_proceso_bloqueado_o_terminado_atomic(pcb, true);
+    //terminar_proceso(pcb);
+}
 
 ////////////////////////////////////////// INSTRUCCION EXIT ////////////////////////////////////
-void instruccion_exit(t_pcb* pcbAExit, t_estado* estadoExit){
-
-                pcb_set_estado_actual(pcbAExit, EXIT);
-                estado_encolar_pcb_atomic(estadoExit, pcbAExit);
-                log_transition("EXEC", "EXIT", pcb_get_pid(pcbAExit));
-                //stream_send_empty_buffer(pcb_get_socket(pcb), HEADER_proceso_terminado);
-                sem_post(estado_get_sem(estadoExit));
-                //pcb_set_proceso_bloqueado_o_terminado_atomic(pcb, true);
-                //terminar_proceso(pcb);
+void instruccion_exit(t_pcb* pcb){
+    
+    proceso_pasa_a_exit(pcb);
             
-
 }
 
 ////////////////////////////////////// INSTRUCCION IO /////////////////////////////////////////
-void instruccion_io(t_pcb* pcb, t_estado* estadoBlocked, t_estado* estadoReady) 
+void instruccion_io(t_pcb* pcb) 
 {
     
-    log_transition("EXEC", "BLOCK", pcb_get_pid(pcb));
-    log_info(kernelLogger, "PID: <%d> - Ejecuta IO: <%i>", pcb_get_pid(pcb), pcb_get_tiempoIO(pcb));
+    proceso_pasa_a_bloqueado(pcb, "IO");
 
-    log_info(kernelLogger, "PID: <%d> - Bloqueado por: IO", pcb_get_pid(pcb));
-    
-    pcb_set_estado_anterior(pcb, pcb_get_estado_actual(pcb));
-    pcb_set_estado_actual(pcb, BLOCK);
-    estado_encolar_pcb_atomic(estadoBlocked, pcb);
-    
-    // MANDAR A EJECUTAR ALGO
-  //  sem_post(&dispatchPermitido);
 
+    
+    log_info(kernelLogger, "PID: <%d> - Ejecuta IO: <%i>s", pcb_get_pid(pcb), pcb_get_tiempoIO(pcb));
     sleep(pcb_get_tiempoIO(pcb));
     int cantidadPcbsEnLista = list_size(estado_get_list(estadoBlocked));
     
@@ -99,35 +123,20 @@ void instruccion_io(t_pcb* pcb, t_estado* estadoBlocked, t_estado* estadoReady)
         pcb = estado_desencolar_primer_pcb(estadoBlocked);
     } 
     else {
-    pcb = estado_remover_pcb_de_cola_atomic(estadoBlocked,pcb);
+        pcb = estado_remover_pcb_de_cola_atomic(estadoBlocked,pcb);
     }
-    pcb_set_estado_anterior(pcb, pcb_get_estado_actual(pcb));
-    pcb_set_estado_actual(pcb, READY);
-    setear_tiempo_ready(pcb); // EMPIEZA A CONTAR EL TIEMPO 
-    estado_encolar_pcb_atomic(estadoReady, pcb);
     
-    char* stringPidsReady = string_pids_ready(estadoReady);
-    log_transition("BLOCK", "READY", pcb_get_pid(pcb));
-    log_info(kernelLogger,  "Cola Ready <%s>: %s", kernel_config_get_algoritmo_planificacion(kernelConfig), stringPidsReady);
-    free(stringPidsReady);
-    sem_post(estado_get_sem(estadoReady));
+    proceso_pasa_a_ready(pcb, "BLOCK");
+
+    
     
 }
 
 ///////////////////////////////////////////// INSTRUCCION YIELD ///////////////////////////////////////
 
-void instruccion_yield(t_pcb* pcb,t_estado* estadoReady){
+void instruccion_yield(t_pcb* pcb){
 
-    pcb_set_estado_anterior(pcb, pcb_get_estado_actual(pcb));
-    pcb_set_estado_actual(pcb, READY);
-    estado_encolar_pcb_atomic(estadoReady, pcb);
-    char* stringPidsReady = string_pids_ready(estadoReady);
-    log_transition("EXEC", "READY", pcb_get_pid(pcb));
-    log_info(kernelLogger,  "Cola Ready <%s>: %s", kernel_config_get_algoritmo_planificacion(kernelConfig), stringPidsReady);
-    setear_tiempo_ready(pcb); // EMPIEZA A CONTAR EL TIEMPO 
-    free(stringPidsReady);
-    sem_post(estado_get_sem(estadoReady));
-                
+    proceso_pasa_a_ready(pcb, "EXEC");                
 }
 
 ///////////////////////////////////////////// INSTRUCCION WAIT ///////////////////////////////////////
@@ -145,7 +154,7 @@ void devolver_recurso(int posicion_recurso){
 }
 
 
-bool instruccion_wait(t_pcb* pcb, t_estado* estadoBlocked, t_estado* estadoExit ) {
+bool instruccion_wait(t_pcb* pcb) {
     char* recursoUtilizado = pcb_get_recurso_utilizado(pcb);
     
     if (contains(kernel_config_get_recurso(kernelConfig), recursoUtilizado)) {
@@ -155,24 +164,14 @@ bool instruccion_wait(t_pcb* pcb, t_estado* estadoBlocked, t_estado* estadoExit 
             asignar_recurso(posicion_recurso);
             log_info(kernelLogger, "PID: <%i> - Wait: <%s> - Instancias: <%i> ",pcb_get_pid(pcb), recursoConfig[posicion_recurso].recurso , *recursoConfig[posicion_recurso].instancias_recurso );    
         } else {
-            log_transition("EXEC", "BLOCK", pcb_get_pid(pcb));
-            log_info(kernelLogger, "PID: <%i> - Bloqueado por: <%s>", pcb_get_pid(pcb), recursoConfig[posicion_recurso].recurso);
-
-            pcb_set_estado_anterior(pcb, pcb_get_estado_actual(pcb));
-            pcb_set_estado_actual(pcb, BLOCK);
-            estado_encolar_pcb_atomic(estadoBlocked, pcb);
-
+            proceso_pasa_a_bloqueado(pcb,recursoConfig[posicion_recurso].recurso);
             return true;
         }
 
 
     } else {
         log_error(kernelLogger, "RECURSO NO EXISTE POR EL PROCESO QUE PIDE ");    
-        pcb_set_estado_actual(pcb, EXIT);
-        estado_encolar_pcb_atomic(estadoExit, pcb);
-        log_transition("EXEC", "EXIT", pcb_get_pid(pcb));
-        //stream_send_empty_buffer(pcb_get_socket(pcb), HEADER_proceso_terminado);
-        sem_post(estado_get_sem(estadoExit));
+        proceso_pasa_a_exit(pcb);
         return false;
 
     }
@@ -194,7 +193,7 @@ void asignar_recurso(int posicion_recurso){
 }
 
 
-t_pcb* primer_elemento_bloqueado_por_recurso(t_list* listaBloqueado, char* nombreRecurso, t_estado* estadoBlocked){
+t_pcb* primer_elemento_bloqueado_por_recurso(t_list* listaBloqueado, char* nombreRecurso){
     
     t_pcb* pcb;
     t_list* listAux = list_create();
@@ -220,34 +219,47 @@ t_pcb* primer_elemento_bloqueado_por_recurso(t_list* listaBloqueado, char* nombr
 }
 
 
-void instruccion_signal(t_pcb* pcb, t_estado* estadoBlocked, t_estado* estadoReady, t_estado* estadoExit){
+void instruccion_signal(t_pcb* pcb){
     
         if(contains(kernel_config_get_recurso(kernelConfig) , pcb_get_recurso_utilizado(pcb)) ){
             
             int posicion_recurso = position_in_list(kernel_config_get_recurso(kernelConfig) , pcb_get_recurso_utilizado(pcb));
             devolver_recurso(posicion_recurso);
             log_info(kernelLogger, "PID: <%i> - Signal: <%s> - Instancias: <%i> ",pcb_get_pid(pcb), recursoConfig[posicion_recurso].recurso , *recursoConfig[posicion_recurso].instancias_recurso );    
-            t_pcb* pcbPasaReady = primer_elemento_bloqueado_por_recurso(estado_get_list(estadoBlocked), pcb_get_recurso_utilizado(pcb), estadoBlocked);
+            t_pcb* pcbPasaReady = primer_elemento_bloqueado_por_recurso(estado_get_list(estadoBlocked), pcb_get_recurso_utilizado(pcb));
             if(pcbPasaReady != NULL){
-                pcb_set_estado_anterior(pcbPasaReady, pcb_get_estado_actual(pcbPasaReady));
-                pcb_set_estado_actual(pcbPasaReady, READY);
-                setear_tiempo_ready(pcbPasaReady); // EMPIEZA A CONTAR EL TIEMPO 
-                estado_encolar_pcb_atomic(estadoReady, pcbPasaReady);
-                char* stringPidsReady = string_pids_ready(estadoReady);
-                log_transition("BLOCK", "READY", pcb_get_pid(pcbPasaReady));
-               log_info(kernelLogger,  "Cola Ready <%s>: %s", kernel_config_get_algoritmo_planificacion(kernelConfig), stringPidsReady);
-                free(stringPidsReady);
-                sem_post(estado_get_sem(estadoReady));
-                
+                proceso_pasa_a_ready(pcbPasaReady,"BLOCK");
             }
         } 
         else {
             log_error(kernelLogger, "RECURSO NO EXISTE POR EL PROCESO QUE LO DEVUELVE ");    
-            pcb_set_estado_actual(pcb, EXIT);
-            estado_encolar_pcb_atomic(estadoExit, pcb);
-            log_transition("EXEC", "EXIT", pcb_get_pid(pcb));
-            //stream_send_empty_buffer(pcb_get_socket(pcb), HEADER_proceso_terminado);
-            sem_post(estado_get_sem(estadoExit));
+            instruccion_exit(pcb);
         }
 
 }
+
+///////////////////////////////// INSTRUCCION CREATE_SEGMENT //////////////////////////////
+
+void instruccion_create_segment(t_pcb* pcb){
+
+    memoria_adapter_enviar_create_segment(pcb,kernelConfig);
+
+    uint8_t memoriaResponse = memoria_adapter_recibir_create_segment(pcb, kernelConfig, kernelLogger);
+
+    if(memoriaResponse == HEADER_memoria_insuficiente){
+        proceso_pasa_a_exit(pcb);
+    }
+
+}
+
+///////////////////////////////// INSTRUCCION DELETE_SEGMENT //////////////////////////////
+
+void instruccion_delete_segment(t_pcb* pcb){
+
+    memoria_adapter_enviar_delete_segment(pcb , kernelConfig);
+    memoria_adapter_recibir_delete_segment(pcb, kernelConfig, kernelLogger);
+
+
+}
+
+///////////////////////////////// INSTRUCCION F_OPEN //////////////////////////////

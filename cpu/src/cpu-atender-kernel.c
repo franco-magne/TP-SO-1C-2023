@@ -461,12 +461,13 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
 
     } else if (tipoInstruccion == INSTRUCCION_MOV_OUT ) {
 
-        uint32_t valorAEscribir = *((uint32_t*) operando1);
-        t_registro registroASetear = *((t_registro*) operando2);
-
-        cpu_escribir_en_memoria(cpu_config_get_socket_memoria(pcb) , valorAEscribir, registroASetear, cpu_pcb_get_pid(pcb));
+        uint32_t dirLogica = *((uint32_t*) operando1);
+        t_registro registro = *((t_registro*) operando2);
+        
+        char* contenidoAEnviar = get_registro_segun_tipo(registro, pcb);
+        cpu_escribir_en_memoria(cpu_config_get_socket_memoria(pcb) , dirLogica, contenidoAEnviar, cpu_pcb_get_pid(pcb));
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <MOV_OUT> - <%i> - <%s>", cpu_pcb_get_pid(pcb), valorAEscribir,  t_registro_to_char(registroASetear));
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <MOV_OUT> - <%i> - <%s>", cpu_pcb_get_pid(pcb), dirLogica,  t_registro_to_char(registro) );
 
         intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);

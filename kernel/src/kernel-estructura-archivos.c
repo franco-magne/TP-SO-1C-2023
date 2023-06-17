@@ -48,10 +48,10 @@ void kernel_archivo_set_pid(t_kernel_archivo* this , uint32_t pid)
     this->pidProceso = pid;
 }
 
-void kernel_archivo_aniadir_cola_procesos_bloqueados(t_kernel_archivo* this, t_pcb* unPcb)
+/*void kernel_archivo_aniadir_cola_procesos_bloqueados(t_kernel_archivo* this, t_pcb* unPcb)
 {
     queue_push(this->colaDeProcesosEsperandoPorElArchivo,unPcb);
-}
+}*/
 
 void archivo_pcb_set_victima(t_pcb_archivo* this, bool victimaArchivo)
 {
@@ -60,12 +60,12 @@ void archivo_pcb_set_victima(t_pcb_archivo* this, bool victimaArchivo)
 
 
 ///////////////////////////// FUNCIONES EXTRAS ///////////////////////////////
-
+/*
 t_pcb* kernel_archivo_quitar_cola_procesos_bloqueados(t_kernel_archivo* this)
 {
     return queue_pop(this->colaDeProcesosEsperandoPorElArchivo);
 }
-
+*/
 bool el_archivo_ya_existe(char* unArchivo, char* otroArchivo)
 {
     return (strcmp(unArchivo, otroArchivo) == 0);

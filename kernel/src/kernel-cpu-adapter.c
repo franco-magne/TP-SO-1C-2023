@@ -30,11 +30,8 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
 {
     uint32_t pidRecibido = 0;
     uint32_t programCounterActualizado = 0;
-    //uint32_t* tablaPagsActualizada = 0;
     uint32_t registroAxActualizado = 0, registroBxActualizado = 0, registroCxActualizado = 0, registroDxActualizado = 0;
-    //char* dispositivoIoEnUso = NULL;
     uint32_t cantidadUnidadesTiemposIo = 0;
-    //t_registro registroEnUsoIo = REGISTRO_null;
       uint32_t id_de_segmento;
       uint32_t tamanio_de_segmento;
 
@@ -43,10 +40,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
     stream_recv_buffer(kernel_config_get_socket_dispatch_cpu(kernelConfig), bufferPcb);
     buffer_unpack(bufferPcb, &pidRecibido, sizeof(pidRecibido));
     buffer_unpack(bufferPcb, &programCounterActualizado, sizeof(programCounterActualizado));
-    //desempaquetar tabla paginas
-    //uint32_t tamanioArrayTablaPaginas = tamanio_array_enteros(pcbAActualizar->arrayTablaPaginas) * sizeof(uint32_t);
-    //tablaPagsActualizada = malloc(tamanioArrayTablaPaginas);
-    //buffer_unpack(bufferPcb, tablaPagsActualizada, tamanioArrayTablaPaginas );
+    
 
     //desempaquetar regs 
     buffer_unpack(bufferPcb, &registroAxActualizado , sizeof(uint32_t));
@@ -87,7 +81,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         case HEADER_delete_segment:
         
         buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
-        modificar_victima_lista_segmento(pcbAActualizar,id_de_segmento);
+        modificar_victima_lista_segmento(pcbAActualizar,id_de_segmento, true);
 
 
         break;

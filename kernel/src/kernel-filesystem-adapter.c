@@ -9,12 +9,14 @@ bool instruccion_f_open(t_pcb* pcb, t_kernel_config* kernelConfig, t_log* kernel
 log_info(kernelLogger,"PID: <%i> - Abrir Archivo: <NOMBRE ARCHIVO>", pcb_get_pid(pcb));
 
 char* nombreArchivo;
+int index = 0;
 
-if( list_any_satisfy(tablaGlobalDeArchivosAbiertos, el_archivo_ya_existe(nombreArchivo) ) ){
+index = list_get_index(tablaGlobalDeArchivosAbiertos,el_archivo_ya_existe,nombreArchivo);
 
-  int index = list_get_index(tablaGlobalDeArchivosAbiertos,el_archivo_ya_existe,nombreArchivo);
+if( index =! 0 ){
+
   t_kernel_archivo* unArchivo = list_get(tablaGlobalDeArchivosAbiertos, index);
-  kernel_archivo_aniadir_cola_procesos_bloqueados(unArchivo,pcb);
+  // kernel_archivo_aniadir_cola_procesos_bloqueados(unArchivo,pcb);
 
   t_pcb_archivo* unArchivoNuevo = archivo_create_pcb(nombreArchivo);
   archivo_pcb_set_victima(unArchivoNuevo, true);
@@ -39,7 +41,6 @@ if(fileSystemResponse == HANDSHAKE_ok_continue){
 
     t_pcb_archivo* unArchivoNuevo = archivo_create_pcb(nombreArchivo);
     pcb_add_lista_de_archivos(pcb,unArchivoNuevo);
-
 
     return false;
 }

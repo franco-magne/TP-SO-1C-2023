@@ -55,50 +55,52 @@ void segmento_set_victima(t_segmento* this, bool cambioEstado){
     this->victima = cambioEstado;
 }
 
+///////////////////////////// FUNCIONES UTILITARIAS DEL SEGMENTO POSIBLE MIGRACION A KERNEL-ESTRUCTURA-SEGMENTO //////////////////
+
 bool es_el_segmento_victima(t_segmento* element, t_segmento* target) {
     if(element->victima)
     return true;
     return false;
 }
 
-t_segmento* enviar_segmento_a_memoria(t_pcb* this, uint8_t header) {
+
+uint32_t index_posicion_del_segmento_victima(t_pcb* this){
     t_segmento* aux1 = segmento_create(-1, -1);
     segmento_set_victima(aux1, false);
     uint32_t index = list_get_index(pcb_get_lista_de_segmentos(this), es_el_segmento_victima, aux1);
-    t_segmento* aux2 = NULL;
-    
-    if (index != -1) {
-        if(header == HEADER_create_segment){
-        aux2 = list_get(pcb_get_lista_de_segmentos(this), index); // Aca no lo queremos quitar, lo leemos y le seteamos el valor asi deja de ser victima
-        segmento_set_victima(aux2, false);
-        list_replace(pcb_get_lista_de_segmentos(this), index, aux2);
-        }
-        else if(header == HEADER_delete_segment){
-        aux2 = list_remove(pcb_get_lista_de_segmentos(this), index); // Aca si porque lo removemos a ese segmento
-        } 
+    //segmento_destroy(aux1);
+    return index;
+}
 
-    }
 
-    segmento_destroy(aux1);
+t_segmento* segmento_victima(t_pcb* this) {
+    uint32_t index = index_posicion_del_segmento_victima(this);
+    t_segmento* aux2 = list_get(pcb_get_lista_de_segmentos(this),index);
     
     return aux2;
 }
+
+t_segmento* remover_segmento_victima_lista(t_pcb* this) {
+    uint32_t index = index_posicion_del_segmento_victima(this);
+    t_segmento* aux2 = list_remove(pcb_get_lista_de_segmentos,index);
+
+    return aux2;
+}
+
+
 
 bool es_el_segmento_victima_id(t_segmento* element, t_segmento* target) {
    return element->id_de_segmento == target ->id_de_segmento;
 }
 
-void modificar_victima_lista_segmento(t_pcb* this, uint32_t id_victima){
-    t_segmento* aux1 = segmento_create(id_victima, -1);
-    uint32_t index = list_get_index(pcb_get_lista_de_segmentos(this), es_el_segmento_victima_id, aux1);
+void modificar_victima_lista_segmento(t_pcb* this, uint32_t id_victima, bool cambiovictima){
+    uint32_t index = index_posicion_del_segmento_victima(this);
     if (index != -1) {
         t_segmento* aux2 = list_get(pcb_get_lista_de_segmentos(this), index);
-        segmento_set_victima(aux2, true);
+        segmento_set_victima(aux2, cambiovictima);
         list_replace(pcb_get_lista_de_segmentos(this), index, aux2);
-        segmento_destroy(aux1); // Liberar segmento anteriormente creado
-    } else {
-        segmento_destroy(aux1); // Liberar segmento si no se encontró en la lista
-    }
+        
+    } 
 }
 //////////////////////////////////////////////////////////////////////////////////////
 
