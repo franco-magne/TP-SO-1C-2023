@@ -17,19 +17,15 @@
 
 typedef struct  {
 
-    uint32_t ENTRADAS_TLB;
-    char* REEMPLAZO_TLB;
+    
     uint32_t RETARDO_INSTRUCCION;
     char* IP_MEMORIA;
     char* PUERTO_MEMORIA;
     char* IP_ESCUCHA;
     char* PUERTO_ESCUCHA_DISPATCH;
-    char* PUERTO_ESCUCHA_INTERRUPT;
-    uint32_t TAMANIO_PAGINA;
-    uint32_t ENTRADAS_POR_TABLA;
     int SOCKET_MEMORIA;
     int SOCKET_DISPATCH_CPU;
-    int SOCKET_INTERRUPT_CPU;
+    int TAMANIO_MAXIMO_SEGMENTO;
 
 } t_cpu_config;
 
@@ -38,20 +34,27 @@ typedef struct  {
 typedef struct  {
     uint32_t pid;
     uint32_t programCounter;
-    uint32_t* arrayTablaPaginas; // TP "de ellos" no usan un puntero 
-    uint32_t* arrayDeSegmentos;
     t_list* instrucciones;
     t_registros_cpu* registrosCpu;
+    uint32_t tiempoIO;
+    char* recursoUtilizado;
+    uint32_t tamanio_de_segmento;
+    uint32_t id_de_segmento;
+    char* nombreArchivo;
 } t_cpu_pcb;
 
-extern t_log* cpuMinimalLogger;
+typedef struct{
+    uint32_t tiempoIO;
+    char* recursoUtilizado;
+} recurso;
+
+
 extern t_log* cpuLogger;
 extern t_cpu_config* cpuConfig;
 
 
-void cpu_config_initializer(void* moduleConfig, t_config* tempCfg);
+t_cpu_config* cpu_config_initializer( t_config* tempCfg);
 void cpu_config_destroy(t_cpu_config* self);
-t_cpu_config* cpu_config_create(char* cpuConfigPath, t_log* cpuLogger) ;
 uint32_t cpu_config_get_retardo_instruccion(t_cpu_config* self);
 char* cpu_config_get_ip_memoria(t_cpu_config* self);
 char* cpu_config_get_puerto_memoria(t_cpu_config* self);
@@ -59,7 +62,18 @@ char* cpu_config_get_puerto_dispatch(t_cpu_config* self);
 char* cpu_config_get_ip_cpu(t_cpu_config* self);
 int cpu_config_get_socket_dispatch(t_cpu_config* self); 
 int cpu_config_get_socket_memoria(t_cpu_config* self);
+int cpu_config_get_tamanio_maximo_segmento(t_cpu_config* self);
+
+
+
 void cpu_config_set_socket_memoria(t_cpu_config* self, int socketMemoria);
 void cpu_config_set_socket_dispatch(t_cpu_config* self, int socketDispatch); 
+void cpu_set_recurso_sem(recurso* this, char* recurso);
+void cpu_set_recursoIO(recurso* this, uint32_t tiempoIO);
+char* cpu_get_recurso_sem(recurso* this);
+uint32_t cpu_get_recurso_IO(recurso* this);
+
+
+
 
 #endif
