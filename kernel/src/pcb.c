@@ -80,17 +80,14 @@ uint32_t index_posicion_del_segmento_victima(t_pcb* this){
 
 
 t_segmento* segmento_victima(t_pcb* this) {
-    //uint32_t index = index_posicion_del_segmento_victima(this);
     t_segmento* aux2 = list_find(pcb_get_lista_de_segmentos(this), es_el_segmento_victimaok);
-
-    
     return aux2;
 }
 
 t_segmento* remover_segmento_victima_lista(t_pcb* this) {
     uint32_t index = index_posicion_del_segmento_victima(this);
     t_segmento* aux2 = list_remove(pcb_get_lista_de_segmentos,index);
-
+    
     return aux2;
 }
 

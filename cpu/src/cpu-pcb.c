@@ -11,6 +11,8 @@ t_cpu_pcb* cpu_pcb_create (uint32_t pid, uint32_t programCounter, t_registros_cp
     this->recursoUtilizado = NULL;
     this->tamanio_de_segmento = -1;
     this->id_de_segmento = -1;
+    this->nombreArchivo = NULL;
+
     return this;
 }
 
@@ -111,7 +113,13 @@ uint32_t cpu_pcb_get_id_de_segmento(t_cpu_pcb* this){
     return this->id_de_segmento;
 }
 
+char* cpu_pcb_get_nombre_archivo(t_cpu_pcb* this){
+    return this->nombreArchivo;
+}
 
+void cpu_pcb_set_nombre_archivo(t_cpu_pcb* this, char* nombreArchivo){
+    this->nombreArchivo = nombreArchivo;
+}
 
 ////////////////////////////  Registros 4bits  /////////////////////////////////////////
 char*  cpu_pcb_get_registro_ax(t_cpu_pcb* this)

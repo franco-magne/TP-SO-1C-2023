@@ -261,3 +261,20 @@ void instruccion_delete_segment(t_pcb* pcb){
 }
 
 ///////////////////////////////// INSTRUCCION F_OPEN //////////////////////////////
+
+bool instruccion_f_open(t_pcb* pcb){
+
+    bool existeElArchivo = file_system_adapter_chequear_si_ya_existe(pcb,kernelConfig, kernelLogger);
+
+    if(existeElArchivo){
+        proceso_pasa_a_bloqueado(pcb, "ARCHIVO");
+        return true;
+    }
+
+    file_system_adapter_send_f_open(pcb,kernelConfig);
+    file_system_adapter_recv_f_open(pcb,kernelConfig);
+
+    return false;
+
+
+}

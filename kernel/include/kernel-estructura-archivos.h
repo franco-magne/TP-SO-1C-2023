@@ -38,7 +38,9 @@ t_pcb_archivo* archivo_create_pcb(char* nombreArchivo);
 void archivo_pcb_set_victima(t_pcb_archivo* this, bool victimaArchivo);
 bool archivo_pcb_get_victima(t_pcb_archivo* this);
 char* archivo_motivo_de_bloqueo(t_list* listaDeArchivosDePcb);
-
+bool es_el_archivo_victima(t_pcb_archivo * unArchivo);
+char* archivo_pcb_get_nombre_archivo(t_pcb_archivo* this);
+void modificar_victima_archivo(t_list* listaDeArchivosDePcb, bool cambio);
 
 
 

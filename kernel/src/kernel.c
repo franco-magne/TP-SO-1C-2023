@@ -56,6 +56,7 @@ uint32_t obtener_siguiente_pid(void)
 }
 
 
+
 //////////////////////////////////////////////////////////////////////////
 /////////////////////////////// FUNCION MAIN ////////////////////////////
 int main(int argc, char* argv[]) {
@@ -72,21 +73,9 @@ int main(int argc, char* argv[]) {
    recursoConfig = iniciar_estructuras_de_recursos(cantidad_de_recursos, kernel_config_get_instancias(kernelConfig), kernel_config_get_recurso(kernelConfig));
     
    
-
-
    /////////////////////////////// CONEXION CON CPU /////////////////////////////
     conectar_a_servidor_cpu_dispatch(kernelConfig,kernelLogger);
-   /* int kernelSocketCPU = conectar_a_servidor("127.0.0.1", "8001");
-    kernel_config_set_socket_dispatch_cpu(kernelConfig, kernelSocketCPU);
-    if (kernelSocketCPU == -1) {
-        log_error(kernelLogger, "Error al intentar establecer conexión inicial con módulo CPU");
-
-        log_destroy(kernelLogger);
-
-    return -2;
-    }
-   */
-
+  
     /////////////////////////////// CONEXION CON FILE_SYSTEM /////////////////////////////
 /*
     int kernelSocketFS = conectar_a_servidor(kernelIP, "8003");
@@ -97,6 +86,8 @@ int main(int argc, char* argv[]) {
 
     return -2;
     }*/
+      //  kernel_config_set_socket_file_system(kernelConfig,kernelSocketFS);
+
 
    /////////////////////////////// CONEXION CON MEMORIA /////////////////////////////
     
@@ -363,11 +354,7 @@ void* atender_pcb(void* args)
                 break;
             case HEADER_f_open:
                 
-                procesoFueBloqueado = instruccion_f_open(pcb,kernelConfig, kernelLogger);
-
-                if(procesoFueBloqueado){
-                    char* nombreArchivo = archivo_motivo_de_bloqueo(pcb_get_lista_de_archivos_abiertos(pcb) );
-                } // HACERLO EN LA FUNCION DE FILESYSTEM ADAPTER
+                procesoFueBloqueado = instruccion_f_open(pcb);
 
                 break;
             case HEADER_f_close:

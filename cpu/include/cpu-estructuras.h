@@ -40,7 +40,7 @@ typedef struct  {
     char* recursoUtilizado;
     uint32_t tamanio_de_segmento;
     uint32_t id_de_segmento;
-
+    char* nombreArchivo;
 } t_cpu_pcb;
 
 typedef struct{

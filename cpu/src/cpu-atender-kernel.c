@@ -79,6 +79,7 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
         //PARTE DE MEMORIA
         uint32_t id_de_segmento = cpu_pcb_get_id_de_segmento(pcb);
         uint32_t tamanio_de_segmento = cpu_pcb_get_tamanio_de_segmento(pcb);
+        char* nombreArchivo = cpu_pcb_get_nombre_archivo(pcb);
 
         t_buffer* buffer = buffer_create();
 
@@ -105,6 +106,7 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
             break;
             case HEADER_delete_segment: buffer_pack(buffer, &id_de_segmento, sizeof(id_de_segmento));
             break;
+            case HEADER_f_open: buffer_pack_string(buffer,nombreArchivo);
             default: break;
         }   
 
@@ -379,6 +381,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_OPEN> - <%s> - ", cpu_pcb_get_pid(pcb),recurso1);
 
+        cpu_pcb_set_nombre_archivo(pcb, recurso1);
         intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
 

@@ -39,6 +39,7 @@
 
 void log_transition(const char* prev, const char* post, int pid);
 void setear_tiempo_ready(t_pcb* this);
+void kernel_archivo_aniadir_cola_procesos_bloqueados(t_kernel_archivo* this, t_pcb* unPcb);
 
 
 
