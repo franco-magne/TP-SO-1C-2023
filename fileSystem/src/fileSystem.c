@@ -18,7 +18,7 @@ int main() {
 
 
    ///////////////////////////////// CONECTARSE A MEMORIA //////////////////////////////
-
+   /*
    int fsSocketMemoria = conectar_a_servidor(fs->ip_memoria, fs->puerto_memoria);
    if (fsSocketMemoria == -1) {
 
@@ -29,7 +29,7 @@ int main() {
    }
    fs->socket_memoria = fsSocketMemoria;
    log_info(fs->logger, "Conexion con MEMORIA establecida");
-
+   */
    levantar_bitmap(fs);
    crear_archivo_de_bloques(fs);
 

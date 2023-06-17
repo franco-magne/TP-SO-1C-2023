@@ -57,7 +57,7 @@ static char* t_registro_to_char(t_registro registro)
 }
 
 
-char* instruccion_to_string(t_tipo_instruccion chequea, t_info_instruccion* self) 
+char* instruccion_to_string(t_instruccion* self) 
 {
   
     uint32_t operando1 = self->operando1;
@@ -67,22 +67,22 @@ char* instruccion_to_string(t_tipo_instruccion chequea, t_info_instruccion* self
     char* dispotisivo = self->dispositivo; 
     
     return 
-             chequea == INSTRUCCION_SET   ? string_from_format("SET %s %s",t_registro_to_char(registro1) ,dispotisivo)
-           : chequea == INSTRUCCION_MOV_OUT  ? string_from_format("MOV_OUT %d %s", operando1, t_registro_to_char(registro2))
-           : chequea == INSTRUCCION_WAIT  ? string_from_format("WAIT %s", dispotisivo)
-           : chequea == INSTRUCCION_IO  ? string_from_format("I/O %i", operando1)
-           : chequea == INSTRUCCION_SIGNAL  ? string_from_format("SIGNAL %s", dispotisivo)
-           : chequea == INSTRUCCION_MOV_IN    ? string_from_format("MOV_IN %s %d",t_registro_to_char(registro1) , operando2)
-           : chequea == INSTRUCCION_F_OPEN  ? string_from_format("F_OPEN %s", dispotisivo)
-           : chequea == INSTRUCCION_YIELD  ? string_from_format("YIELD")
-           : chequea == INSTRUCCION_F_TRUNCATE  ? string_from_format("F_TRUNCATE %s %i", dispotisivo, operando2)
-           : chequea == INSTRUCCION_F_SEEK  ? string_from_format("F_SEEK %s %i", dispotisivo, operando2)
-           : chequea == INSTRUCCION_CREATE_SEGMENT  ? string_from_format("CREATE_SEGMENT %i %i", operando1, operando2)
-           : chequea == INSTRUCCION_F_WRITE  ? string_from_format("F_WRITE %s %i %i", dispotisivo, operando1, operando2)
-           : chequea == INSTRUCCION_F_READ  ? string_from_format("F_READ %s %i %i", dispotisivo, operando1, operando2)
-           : chequea == INSTRUCCION_DELETE_SEGMENT  ? string_from_format("DELETE_SEGMENT %i", operando1)
-           : chequea == INSTRUCCION_F_CLOSE  ? string_from_format("F_CLOSE %s", dispotisivo)
-           : chequea == INSTRUCCION_EXIT ? string_from_format("EXIT")
+             self->tipoInstruccion == INSTRUCCION_SET   ? string_from_format("SET %s %s",t_registro_to_char(registro1) ,dispotisivo)
+           : self->tipoInstruccion == INSTRUCCION_MOV_OUT  ? string_from_format("MOV_OUT %d %s", operando1, t_registro_to_char(registro2))
+           : self->tipoInstruccion == INSTRUCCION_WAIT  ? string_from_format("WAIT %s", dispotisivo)
+           : self->tipoInstruccion == INSTRUCCION_IO  ? string_from_format("I/O %i", operando1)
+           : self->tipoInstruccion == INSTRUCCION_SIGNAL  ? string_from_format("SIGNAL %s", dispotisivo)
+           : self->tipoInstruccion == INSTRUCCION_MOV_IN    ? string_from_format("MOV_IN %s %d",t_registro_to_char(registro1) , operando2)
+           : self->tipoInstruccion == INSTRUCCION_F_OPEN  ? string_from_format("F_OPEN %s", dispotisivo)
+           : self->tipoInstruccion == INSTRUCCION_YIELD  ? string_from_format("YIELD")
+           : self->tipoInstruccion == INSTRUCCION_F_TRUNCATE  ? string_from_format("F_TRUNCATE %s %i", dispotisivo, operando2)
+           : self->tipoInstruccion == INSTRUCCION_F_SEEK  ? string_from_format("F_SEEK %s %i", dispotisivo, operando2)
+           : self->tipoInstruccion == INSTRUCCION_CREATE_SEGMENT  ? string_from_format("CREATE_SEGMENT %i %i", operando1, operando2)
+           : self->tipoInstruccion == INSTRUCCION_F_WRITE  ? string_from_format("F_WRITE %s %i %i", dispotisivo, operando1, operando2)
+           : self->tipoInstruccion == INSTRUCCION_F_READ  ? string_from_format("F_READ %s %i %i", dispotisivo, operando1, operando2)
+           : self->tipoInstruccion == INSTRUCCION_DELETE_SEGMENT  ? string_from_format("DELETE_SEGMENT %i", operando1)
+           : self->tipoInstruccion == INSTRUCCION_F_CLOSE  ? string_from_format("F_CLOSE %s", dispotisivo)
+           : self->tipoInstruccion == INSTRUCCION_EXIT ? string_from_format("EXIT")
            : string_from_format("UNKNOWN");
 }
 
@@ -170,7 +170,13 @@ t_list* lista_de_instrucciones_buffer(t_buffer* bufferConInstrucciones, t_log * 
         }
         t_instruccion* instruccionActual = instruccion_create(identificadorInstruccion, infoInstruccion);
         list_add(instrucciones, instruccionActual);
-        log_info(logger, "Se desempaqueta la instruccion %s", instruccion_to_string(identificadorInstruccion,infoInstruccion));
+        log_info(logger, "Se desempaqueta la instruccion %s", instruccion_to_string(instruccionActual));
+        /*if(infoInstruccion->dispositivo != NULL){
+
+            free(infoInstruccion->dispositivo);
+        }
+        free(infoInstruccion);
+        */
     }
     log_info(logger, "Se desempaquetan %d instrucciones", list_size(instrucciones));
     return instrucciones;
@@ -185,4 +191,38 @@ t_registros_cpu* registros_cpu_create()
 }
 
 
+void destroy_instructions_list(t_list* instructionsList)
+{
+   // list_destroy_and_destroy_elements(instructionsList, instruccion_destroy);
+}
+
+t_tipo_instruccion instruccion_get_tipo_instruccion(t_instruccion* self) 
+{
+    return self->tipoInstruccion;
+}
+
+uint32_t instruccion_get_operando1(t_instruccion* self) 
+{
+    return self->operando1;
+}
+
+uint32_t instruccion_get_operando2(t_instruccion* self) 
+{
+    return self->operando2;
+}
+
+t_registro instruccion_get_registro1(t_instruccion* self) 
+{
+    return self->registro1;
+}
+
+t_registro instruccion_get_registro2(t_instruccion* self) 
+{
+    return self->registro2;
+}
+
+
+char* instruccion_get_dispositivo(t_instruccion* self){
+    return self->dispositivo;
+}
 
