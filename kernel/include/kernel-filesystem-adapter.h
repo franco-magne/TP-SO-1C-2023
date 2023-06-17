@@ -18,7 +18,7 @@ void file_system_adapter_recv_f_open(t_pcb* pcb, t_kernel_config* kernelConfig);
 
 
 
-void instruccion_f_close(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger);
+t_pcb* atender_f_close(char* nombreArchivo);
 
 void instruccion_f_truncate(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger);
 

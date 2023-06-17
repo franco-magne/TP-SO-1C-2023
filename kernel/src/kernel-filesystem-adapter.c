@@ -22,7 +22,7 @@ bool file_system_adapter_chequear_si_ya_existe(t_pcb* pcb, t_kernel_config* kern
 
   if( index != -1 ){
 
-      modificar_victima_archivo(pcb_get_lista_de_archivos_abiertos(pcb), false);
+      modificar_victima_archivo(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo, false);
       t_kernel_archivo* unArchivo = list_get(tablaGlobalDeArchivosAbiertos, index);
       queue_push(unArchivo->colaDeProcesosEsperandoPorElArchivo,pcb);
       pthread_mutex_lock(&mutexTablaGlobal);
@@ -51,7 +51,7 @@ void file_system_adapter_recv_f_open(t_pcb* pcb, t_kernel_config* kernelConfig){
 
   t_pcb_archivo* archivoAbrir = list_find(pcb_get_lista_de_archivos_abiertos(pcb), es_el_archivo_victima);
   char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoAbrir);
-  modificar_victima_archivo(pcb_get_lista_de_archivos_abiertos(pcb), false);
+  modificar_victima_archivo(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo, false);
 
 
   uint8_t fileSystemResponse = stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
@@ -71,13 +71,36 @@ void file_system_adapter_recv_f_open(t_pcb* pcb, t_kernel_config* kernelConfig){
 }
 
 
-void instruccion_f_close(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger){
+t_pcb* atender_f_close(char* nombreArchivo){
 
-log_info(kernelLogger,"PID: <%i> - Cerrar Archivo: <NOMBRE ARCHIVO>", pcb_get_pid(pcbAIniciar));
+    pthread_mutex_lock(&mutexTablaGlobal);
+  int index = archivo_kernel_index(tablaGlobalDeArchivosAbiertos,nombreArchivo);
+  t_kernel_archivo* archivo = list_get(tablaGlobalDeArchivosAbiertos, index);
+  pthread_mutex_unlock(&mutexTablaGlobal);
 
 
+  if( queue_is_empty (kernel_archivo_get_cola_procesos_bloqueados(archivo)) ){
+        pthread_mutex_lock(&mutexTablaGlobal);
+        list_remove(tablaGlobalDeArchivosAbiertos,index);
+        pthread_mutex_unlock(&mutexTablaGlobal);
+        return NULL;
+  } 
+  else {
+      t_pcb* pcbLiberado = queue_pop( kernel_archivo_get_cola_procesos_bloqueados(archivo) );
+      pthread_mutex_lock(&mutexTablaGlobal);
+      kernel_archivo_set_cola_procesos_bloqueados(archivo, kernel_archivo_get_cola_procesos_bloqueados(archivo) );
+      list_replace(tablaGlobalDeArchivosAbiertos,index,archivo);
+      pthread_mutex_unlock(&mutexTablaGlobal);
 
+      return  pcbLiberado;
+  }
 }
+
+
+
+
+
+
 
 void instruccion_f_truncate(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger){
 

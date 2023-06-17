@@ -93,6 +93,12 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         pcb_add_lista_de_archivos(pcbAActualizar, nuevoArchivo);
         
         break;
+
+        case HEADER_f_close:
+        nombreArchivo = buffer_unpack_string(bufferPcb);
+        modificar_victima_archivo(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),nombreArchivo,true);
+
+        break;
     }
     
    if (pidRecibido == pcb_get_pid(pcbAActualizar)) {

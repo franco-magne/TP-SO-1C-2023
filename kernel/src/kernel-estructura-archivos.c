@@ -59,6 +59,10 @@ void archivo_pcb_set_victima(t_pcb_archivo* this, bool victimaArchivo)
      this->victimaDelArchivo = victimaArchivo;
 }
 
+void kernel_archivo_set_cola_procesos_bloqueados(t_kernel_archivo* this , t_queue* cola)
+{
+    this->colaDeProcesosEsperandoPorElArchivo = cola;
+}
 
 ///////////////////////////// FUNCIONES EXTRAS ///////////////////////////////
 
@@ -88,9 +92,26 @@ char* archivo_motivo_de_bloqueo(t_list* listaDeArchivosDePcb)
     return aux2->nombreDeArchivo;
 }
 
-void modificar_victima_archivo(t_list* listaDeArchivosDePcb, bool cambio){
+void eliminar_archivo_pcb(t_list* listaDeArchivosDePcb,char* nombreArchivo){
+
+    t_pcb_archivo* aux = archivo_create_pcb(nombreArchivo);
+    int index = list_get_index(listaDeArchivosDePcb,elArchivoEsVictima,aux);
+    t_pcb_archivo* aux2= list_get(listaDeArchivosDePcb,index);
+    list_remove(listaDeArchivosDePcb,index);
+}
+
+int archivo_kernel_index(t_list* listaDeArchivosDePcb,char* nombreArchivo){
+
+    t_kernel_archivo* aux = archivo_create_kernel(-1,nombreArchivo);
+    int index = list_get_index(listaDeArchivosDePcb,elArchivoEsVictima,aux);
+    return index;
+}
+
+
+
+void modificar_victima_archivo(t_list* listaDeArchivosDePcb,char* nombreArchivo, bool cambio){
      
-    t_pcb_archivo* aux = archivo_create_pcb(NULL);
+    t_pcb_archivo* aux = archivo_create_pcb(nombreArchivo);
     int index = list_get_index(listaDeArchivosDePcb,elArchivoEsVictima,aux);
     t_pcb_archivo* aux2= list_get(listaDeArchivosDePcb,index);
     aux2->victimaDelArchivo = cambio;

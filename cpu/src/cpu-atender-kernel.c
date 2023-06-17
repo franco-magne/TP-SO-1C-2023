@@ -106,8 +106,12 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
             break;
             case HEADER_delete_segment: buffer_pack(buffer, &id_de_segmento, sizeof(id_de_segmento));
             break;
-            case HEADER_f_open: buffer_pack_string(buffer,nombreArchivo);
-            default: break;
+            case HEADER_f_open: 
+            case HEADER_f_close: buffer_pack_string(buffer,nombreArchivo);
+            break;
+
+            default: 
+            break;
         }   
 
         stream_send_buffer(cpu_config_get_socket_dispatch(cpuConfig), header, buffer);
@@ -379,7 +383,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         
         char* recurso1 = string_duplicate((char*) operando1);
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_OPEN> - <%s> - ", cpu_pcb_get_pid(pcb),recurso1);
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_OPEN> - <%s> ", cpu_pcb_get_pid(pcb),recurso1);
 
         cpu_pcb_set_nombre_archivo(pcb, recurso1);
         intervalo_de_pausa(retardoInstruccion);
@@ -393,7 +397,8 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         char* recurso1 = string_duplicate((char*) operando1);
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_CLOSE> - <%s>", cpu_pcb_get_pid(pcb), recurso1);
-
+        
+        cpu_pcb_set_nombre_archivo(pcb, recurso1);
         intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
 
