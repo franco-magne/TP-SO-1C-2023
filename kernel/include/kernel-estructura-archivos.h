@@ -30,7 +30,6 @@ typedef struct{
 
 //////////////////////// DEFINICIONES FUNCIONES ////////////////////////
 
-bool el_archivo_ya_existe(char* unArchivo, char* otroArchivo);
 t_queue* kernel_archivo_get_cola_procesos_bloqueados(t_kernel_archivo* this);
 //void kernel_archivo_aniadir_cola_procesos_bloqueados(t_kernel_archivo* this, t_pcb* unPcb);
 t_kernel_archivo* archivo_create_kernel(uint32_t pid, char* nombreArchivo);
@@ -40,6 +39,7 @@ bool archivo_pcb_get_victima(t_pcb_archivo* this);
 char* archivo_motivo_de_bloqueo(t_list* listaDeArchivosDePcb);
 bool es_el_archivo_victima(t_pcb_archivo * unArchivo);
 char* archivo_pcb_get_nombre_archivo(t_pcb_archivo* this);
+bool el_archivo_ya_existe(t_kernel_archivo* unArchivo, t_kernel_archivo* otroArchivo);
 void modificar_victima_archivo(t_list* listaDeArchivosDePcb, bool cambio);
 
 

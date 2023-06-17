@@ -68,9 +68,9 @@ bool es_el_archivo_victima(t_pcb_archivo * unArchivo){
 }
 
 
-bool el_archivo_ya_existe(char* unArchivo, char* otroArchivo)
+bool el_archivo_ya_existe(t_kernel_archivo* unArchivo, t_kernel_archivo* otroArchivo)
 {
-    return (strcmp(unArchivo, otroArchivo) == 0);
+    return (strcmp(unArchivo->nombreDeArchivo, otroArchivo->nombreDeArchivo) == 0);
 }
 
 bool elArchivoEsVictima(t_pcb_archivo* unArchivo, t_pcb_archivo* otroArchivo){

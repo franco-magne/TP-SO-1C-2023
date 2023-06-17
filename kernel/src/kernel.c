@@ -62,7 +62,7 @@ uint32_t obtener_siguiente_pid(void)
 int main(int argc, char* argv[]) {
     kernelLogger = log_create(KERNEL_LOG_UBICACION,KERNEL_PROCESS_NAME,true,LOG_LEVEL_INFO);
     t_config* kernelConfigPath = config_create(argv[1]);
-
+    tablaGlobalDeArchivosAbiertos = list_create();
     nextPid++;
     pthread_mutex_init(&nextPidMutex, NULL);
 
@@ -77,16 +77,17 @@ int main(int argc, char* argv[]) {
     conectar_a_servidor_cpu_dispatch(kernelConfig,kernelLogger);
   
     /////////////////////////////// CONEXION CON FILE_SYSTEM /////////////////////////////
-/*
-    int kernelSocketFS = conectar_a_servidor(kernelIP, "8003");
+
+    int kernelSocketFS = conectar_a_servidor("127.0.0.1", "8003");
     if (kernelSocketFS == -1) {
         log_error(kernelLogger, "Error al intentar establecer conexión inicial con módulo FILE_SYSTEM");
 
         log_destroy(kernelLogger);
 
     return -2;
-    }*/
-      //  kernel_config_set_socket_file_system(kernelConfig,kernelSocketFS);
+    }
+
+kernel_config_set_socket_file_system(kernelConfig,kernelSocketFS);
 
 
    /////////////////////////////// CONEXION CON MEMORIA /////////////////////////////

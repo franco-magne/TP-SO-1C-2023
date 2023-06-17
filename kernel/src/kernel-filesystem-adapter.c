@@ -9,15 +9,18 @@ bool file_system_adapter_chequear_si_ya_existe(t_pcb* pcb, t_kernel_config* kern
 
   t_pcb_archivo* archivoAbrir = list_find(pcb_get_lista_de_archivos_abiertos(pcb), es_el_archivo_victima);
 
-  char* nombreArchivo = archivo_pcb_get_nombre_archivo(pcb);
+  char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoAbrir);
 
   log_info(kernelLogger,"PID: <%i> - Abrir Archivo: <%s>", pcb_get_pid(pcb), nombreArchivo);
 
   int index = 0;
+  
+  t_kernel_archivo* unArchivo = archivo_create_kernel(-1,nombreArchivo );
 
-  index = list_get_index(tablaGlobalDeArchivosAbiertos,el_archivo_ya_existe,nombreArchivo);
 
-  if( index =! 0 ){
+  index = list_get_index(tablaGlobalDeArchivosAbiertos,el_archivo_ya_existe,unArchivo);
+
+  if( index != -1 ){
 
       modificar_victima_archivo(pcb_get_lista_de_archivos_abiertos(pcb), false);
       t_kernel_archivo* unArchivo = list_get(tablaGlobalDeArchivosAbiertos, index);
@@ -35,8 +38,8 @@ bool file_system_adapter_chequear_si_ya_existe(t_pcb* pcb, t_kernel_config* kern
 void file_system_adapter_send_f_open(t_pcb* pcb, t_kernel_config* kernelConfig){ 
   
   t_pcb_archivo* archivoAbrir = list_find(pcb_get_lista_de_archivos_abiertos(pcb), es_el_archivo_victima);
-  char* nombreArchivo = archivo_pcb_get_nombre_archivo(pcb);
-
+  char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoAbrir);
+  printf("Nombre : <%s>",nombreArchivo);
   t_buffer* bufferNombreArchivo = buffer_create();
   buffer_pack_string(bufferNombreArchivo, nombreArchivo);
   stream_send_buffer(kernel_config_get_socket_file_system(kernelConfig), HEADER_f_open, bufferNombreArchivo);
@@ -47,7 +50,7 @@ void file_system_adapter_send_f_open(t_pcb* pcb, t_kernel_config* kernelConfig){
 void file_system_adapter_recv_f_open(t_pcb* pcb, t_kernel_config* kernelConfig){ 
 
   t_pcb_archivo* archivoAbrir = list_find(pcb_get_lista_de_archivos_abiertos(pcb), es_el_archivo_victima);
-  char* nombreArchivo = archivo_pcb_get_nombre_archivo(pcb);
+  char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoAbrir);
   modificar_victima_archivo(pcb_get_lista_de_archivos_abiertos(pcb), false);
 
 
