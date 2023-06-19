@@ -23,6 +23,8 @@ void atender_peticiones_cpu(int socketCpu) {
             buffer_unpack(buffer, &pid, sizeof(pid));
             buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
 
+            
+            
             //Logica de desplazamiento ...          base < limite
 
 
@@ -42,9 +44,11 @@ void atender_peticiones_cpu(int socketCpu) {
         case HEADER_move_in :{ //"leer"
             uint32_t pid;
             uint32_t id_segmento;
+            //uint32_t desplazamiento_segmento;
 
             buffer_unpack(buffer, &id_segmento, sizeof(id_segmento));
             buffer_unpack(buffer, &pid, sizeof(pid));
+            //buffer_unpack(buffer, &desplazamiento_segmento, sizeof(pid));
 
             Procesos* unProceso = obtener_proceso_por_pid(pid);
             Segmento* unSegmento = obtener_segmento_por_id(unProceso, id_segmento);

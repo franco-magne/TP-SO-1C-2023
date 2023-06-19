@@ -33,6 +33,14 @@ void segmento_set_limite(Segmento* un_segmento, uint32_t* limite){
     un_segmento->limite = limite;
 }
 
+uint32_t segmento_get_tamanio(Segmento* un_segmento){
+    return un_segmento->tamanio;
+}
+
+void segmento_set_tamanio(Segmento* un_segmento, uint32_t tamanio){
+    un_segmento->tamanio = tamanio;
+}
+
 uint32_t* segmento_get_base(Segmento* un_segmento){
     return un_segmento->base;
 }

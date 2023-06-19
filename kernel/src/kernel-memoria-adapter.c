@@ -10,11 +10,13 @@ void instruccion_create_segment(t_pcb* pcbAIniciar, t_kernel_config* kernelConfi
 
     uint32_t id_de_segmento = segmento_get_id_de_segmento(unSegmentoAEnviar);
     uint32_t tamanio_de_segmento = segmento_get_tamanio_de_segmento(unSegmentoAEnviar);
+    int pid = pcb_get_pid(pcbAIniciar);
 
     t_buffer* bufferNuevoSegmento = buffer_create();
 
     buffer_pack(bufferNuevoSegmento, &id_de_segmento, sizeof(id_de_segmento));
     buffer_pack(bufferNuevoSegmento, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
+    buffer_pack(bufferNuevoSegmento, &pid, sizeof(pid));
 
     stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig), HEADER_create_segment ,bufferNuevoSegmento);
 
@@ -41,10 +43,12 @@ void instruccion_delete_segment(t_pcb* pcbAIniciar, t_kernel_config* kernelConfi
     t_segmento* unSegmentoAEnviar = enviar_segmento_a_memoria(pcbAIniciar, HEADER_delete_segment);
 
     uint32_t id_de_segmento = segmento_get_id_de_segmento(unSegmentoAEnviar);
+    int pid = pcb_get_pid(pcbAIniciar);
 
     t_buffer* bufferNuevoSegmento = buffer_create();
 
     buffer_pack(bufferNuevoSegmento, &id_de_segmento, sizeof(id_de_segmento));
+    buffer_pack(bufferNuevoSegmento, &pid, sizeof(pid));
 
     stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig), HEADER_delete_segment ,bufferNuevoSegmento);
 

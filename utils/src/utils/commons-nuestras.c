@@ -96,3 +96,20 @@ double obtener_diferencial_de_tiempo_en_milisegundos(struct timespec end, struct
     const uint32_t NANOSECS_TO_MILISECS = 1000000;
     return (end.tv_sec - start.tv_sec) * SECS_TO_MILISECS + (end.tv_nsec - start.tv_nsec) / NANOSECS_TO_MILISECS;
 }
+
+
+bool es_el_ultimo_elemento(t_list* lista, t_link_element* elemento) {
+    if (lista->head == NULL || elemento == NULL) {
+        return false;
+    }
+    
+    t_link_element* actual = lista->head;
+    while (actual->next != NULL) {
+        if (actual == elemento) {
+            return false;
+        }
+        actual = actual->next;
+    }
+    
+    return (actual == elemento);
+}

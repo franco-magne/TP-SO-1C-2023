@@ -20,6 +20,7 @@ typedef struct {
     int segmento_id; 
     uint32_t* limite; //tamanio
     uint32_t* base;
+    uint32_t tamanio;
     int pid; 
     int validez;
     char* contenido;
@@ -39,6 +40,8 @@ uint32_t* segmento_get_limite(Segmento* );
 void segmento_set_limite(Segmento* , uint32_t* );
 uint32_t* segmento_get_base(Segmento* );
 void segmento_set_base(Segmento* , uint32_t* );
+uint32_t segmento_get_tamanio(Segmento* );
+void segmento_set_tamanio(Segmento* , uint32_t );
 int segmento_get_pid(Segmento* );
 void segmento_set_pid(Segmento* , int );
 int segmento_get_bit_validez(Segmento* );

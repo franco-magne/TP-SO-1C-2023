@@ -360,7 +360,6 @@ void* atender_pcb(void* args)
                 break;
             
             case HEADER_delete_segment:
-
                 instruccion_delete_segment( pcb,kernelConfig,kernelLogger);
                 break;
             case HEADER_f_open:
