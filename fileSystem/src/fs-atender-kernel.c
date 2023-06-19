@@ -9,6 +9,7 @@ void atender_kernel(t_filesystem* fs) {
     
     while (fs->socket_kernel != -1) {
 
+        log_info(fs->logger, "Esperando peticion de KERNEL...");
         uint8_t header = stream_recv_header(fs->socket_kernel); // RECIBO LA OPERACION QUE KERNEL QUIERA SOLICITAR
 
         switch(header) {
@@ -20,9 +21,9 @@ void atender_kernel(t_filesystem* fs) {
                 stream_recv_buffer(fs->socket_kernel, buffer_nombre_archivo_open); // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
                 nombre_archivo_open = buffer_unpack_string(buffer_nombre_archivo_open); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
 
-                //operacion_OK = abrir_archivo(nombre_archivo_open);
+                operacion_OK = abrir_archivo(nombre_archivo_open);
 
-                if (1) {
+                if (operacion_OK) {
                     log_info(fs->logger, "Abrir archivo: <%s>", nombre_archivo_open);
                     stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO EXISTE Y LO AGREGUE A SU TABLA GLOBAL
                 } else {
@@ -72,7 +73,7 @@ void atender_kernel(t_filesystem* fs) {
 
             break;
             default:
-
+                log_error(fs->logger, "Peticion incorrecta.");
             break;
         }
 
@@ -83,37 +84,7 @@ void atender_kernel(t_filesystem* fs) {
     return;
 }
 
-/*
-t_buffer* bufferArchivo = buffer_create();
-char* nombreArchivo;
-int ejemplo;
-buffer_pack_string(bufferArchivo, nombreArchivo); // EMPAQUETADO STRING
-buffer_pack(bufferArchivo,&ejemplo,sizeof(ejemplo)); // EMpaquetado int
-
-stream_send_buffer(kernel_config_get_socket_filesystem(kernelConfig),HEADER_f_close,bufferArchivo ); // ENVIAR
-
-buffer_destroy(bufferArchivo);
-
-
-
-////////////////////// FILE SYSTEM ///////////////
-
-uint8_t header = stream_recv_header(socketKernel); // PRIMERO RECIBO HEADER
-if(header == HEADER_f_close){
-    char* nombreARchivoACerrar;
-    int ejemplo;
-    t_buffer* bufferArchivoCerrar = buffer_create();
-    stream_recv_buffer(socketKernel, bufferArchivoCerrar); //DESPUES RECIBO EL BUFFER
-    nombreARchivoACerrar= buffer_unpack_string(bufferArchivoCerrar); // ESTE USA PARA STRING
-    buffer_unpack(bufferArchivoCerrar, &ejemplo, sizeof(ejemplo)); // ESTE LO USAS PARA INT Y ESO
-    log_info(fileSystemlog, "nombre a archivo a cerrar <%s> ", nombreARchivoACerrar);
-
-    stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue); // ACA ME NOTIFICAS A MI QUE YA LO CERRASTE
-}
-
-*/
-
-int truncar_archivo(char* nombre_archivo, uint32_t tamanio_archivo) {
+int truncar_archivo(char* nombre_archivo, uint32_t nuevo_tamanio_archivo) {
 
     int truncado_ok;
     int pos_archivo_a_truncar = -1;
@@ -134,31 +105,22 @@ int truncar_archivo(char* nombre_archivo, uint32_t tamanio_archivo) {
     if (pos_archivo_a_truncar == -1) {
         truncado_ok = 0;
     } else {
-        t_fcb* fcb_a_truncar = malloc(sizeof(t_fcb));
-        t_fcb* nuevo_fcb = malloc(sizeof(t_fcb));
 
-        fcb_a_truncar = list_get(lista_fcbs, pos_archivo_a_truncar);
-        nuevo_fcb->nombre_archivo = fcb_a_truncar->nombre_archivo;
-        nuevo_fcb->puntero_directo = fcb_a_truncar->puntero_directo;
-        nuevo_fcb->puntero_indirecto = fcb_a_truncar->puntero_indirecto;
+        t_fcb* fcb_a_truncar = list_get(lista_fcbs, pos_archivo_a_truncar);
 
-        if (fcb_a_truncar->tamanio_archivo > tamanio_archivo) {
+        if (fcb_a_truncar->tamanio_archivo > nuevo_tamanio_archivo) {
             // CASO REDUCIR EL TAMANIO DEL ARCHIVO
 
-            nuevo_fcb->tamanio_archivo = fcb_a_truncar->tamanio_archivo;
-            list_replace(lista_fcbs, pos_archivo_a_truncar, nuevo_fcb);
+            fcb_a_truncar->tamanio_archivo = nuevo_tamanio_archivo;
 
         } else {
             // CASO AMPLIAR EL TAMANIO DEL ARCHIVO
 
-            nuevo_fcb->tamanio_archivo = fcb_a_truncar->tamanio_archivo;
-            list_replace(lista_fcbs, pos_archivo_a_truncar, nuevo_fcb);
+            fcb_a_truncar->tamanio_archivo = nuevo_tamanio_archivo;
 
         }
 
-        truncado_ok = 1;
-        free(nuevo_fcb);
-        free(fcb_a_truncar);        
+        truncado_ok = 1;    
     }
 
     return truncado_ok;
@@ -171,14 +133,13 @@ int abrir_archivo(char* nombre_archivo) {
     
     for (int i = 0; i < size_lista_fcbs; i++) {
 
-        t_fcb* fcb_aux = malloc(sizeof(t_fcb));
+        t_fcb* fcb_aux;
         fcb_aux = list_get(lista_fcbs, i);
 
         if (strcmp(fcb_aux->nombre_archivo, nombre_archivo) == 0) {
             encontrado = 1;
         }
 
-        free(fcb_aux);
     }
 
     return encontrado;
@@ -186,14 +147,16 @@ int abrir_archivo(char* nombre_archivo) {
 
 int fs_escuchando_en(int server_fs, t_filesystem* fs) {
 
+    pthread_t hilo;
     int socket_kernel = esperar_cliente(server_fs);
+    
     fs->socket_kernel = socket_kernel;
+    log_info(fs->logger, "Cliente KERNEL conectado!");
 
     if (socket_kernel != -1) {
-        
-        pthread_t hilo;
-        pthread_create(&hilo, NULL, (void*) atender_kernel, (void*) fs);
-        pthread_detach(hilo);
+    
+        pthread_create(&hilo, NULL, (void*) atender_kernel, fs);
+        pthread_join(hilo, NULL);
         
         return 1;
     }

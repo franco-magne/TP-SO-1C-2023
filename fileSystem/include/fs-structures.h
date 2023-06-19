@@ -10,11 +10,13 @@
 #include <fcntl.h>
 #include <math.h>
 #include <dirent.h>
+#include <errno.h>
 
 //////////////////////// BIBLOTECAS COMMONS /////////////////
 #include <commons/log.h>
 #include <commons/config.h>
 #include <commons/bitarray.h>
+#include <commons/string.h>
 #include <commons/collections/list.h>
 
 /////////////////////// ESTRUCTURA PARA FILESYSTEM ////////////////////////
@@ -51,10 +53,12 @@ typedef struct {
 
 ////////////////////////// DEFINICION DE LAS FUNCIONES ////////////////
 
+void crear_superbloque_dat(t_filesystem*, t_config*);
 void cargar_t_filesystem(t_config*, t_config*, t_filesystem*);
 void levantar_bitmap(t_filesystem*);
 void crear_archivo_de_bloques(t_filesystem*);
 t_list* crear_fcbs(t_log*);
 
+void cerrar_archivos();
 
 #endif

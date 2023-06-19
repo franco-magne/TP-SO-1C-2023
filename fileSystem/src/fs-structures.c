@@ -5,17 +5,29 @@ int fd_bitmap;
 int fd_bloques;
 void* map_bloques;
 
+void crear_superbloque_dat(t_filesystem* fs, t_config* superbloque) {
+
+    int creado = config_save_in_file(superbloque, fs->superbloque_path);
+
+    if (creado == -1) {
+        log_error(fs->logger, "Error al crear el superbloque.dat");
+    } else {
+        log_info(fs->logger, "El superbloque.dat fue creado en el path correspondiente");
+    }
+
+}
+
 void levantar_bitmap(t_filesystem* fs) {
 
-    fd_bitmap = open(fs->bitmap_path, O_RDONLY); 
+    fd_bitmap = open(fs->bitmap_path, O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO); // 664 permiso de lectura y escritura a mi usuario
     if (fd_bitmap == -1) {
-        log_error(fs->logger, "Error al abrir el archivo de bitmap.");
+        log_error(fs->logger, "Error al abrir el archivo de bitmap. %s", strerror(errno));
         exit(1);
     }
 
     off_t valor = lseek(fd_bitmap, fs->block_count - 1, SEEK_SET); // Me aseguro que el fd tenga -block_count- bytes. Me desplazo
     if (valor == -1) {
-        log_error(fs->logger, "Error al desplazarse por el archivo.");
+        log_error(fs->logger, "Error al desplazarse por el archivo. %s", strerror(errno));
         exit(1);
     }
 
@@ -23,8 +35,10 @@ void levantar_bitmap(t_filesystem* fs) {
     void* map = mmap(NULL, fs->block_count, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bitmap, 0);
 
     if (map == MAP_FAILED) {
-        log_error(fs->logger, "Fallo en el mmap.");
+        log_error(fs->logger, "Fallo en el mmap. %s", strerror(errno));
         exit(1);
+    } else {
+        log_info(fs->logger, "Tenemos bitmap ok.");
     }
 
     bitmap = bitarray_create(map, size_bitarray);
@@ -36,21 +50,18 @@ void levantar_bitmap(t_filesystem* fs) {
 
 void crear_archivo_de_bloques(t_filesystem* fs) {
 
-    // EL SUPERBLOQUE SOLO ES EL ARCHIVO CONFIG. NO HAY ESTRUCTURAS.
-    // MAS DATA: EL BITMAP SE CORRESPONDE CON EL ARCHIVO DE BLOQUES Y ES UNO SOLO BITMAP PARA TODO EL FYLESYSTEM.
+    // MAS DATA: EL BITMAP SE CORRESPONDE CON EL ARCHIVO DE BLOQUES Y ES UN SOLO BITMAP PARA TODO EL FYLESYSTEM.
     // LOS ARCHIVOS QUE ENTREN A FYLESYSTEM ENTRAN COMO .CONFIG
 
-    // CREACION DEL ARCHIVO DE BLOQUES
-
-    fd_bloques = open(fs->bloques_path, O_RDONLY); 
+    fd_bloques = open(fs->bloques_path, O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO); 
     if (fd_bloques == -1) {
-        log_error(fs->logger, "Error al abrir el archivo de bloques.");
+        log_error(fs->logger, "Error al abrir el archivo de bloques. %s", strerror(errno));
         exit(1);
     }
 
     off_t valor = lseek(fd_bloques, (fs->block_count * fs->block_size) - 1, SEEK_SET); // Me aseguro que el fd tenga -block_count * block_size- bytes. Me desplazo
     if (valor == -1) {
-        log_error(fs->logger, "Error al desplazarse por el archivo.");
+        log_error(fs->logger, "Error al desplazarse por el archivo. %s", strerror(errno));
         exit(1);
     }
 
@@ -58,8 +69,10 @@ void crear_archivo_de_bloques(t_filesystem* fs) {
     map_bloques = mmap(NULL, size, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bloques, 0); // map_bloques REEMPLAZA AL ARRAY DE BLOQUES
 
     if (map_bloques == MAP_FAILED) {
-        log_error(fs->logger, "Fallo en el mmap.");
+        log_error(fs->logger, "Fallo en el mmap. %s", strerror(errno));
         exit(1);
+    } else {
+        log_info(fs->logger, "Tenemos archivo de bloques ok.");
     }
 
 }
@@ -68,23 +81,23 @@ t_list* crear_fcbs(t_log* fs_logger) {
 
     DIR* fcbs_path;
     struct dirent* directorio;
-    t_list* lista = malloc(sizeof(t_list));
+    t_list* lista = list_create();
 
     // ABRO LA CARPETA QUE CONTIENE LOS FCBS.CONFIG
 
-    fcbs_path = opendir("../fcbs");
+    fcbs_path = opendir("./fcbs");
     if (fcbs_path == NULL) {
-        log_error(fs_logger, "Error al abrir el path de fcbs.");
+        log_error(fs_logger, "Error al abrir el path de fcbs. %s", strerror(errno));
         exit(1);
     }
 
     // CREO UNA LISTA DE STRUCTS FCBS DE LOS ARCHIVOS .CONFIG
 
     while((directorio = readdir(fcbs_path))) {
-        if (strstr(directorio->d_name, ".config")) { // PARA SABER SI EL ARCHIVO CONTIENE .CONFIG
+        if (string_ends_with(directorio->d_name, ".config")) { // PARA SABER SI EL ARCHIVO CONTIENE .CONFIG
             
             t_fcb* fcb_aux = malloc(sizeof(t_fcb));
-            t_config* config_aux = config_create(strcat("../fcbs/", directorio->d_name));
+            t_config* config_aux = config_create(strcat("./fcbs/", directorio->d_name)); // concatenar con las commons
             
             fcb_aux->nombre_archivo = config_get_string_value(config_aux, "NOMBRE_ARCHIVO");
             fcb_aux->tamanio_archivo = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
@@ -93,7 +106,6 @@ t_list* crear_fcbs(t_log* fs_logger) {
 
             list_add(lista, fcb_aux);
             config_destroy(config_aux);
-            free(fcb_aux);
         }
     }
 
