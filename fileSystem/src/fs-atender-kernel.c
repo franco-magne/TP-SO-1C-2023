@@ -5,7 +5,14 @@ t_list* lista_fcbs;
 void atender_kernel(t_filesystem* fs) {
 
     int operacion_OK = 0;
-    //lista_fcbs = crear_fcbs(fs->logger);
+    lista_fcbs = list_create();
+    /* CON ESTO TESTEABA
+    operacion_OK = abrir_archivo("Notas1erParcialK9999", fs);
+    if (operacion_OK) {
+        log_info(fs->logger, "Apertura ok");
+    } else {
+        log_error(fs->logger, "error al abrir");
+    }*/
     
     while (fs->socket_kernel != -1) {
 
@@ -21,15 +28,22 @@ void atender_kernel(t_filesystem* fs) {
                 stream_recv_buffer(fs->socket_kernel, buffer_nombre_archivo_open); // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
                 nombre_archivo_open = buffer_unpack_string(buffer_nombre_archivo_open); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
 
-                operacion_OK = abrir_archivo(nombre_archivo_open);
-
-                if (operacion_OK) {
+                if (buscar_archivo(nombre_archivo_open)) {
+                    // CASO: EL ARCHIVO YA EXISTE, TIENE SU FCB CREADO
                     log_info(fs->logger, "Abrir archivo: <%s>", nombre_archivo_open);
                     stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO EXISTE Y LO AGREGUE A SU TABLA GLOBAL
                 } else {
-                    stream_send_empty_buffer(fs->socket_kernel, HEADER_error); // NO EXISTE EL FCB DE ESE ARCHIVO. TIENE QUE SOLICITAR CREARLO
-                    // ESTOY USANDO EL HEADER_ERROR PARA INDICAR QUE NO SE PUDO ABRIR EL ARCHIVO. A CONFIRMAR SI ESTO ESTA OK
-                }         
+                    operacion_OK = abrir_archivo(nombre_archivo_open, fs);
+                    if (operacion_OK) {
+                        // CASO: EL ARCHIVO NO EXISTE Y TENGO QUE CREAR EL FCB
+                        log_info(fs->logger, "Abrir archivo: <%s>", nombre_archivo_open);
+                        stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO EXISTE Y LO AGREGUE A SU TABLA GLOBAL
+                    } else {
+                        // CASO: NO EXISTE EL FCB DE ESE ARCHIVO. TIENE QUE SOLICITAR CREARLO
+                        stream_send_empty_buffer(fs->socket_kernel, HEADER_error);
+                        // ESTOY USANDO EL HEADER_ERROR PARA INDICAR QUE NO SE PUDO ABRIR EL ARCHIVO. A CONFIRMAR SI ESTO ESTA OK
+                    }                                                                            
+                }
 
                 free(nombre_archivo_open);
                 buffer_destroy(buffer_nombre_archivo_open);
@@ -126,7 +140,21 @@ int truncar_archivo(char* nombre_archivo, uint32_t nuevo_tamanio_archivo) {
     return truncado_ok;
 }
 
-int abrir_archivo(char* nombre_archivo) {
+int abrir_archivo(char* nombre_archivo, t_filesystem* fs) {
+    
+    int resultado = 0;
+    t_fcb* fcb_nuevo = malloc(sizeof(t_fcb));
+
+    fcb_nuevo = crear_fcb(nombre_archivo, fs);
+    if (fcb_nuevo != NULL) {
+        resultado = 1;
+        list_add(lista_fcbs, fcb_nuevo);
+    }     
+
+    return resultado;
+}
+
+int buscar_archivo(char* nombre_archivo) {
 
     int encontrado = 0;
     int size_lista_fcbs = list_size(lista_fcbs);
@@ -139,7 +167,6 @@ int abrir_archivo(char* nombre_archivo) {
         if (strcmp(fcb_aux->nombre_archivo, nombre_archivo) == 0) {
             encontrado = 1;
         }
-
     }
 
     return encontrado;
@@ -151,7 +178,7 @@ int fs_escuchando_en(int server_fs, t_filesystem* fs) {
     int socket_kernel = esperar_cliente(server_fs);
     
     fs->socket_kernel = socket_kernel;
-    log_info(fs->logger, "Cliente KERNEL conectado!");
+    log_info(fs->logger, "Cliente KERNEL conectado");
 
     if (socket_kernel != -1) {
     

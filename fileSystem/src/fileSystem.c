@@ -16,7 +16,7 @@ int main() {
 
    cargar_t_filesystem(fs_config, superbloque_config, fs);
    fs->logger = fs_logger;
-   crear_superbloque_dat(fs, superbloque_config);
+   log_info(fs->logger, "FILESYSTEM iniciado");
 
    ///////////////////////////////// CONECTARSE A MEMORIA //////////////////////////////
    /*
@@ -31,7 +31,9 @@ int main() {
    fs->socket_memoria = fsSocketMemoria;
    log_info(fs->logger, "Conexion con MEMORIA establecida");
    */
+   crear_directorios(fs);
    levantar_bitmap(fs);
+   crear_superbloque_dat(fs, superbloque_config);
    crear_archivo_de_bloques(fs);
 
 

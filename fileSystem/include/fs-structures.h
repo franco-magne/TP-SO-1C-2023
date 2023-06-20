@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <fcntl.h>
 #include <math.h>
 #include <dirent.h>
@@ -57,8 +59,12 @@ void crear_superbloque_dat(t_filesystem*, t_config*);
 void cargar_t_filesystem(t_config*, t_config*, t_filesystem*);
 void levantar_bitmap(t_filesystem*);
 void crear_archivo_de_bloques(t_filesystem*);
-t_list* crear_fcbs(t_log*);
+t_fcb* crear_fcb(char*, t_filesystem*);
 
+void crear_fcb_config_en_el_path(t_config*, t_filesystem*, char*);
+char* concatenar(char*, char*, t_filesystem*);
+
+void crear_directorios(t_filesystem*);
 void cerrar_archivos();
 
 #endif
