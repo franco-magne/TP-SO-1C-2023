@@ -4,7 +4,6 @@ int fd_bitmap;
 int fd_bloques;
 void* map_bloques;
 t_bitarray* bitmap;
-t_list* lista_fcbs_configs;
 
 void crear_superbloque_dat(t_filesystem* fs, t_config* superbloque) {
 
@@ -116,12 +115,12 @@ t_fcb* crear_fcb(char* nombre_archivo, t_filesystem* fs) {
             continue;
         } else if (strcmp(nombre_temporal, nombre_archivo) == 0) {
             fcb_nuevo->nombre_archivo = config_get_string_value(config_aux, "NOMBRE_ARCHIVO");
-            fcb_nuevo->tamanio_archivo = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
+            fcb_nuevo->tamanio_archivo = config_get_string_value(config_aux, "TAMANIO_ARCHIVO");
             fcb_nuevo->puntero_directo = config_get_int_value(config_aux, "PUNTERO_DIRECTO");
             fcb_nuevo->puntero_indirecto = config_get_int_value(config_aux, "PUNTERO_INDIRECTO");
+            fcb_nuevo->fcb_config = config_aux;
 
             crear_fcb_config_en_el_path(config_aux, fs, nombre_archivo);
-            list_add(lista_fcbs_configs, config_aux);
             creado = 1;
 
             log_info(fs->logger, "Fue creado un FCB con nombre %s", fcb_nuevo->nombre_archivo);
@@ -174,8 +173,6 @@ void cargar_t_filesystem(t_config* config, t_config* sb_config, t_filesystem* fs
 
     fs->block_size = config_get_int_value(sb_config, "BLOCK_SIZE"); // DEL SUPERBLOQUE
     fs->block_count = config_get_int_value(sb_config, "BLOCK_COUNT"); // DEL SUPERBLOQUE
-
-    lista_fcbs_configs = list_create();
 
 }
 

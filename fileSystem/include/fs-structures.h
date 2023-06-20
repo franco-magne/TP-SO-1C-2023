@@ -46,9 +46,11 @@ typedef struct {
 
 typedef struct {
     char* nombre_archivo;
-    uint32_t tamanio_archivo;
+    char* tamanio_archivo;
     uint32_t puntero_directo;
     uint32_t puntero_indirecto;
+
+    t_config* fcb_config;
 } t_fcb;
 
 
