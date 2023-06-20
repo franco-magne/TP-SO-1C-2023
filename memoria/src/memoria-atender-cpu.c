@@ -50,8 +50,7 @@ void atender_peticiones_cpu(int socketCpu) {
             buffer_unpack(buffer, &pid, sizeof(pid));
             //buffer_unpack(buffer, &desplazamiento_segmento, sizeof(pid));
 
-            Procesos* unProceso = obtener_proceso_por_pid(pid);
-            Segmento* unSegmento = obtener_segmento_por_id(unProceso, id_segmento);
+            Segmento* unSegmento = obtener_segmento_por_id(pid, id_segmento);
     
             char* contenidoAenviar = segmento_get_contenido(unSegmento);
 
@@ -76,8 +75,7 @@ void atender_peticiones_cpu(int socketCpu) {
             buffer_unpack(buffer, &pid, sizeof(pid));
             contenidoAEscribir = buffer_unpack_string(buffer);
             
-            Procesos* unProceso = obtener_proceso_por_pid(pid);
-            Segmento* unSegmento = obtener_segmento_por_id(unProceso, id_segmento);
+            Segmento* unSegmento = obtener_segmento_por_id(pid, id_segmento);
             //cada vez que hago un obtener segmento hago un list_replace
             segmento_set_contenido(unSegmento, contenidoAEscribir);
 
@@ -94,39 +92,3 @@ void atender_peticiones_cpu(int socketCpu) {
     }
     }
 }
-/*
-log_info(memoriaData->memoriaLogger, "\e[1;93mPetición de escritura\e[0m");
-                buffer_unpack(buffer, &direccionFisica, sizeof(direccionFisica));
-                buffer_unpack(buffer, &valor, sizeof(valor));
-                memcpy((void*)(memoriaPrincipal + direccionFisica), (void*)&valor, sizeof(valor));
-                __actualizar_pagina(direccionFisica, true, memoriaData);
-                log_info(memoriaData->memoriaLogger, "Se escribio el valor [%d] en la dirección física [%d]", *((uint32_t*)(memoriaPrincipal + direccionFisica)), direccionFisica);
-                break;
-
-*/
-
-// actualizar pagina
-/*static void __actualizar_pagina(uint32_t direccionFisica, bool esEscritura, t_memoria_data_holder* memoriaData) {
-    int nroPagina = obtener_pagina_de_direccion_fisica(direccionFisica, memoriaData);
-    int nroTablaNivel2 = obtener_tabla_de_nivel_2_pagina(nroPagina, memoriaData);
-    if (esEscritura)
-        actualizar_escritura_pagina(nroPagina, nroTablaNivel2, memoriaData);
-    else
-        actualizar_lectura_pagina(nroPagina, nroTablaNivel2, memoriaData);
-    __loggear_paginas_en_memoria_del_proceso(nroTablaNivel2, memoriaData);
-}
-
-
-uint32_t obtener_direccFisica(int pid, uint32_t id_segmento){
-    Procesos* miProceso = obtener_proceso_por_pid(pid);
-    Segmento* segBuscado = obtener_segmento_por_id(miProceso, id_segmento);
-
-    uint32_t base = segmento_get_base(segBuscado);
-    uint32_t limite = segmento_get_limite(segBuscado);
-
-    return base + limite;
-}
-
-
-
-*/

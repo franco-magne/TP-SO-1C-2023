@@ -16,10 +16,11 @@
 #include <stdio.h>
 #include "memoria-config.h"
 
+
 typedef struct {
     int segmento_id; 
-    uint32_t* limite; //tamanio
-    uint32_t* base;
+    uint32_t limite;
+    uint32_t base;
     uint32_t tamanio;
     int pid; 
     int validez;
@@ -27,19 +28,14 @@ typedef struct {
 } Segmento;
 
 
-typedef struct {
-    t_list* tablaDeSegmentos;
-    int pid;
-} Procesos;
-
 #include "memoria.h"
 
 int segmento_get_id(Segmento*);
 void segmento_set_id(Segmento* , int );
 uint32_t* segmento_get_limite(Segmento* );
-void segmento_set_limite(Segmento* , uint32_t* );
+void segmento_set_limite(Segmento* , uint32_t );
 uint32_t* segmento_get_base(Segmento* );
-void segmento_set_base(Segmento* , uint32_t* );
+void segmento_set_base(Segmento* , uint32_t );
 uint32_t segmento_get_tamanio(Segmento* );
 void segmento_set_tamanio(Segmento* , uint32_t );
 int segmento_get_pid(Segmento* );
@@ -48,30 +44,12 @@ int segmento_get_bit_validez(Segmento* );
 void segmento_set_bit_validez(Segmento* , int );
 
 void inicializar_memoria();
-Segmento* crear_segmento(int );
 void inicializar_estructuras();
-void eliminar_segmento(Segmento* );
-void sumar_memoriaRecuperada_a_tamMemoriaActual(uint32_t tamMemorRecuperada);
-void liberar_tabla_segmentos(int pid);
-
-//////////////////////// PROCESOS ////////////////////////
-
-/**
- * @brief Crea un nuevo proceso con el ID especificado.
- * @param pid El ID del proceso a crear.
- * @return Un puntero al proceso creado.
- */ 
-Procesos* crear_proceso(int pid);
-
-/**
- * @brief Obtiene un proceso por su ID.
- * @param pid_victima El ID del proceso a buscar.
- * @return Un puntero al proceso encontrado o NULL si no se encontró.
- */
-Procesos* obtener_proceso_por_pid(int pid_victima);
 
 
 //////////////////////// SEGMENTO ////////////////////////
+Segmento* crear_segmento(int tamSegmento);
+bool es_el_segmento_victima_id(Segmento* element, int pid_segmento, int id_segmento);
 
 /**
  * @brief Obtiene un segmento de un proceso por su ID.
@@ -79,7 +57,7 @@ Procesos* obtener_proceso_por_pid(int pid_victima);
  * @param id_victima El ID del segmento a buscar.
  * @return Un puntero al segmento encontrado o NULL si no se encontró.
  */
-Segmento* obtener_segmento_por_id(Procesos* proceso, int id_victima);
+Segmento* obtener_segmento_por_id(int pid_victima, int id_victima);
 
 /**
  * @brief Desencola y retorna un segmento de un proceso por su ID.
@@ -87,7 +65,14 @@ Segmento* obtener_segmento_por_id(Procesos* proceso, int id_victima);
  * @param id_segmento El ID del segmento a desencolar.
  * @return Un puntero al segmento desencolado o NULL si no se encontró.
  */
-Segmento* desencolar_segmento_por_id(Procesos* proceso, int id_segmento);
+Segmento* desencolar_segmento_por_id(int pid_segmento, int id_segmento);
+Segmento* desencolar_segmento_primer_segmento_atomic();
+void encolar_segmento_atomic(Segmento* targetSegmento);
+t_list* obtener_tabla_de_segmentos_por_pid(int pid);
+
+
+void sumar_memoriaRecuperada_a_tamMemoriaActual(uint32_t tamMemorRecuperada);
+void liberar_tabla_segmentos(int pid);
 
 
 #endif

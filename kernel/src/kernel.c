@@ -321,7 +321,12 @@ void* atender_pcb(void* args)
         
 
         switch (cpuResponse) {
-            
+            case HEADER_iniciar_proceso:
+
+                instruccion_iniciar_proceso(pcb, kernelConfig, kernelLogger);
+
+                break;
+
             case HEADER_proceso_desalojado:
 
                 instruccion_yield(pcb,estadoReady);

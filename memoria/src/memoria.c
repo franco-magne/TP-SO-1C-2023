@@ -5,8 +5,7 @@ t_log *memoriaLogger;
 static t_config *memoriaConfigInicial;
 t_memoria_config* memoriaConfig;
 Segmento* segCompartido;
-t_estado* tabla_segmentos; //antigua tabla_de_segmentos
-t_list* listaDeProcesos;
+t_list* listaDeSegmentos;
 
 static bool cpuSinAtender;
 static bool kernelSinAtender;
@@ -62,7 +61,7 @@ void recibir_conexion(int socketCliente) {
 
     if (handshake == HANDSHAKE_cpu) {  //solic tabla de segmentos   
         log_info(memoriaLogger, "\e[1;92mSe acepta conexión de CPU en socket [%d]\e[0m", socketCliente);
-        pthread_create(&threadAntencionCpu, NULL, atender_peticiones_cpu(), socketCliente);
+        pthread_create(&threadAntencionCpu, NULL, atender_peticiones_cpu, socketCliente);
         pthread_detach(threadAntencionCpu);
         cpuSinAtender = false;
     } 

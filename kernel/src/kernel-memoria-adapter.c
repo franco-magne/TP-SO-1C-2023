@@ -1,6 +1,22 @@
 #include <../include/kernel-memoria-adapter.h>
 
+void instruccion_iniciar_proceso(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger){
+    int pid = pcb_get_pid(pcbAIniciar);
 
+    t_buffer* bufferNuevoProceso = buffer_create();
+
+    buffer_pack(bufferNuevoProceso, &pid, sizeof(pid));
+    stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig), HEADER_iniciar_proceso, bufferNuevoProceso);
+
+    buffer_destroy(bufferNuevoProceso);
+    t_buffer* bufferResponse = buffer_create();
+    t_list* lista_de_segmentos = list_create();
+    stream_recv_buffer(kernel_config_get_socket_memoria(kernelConfig), bufferResponse);
+    buffer_unpack(bufferResponse, lista_de_segmentos, sizeof(lista_de_segmentos));
+    pcbAIniciar->listaDeSegmento = lista_de_segmentos;
+
+    buffer_destroy(bufferNuevoProceso);
+}
 
 
 void instruccion_create_segment(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger) {
@@ -20,7 +36,7 @@ void instruccion_create_segment(t_pcb* pcbAIniciar, t_kernel_config* kernelConfi
 
     stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig), HEADER_create_segment ,bufferNuevoSegmento);
 
-     uint8_t headerMemoria = stream_recv_header(kernel_config_get_socket_memoria(kernelConfig));
+    uint8_t headerMemoria = stream_recv_header(kernel_config_get_socket_memoria(kernelConfig));
     stream_recv_empty_buffer(kernel_config_get_socket_memoria(kernelConfig));
 
     if (headerMemoria == HANDSHAKE_ok_continue) {
@@ -46,6 +62,7 @@ void instruccion_delete_segment(t_pcb* pcbAIniciar, t_kernel_config* kernelConfi
     int pid = pcb_get_pid(pcbAIniciar);
 
     t_buffer* bufferNuevoSegmento = buffer_create();
+    t_buffer* bufferResponse = buffer_create();
 
     buffer_pack(bufferNuevoSegmento, &id_de_segmento, sizeof(id_de_segmento));
     buffer_pack(bufferNuevoSegmento, &pid, sizeof(pid));
@@ -53,18 +70,18 @@ void instruccion_delete_segment(t_pcb* pcbAIniciar, t_kernel_config* kernelConfi
     stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig), HEADER_delete_segment ,bufferNuevoSegmento);
 
     
-    stream_recv_empty_buffer(kernel_config_get_socket_memoria(kernelConfig));
-    uint8_t headerMemoria = stream_recv_header(kernel_config_get_socket_memoria(kernelConfig));
+    stream_recv_buffer(kernel_config_get_socket_memoria(kernelConfig), bufferResponse);
+    uint32_t header = stream_recv_header(kernel_config_get_socket_memoria(kernelConfig));
 
-     if (headerMemoria == HANDSHAKE_ok_continue) {
+     if (header == HEADER_tabla_segmentos) {
 
         log_info(kernelLogger, "PID: <%i> - Eliminar Segmento - Id Segmento: <%i>", pcb_get_pid(pcbAIniciar), id_de_segmento);
 
-    } else if (headerMemoria == HEADER_error) {
+    } else if (header == HEADER_error) {
         log_info(kernelLogger, "PID: <%i> No pudo crear el segmento",  pcb_get_pid(pcbAIniciar));
         return -1;
     } else {
-        log_error(kernelLogger, "Error al recibir buffer de la creacion");
+        log_error(header, "Error al recibir buffer de la creacion");
         exit(-1);
     }
     buffer_destroy(bufferNuevoSegmento);
