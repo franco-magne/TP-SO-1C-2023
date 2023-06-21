@@ -359,13 +359,14 @@ void* atender_pcb(void* args)
 
                 break;
             case HEADER_f_close:
-                instruccion_f_close(pcb,kernelConfig, kernelLogger);
+                instruccion_f_close(pcb);
                 break;
             case HEADER_f_seek:
                 instruccion_f_seek(pcb,kernelConfig, kernelLogger);
                 break;
             case HEADER_f_truncate:
-                instruccion_f_truncate(pcb,kernelConfig, kernelLogger);
+                sem_post(&dispatchPermitido);
+                instruccion_f_truncate(pcb);
                 break;
 
             default:
@@ -384,15 +385,14 @@ void* atender_pcb(void* args)
         || (cpuResponse == HEADER_f_open) && !procesoFueBloqueado
         || (cpuResponse == HEADER_f_close)
         || (cpuResponse == HEADER_f_seek)
-        || (cpuResponse == HEADER_f_truncate) 
          // Agrega otro mas
         )
         {
 
                 estado_encolar_pcb_atomic(estadoExec, pcb);
                 sem_post(estado_get_sem(estadoExec));
-        }else if(cpuResponse == HEADER_proceso_bloqueado){
-            
+        }else if((cpuResponse == HEADER_proceso_bloqueado) || (cpuResponse == HEADER_f_truncate) ){
+         // ESTOS LIBERAN ANTES EL CPU DISPATCHPERMITIDO   
         }
         else{
                 sem_post(&dispatchPermitido);

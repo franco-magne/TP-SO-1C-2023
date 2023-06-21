@@ -39,7 +39,6 @@ void file_system_adapter_send_f_open(t_pcb* pcb, t_kernel_config* kernelConfig){
   
   t_pcb_archivo* archivoAbrir = list_find(pcb_get_lista_de_archivos_abiertos(pcb), es_el_archivo_victima);
   char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoAbrir);
-  printf("Nombre : <%s>",nombreArchivo);
   t_buffer* bufferNombreArchivo = buffer_create();
   buffer_pack_string(bufferNombreArchivo, nombreArchivo);
   stream_send_buffer(kernel_config_get_socket_file_system(kernelConfig), HEADER_f_open, bufferNombreArchivo);
@@ -97,17 +96,39 @@ t_pcb* atender_f_close(char* nombreArchivo){
 }
 
 
+void file_system_adapter_send_f_truncate(t_pcb* pcb, t_kernel_config* kernelConfig, t_log* kernelLogger){ 
 
+  t_pcb_archivo* archivoTruncar = list_find(pcb_get_lista_de_archivos_abiertos(pcb), es_el_archivo_victima);
 
+  char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoTruncar);
+  uint32_t tamanioArchivo = archivo_pcb_get_tamanio_archivo(archivoTruncar);
 
+  log_info(kernelLogger,"PID: <%i> - Archivo: <%s> - Tamaño: <%i>", pcb_get_pid(pcb),nombreArchivo,tamanioArchivo);
 
+  t_buffer* bufferTruncate = buffer_create();
 
-void instruccion_f_truncate(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger){
+  buffer_pack_string(bufferTruncate,nombreArchivo );
+  buffer_pack(bufferTruncate, &tamanioArchivo, sizeof(tamanioArchivo));
 
-log_info(kernelLogger,"PID: <%i> - Archivo: <NOMBRE ARCHIVO> - Tamaño: <TAMAÑO>", pcb_get_pid(pcbAIniciar));
+  stream_send_buffer(kernel_config_get_socket_file_system(kernelConfig), HEADER_f_truncate, bufferTruncate);
 
+  buffer_destroy(bufferTruncate);
 
 }
+
+
+void file_system_adapter_recv_f_truncate(t_kernel_config* kernelConfig, t_log* kernelLogger){
+    
+    uint8_t fileSystemResponse = stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
+    stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
+
+    if(fileSystemResponse == HANDSHAKE_ok_continue){
+      log_info(kernelLogger, "EL ARCHIVO FUE MODIFICADO");
+    }
+}
+
+
+
 
 void instruccion_f_seek(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger){
     

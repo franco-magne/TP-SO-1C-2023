@@ -15,7 +15,6 @@ int conectar_a_servidor_cpu_dispatch( t_kernel_config* kernelConfig, t_log* kern
     }
 
     kernel_config_set_socket_dispatch_cpu(kernelConfig, socketCpuDispatch);
-    log_info(kernelLogger,"%i",kernel_config_get_socket_dispatch_cpu(kernelConfig));
     stream_send_empty_buffer(socketCpuDispatch, HANDSHAKE_dispatch);
     uint8_t cpuDispatchResponse = stream_recv_header(socketCpuDispatch);
     stream_recv_empty_buffer(socketCpuDispatch);

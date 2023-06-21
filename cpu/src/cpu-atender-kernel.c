@@ -80,7 +80,7 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
         uint32_t id_de_segmento = cpu_pcb_get_id_de_segmento(pcb);
         uint32_t tamanio_de_segmento = cpu_pcb_get_tamanio_de_segmento(pcb);
         char* nombreArchivo = cpu_pcb_get_nombre_archivo(pcb);
-
+        uint32_t tamanioArchivo = cpu_pcb_get_tamanio_archivo(pcb);
         t_buffer* buffer = buffer_create();
 
          //Empaqueto pid
@@ -108,6 +108,10 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
             break;
             case HEADER_f_open: 
             case HEADER_f_close: buffer_pack_string(buffer,nombreArchivo);
+            break;
+            case HEADER_f_truncate:
+            buffer_pack_string(buffer,nombreArchivo);
+            buffer_pack(buffer,&tamanioArchivo, sizeof(tamanioArchivo));
             break;
 
             default: 
@@ -431,7 +435,8 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
 
         intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
-
+        cpu_pcb_set_nombre_archivo(pcb,recurso1);
+        cpu_pcb_set_tamanio_archivo(pcb,tamanio_archivo);
         empaquetar_instruccion(pcb, HEADER_f_truncate);
         shouldStopExec = true;
 

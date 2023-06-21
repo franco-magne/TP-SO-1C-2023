@@ -12,6 +12,7 @@ t_kernel_archivo* archivo_create_kernel(uint32_t pid, char* nombreArchivo){
 t_pcb_archivo* archivo_create_pcb(char* nombreArchivo){
     t_pcb_archivo* this = malloc(sizeof(*this));
     this->nombreDeArchivo = nombreArchivo;
+    this->tamanioArchivo = 0;
     this->victimaDelArchivo = true;
 
     return this;
@@ -46,6 +47,10 @@ bool archivo_pcb_get_victima(t_pcb_archivo* this)
     return this->victimaDelArchivo;
 }
 
+uint32_t archivo_pcb_get_tamanio_archivo(t_pcb_archivo* this)
+{
+    return this->tamanioArchivo;
+}
 ///////////////////////// SETTER /////////////////////////////
 
 void kernel_archivo_set_pid(t_kernel_archivo* this , uint32_t pid)
@@ -58,6 +63,12 @@ void archivo_pcb_set_victima(t_pcb_archivo* this, bool victimaArchivo)
 {
      this->victimaDelArchivo = victimaArchivo;
 }
+
+void archivo_pcb_set_tamanio_archivo(t_pcb_archivo* this, uint32_t tamanio)
+{
+    this->tamanioArchivo = tamanio;
+}
+
 
 void kernel_archivo_set_cola_procesos_bloqueados(t_kernel_archivo* this , t_queue* cola)
 {
@@ -107,6 +118,13 @@ int archivo_kernel_index(t_list* listaDeArchivosDePcb,char* nombreArchivo){
     return index;
 }
 
+
+int index_de_archivo_pcb(t_list* listaDeArchivosDePcb, char* nombreArchivo){
+
+    t_pcb_archivo* aux = archivo_create_pcb(nombreArchivo);
+    int index = list_get_index(listaDeArchivosDePcb,el_archivo_ya_existe,aux);
+    return index;
+}
 
 
 void modificar_victima_archivo(t_list* listaDeArchivosDePcb,char* nombreArchivo, bool cambio){

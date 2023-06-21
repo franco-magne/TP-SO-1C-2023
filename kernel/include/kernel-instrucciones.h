@@ -21,6 +21,7 @@ void instruccion_create_segment(t_pcb* pcb);
 void instruccion_delete_segment(t_pcb* pcb);
 bool instruccion_f_open(t_pcb* pcb);
 void instruccion_f_close(t_pcb* pcb);
+void instruccion_f_truncate(t_pcb* pcb);
 
 char* string_pids_ready(t_estado* estadoReady);
 

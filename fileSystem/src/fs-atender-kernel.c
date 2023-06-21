@@ -40,19 +40,17 @@ void atender_kernel(t_filesystem* fs) {
             case HEADER_f_truncate:
 
                 char* nombre_archivo_truncate;
-                t_buffer* buffer_nombre_archivo_truncate = buffer_create();
-
                 uint32_t tamanio_archivo_truncate;
-                t_buffer* buffer_tamanio_archivo_truncate = buffer_create();
+                t_buffer* bufferTruncate = buffer_create();
 
-                stream_recv_buffer(fs->socket_kernel, buffer_nombre_archivo_truncate); // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
-                nombre_archivo_truncate = buffer_unpack_string(buffer_nombre_archivo_truncate); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
-                stream_recv_buffer(fs->socket_kernel, buffer_tamanio_archivo_truncate); // RECIBO EL BUFFER TAMANIO DE ARCHIVO DE KERNEL
-                buffer_unpack(buffer_tamanio_archivo_truncate, &tamanio_archivo_truncate, sizeof(tamanio_archivo_truncate)); // DESERIALIZO EL TAMANIO DE ARCHIVO
 
-                operacion_OK = truncar_archivo(nombre_archivo_truncate, tamanio_archivo_truncate);
+                stream_recv_buffer(fs->socket_kernel, bufferTruncate); // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
+                nombre_archivo_truncate = buffer_unpack_string(bufferTruncate); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
+                buffer_unpack(bufferTruncate, &tamanio_archivo_truncate, sizeof(tamanio_archivo_truncate)); // DESERIALIZO EL TAMANIO DE ARCHIVO
 
-                if (operacion_OK) {
+               // operacion_OK = truncar_archivo(nombre_archivo_truncate, tamanio_archivo_truncate);
+
+                if (true) {
                     log_info(fs->logger, "Truncar Archivo: <%s> - Tamaño: <%d>", nombre_archivo_truncate, tamanio_archivo_truncate);
                     stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO SE TRUNCO
                 } else {
@@ -60,9 +58,8 @@ void atender_kernel(t_filesystem* fs) {
                     // ESTOY USANDO EL HEADER_ERROR PARA INDICAR QUE NO SE PUDO ABRIR EL ARCHIVO. A CONFIRMAR SI ESTO ESTA OK
                 }  
 
-                free(nombre_archivo_truncate);
-                buffer_destroy(buffer_nombre_archivo_truncate);
-                buffer_destroy(buffer_tamanio_archivo_truncate);
+                //free(nombre_archivo_truncate);
+                buffer_destroy(bufferTruncate);
 
             break;
             case HEADER_f_read:

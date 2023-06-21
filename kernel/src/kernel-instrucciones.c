@@ -304,6 +304,17 @@ void instruccion_f_close(t_pcb* pcb){
     }
 
 
+}
+
+/////////////////////////////// F_TRUNCATE ////////////////////////////////////
+
+void instruccion_f_truncate(t_pcb* pcb){
+
+file_system_adapter_send_f_truncate(pcb, kernelConfig, kernelLogger);
+proceso_pasa_a_bloqueado(pcb, "ARCHIVO");
+file_system_adapter_recv_f_truncate(kernelConfig, kernelLogger);
+pcb = estado_remover_pcb_de_cola_atomic(estadoBlocked,pcb);
+proceso_pasa_a_ready(pcb, "BLOCK");
 
 
 }
