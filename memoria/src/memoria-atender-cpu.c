@@ -22,13 +22,16 @@ void atender_peticiones_cpu(int socketCpu) {
             buffer_unpack(buffer, &id_segmento, sizeof(id_segmento));
             buffer_unpack(buffer, &pid, sizeof(pid));
             buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
-
             
+            Segmento* segementoSolic = obtener_segmento_por_id(pid, id_segmento);
+            log_info(memoriaLogger, "Se quiere la dirección física del segmento <%i>",id_segmento);
             
             //Logica de desplazamiento ...          base < limite
+            /*if(desplazamiento_segmento >= segmento_get_limite(segementoSolic)){
+                segmentation_fault...
+            }*/
 
-
-            log_info(memoriaLogger, "Se quiere la dirección física del segmento <%i>",id_segmento);
+            
             
             uint32_t marco = 0;//obtener_marco(pid, id_segmento); //base y limite no +
             

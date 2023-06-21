@@ -15,6 +15,7 @@ Segmento* consolidar_segmentos(Segmento* unSegmento, Segmento* segSiguiente);
 
 void administrar_nuevo_segmento(Segmento* nuevoSegmento);
 void eliminar_segmento_memoria(Segmento* segmentoAEliminar);
+void mostrar_tabla(t_list* tablaDeSegmentosSolic);
 
 
 #endif

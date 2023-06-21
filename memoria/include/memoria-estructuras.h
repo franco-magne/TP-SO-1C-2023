@@ -32,9 +32,9 @@ typedef struct {
 
 int segmento_get_id(Segmento*);
 void segmento_set_id(Segmento* , int );
-uint32_t* segmento_get_limite(Segmento* );
+uint32_t segmento_get_limite(Segmento* );
 void segmento_set_limite(Segmento* , uint32_t );
-uint32_t* segmento_get_base(Segmento* );
+uint32_t segmento_get_base(Segmento* );
 void segmento_set_base(Segmento* , uint32_t );
 uint32_t segmento_get_tamanio(Segmento* );
 void segmento_set_tamanio(Segmento* , uint32_t );
@@ -49,7 +49,7 @@ void inicializar_estructuras();
 
 //////////////////////// SEGMENTO ////////////////////////
 Segmento* crear_segmento(int tamSegmento);
-bool es_el_segmento_victima_id(Segmento* element, int pid_segmento, int id_segmento);
+bool es_el_segmento_victima_id(Segmento* unSegmento, Segmento* otroSegmento);
 
 /**
  * @brief Obtiene un segmento de un proceso por su ID.

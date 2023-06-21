@@ -1,6 +1,7 @@
 #include <../include/memoria-administracion.h>
 
 extern t_list* listaDeSegmentos;
+extern t_log *memoriaLogger;
 
 
 t_list* list_filter_ok(t_list* lista, bool (*condition)(void*, void*), void* argumento) {
@@ -17,24 +18,27 @@ t_list* list_filter_ok(t_list* lista, bool (*condition)(void*, void*), void* arg
 }
  
  
-bool hay_segmento_libre_de_ese_tamanio(Segmento* unSegmento,Segmento* otroSegento){
+bool hay_segmento_libre_de_ese_tamanio(Segmento* unSegmento,Segmento* otroSegmento){
  
-    if(segmento_get_bit_validez(unSegmento) != 0){
  
-        if ( segmento_get_tamanio(otroSegento) > segmento_get_tamanio(unSegmento) ){
+        if ( segmento_get_tamanio(unSegmento) > segmento_get_tamanio(otroSegmento) ){
             return true;
         }
         return false;
 
-    }
-    
-    return false;
+
 }
+
+bool segmentos_validez_0(Segmento* unSegmento){
+    return (segmento_get_bit_validez(unSegmento) == 0);
+}
+
+
  
-t_list* segmento_disponibles_del_tamanio(Segmento* nuevoSegmento){
+t_list* segmento_disponibles_del_tamanio(Segmento* nuevoSegmento, t_list* listaDeSegmentoHuecoLibres){
  
     //Semaforos
-    t_list* aux = listaDeSegmentos;
+    t_list* aux = listaDeSegmentoHuecoLibres;
     list_filter_ok(aux,hay_segmento_libre_de_ese_tamanio,nuevoSegmento );
  
     return aux;
@@ -61,6 +65,7 @@ void administrar_primer_hueco_libre(t_list* huecosLibres, Segmento* nuevoSegment
         segmento_set_limite(nuevoSegmento, segmento_get_limite(segmentoReal));
         segmento_set_bit_validez(nuevoSegmento,1);
         list_replace(listaDeSegmentos,index, nuevoSegmento); 
+        log_info(memoriaLogger,"no hubo F.interna PID: <%i> - Crear Segmento: <%i> - Base: <%i> - TAMAÑO: <%i>", segmento_get_pid(nuevoSegmento), segmento_get_id(nuevoSegmento), segmento_get_base(nuevoSegmento), segmento_get_tamanio(nuevoSegmento));
         //bit_ultimo_seg = 1            //en todos iria en 0 pero en este seria 1 xq tendria el puntero apuntando
     } else {
     
@@ -68,19 +73,23 @@ void administrar_primer_hueco_libre(t_list* huecosLibres, Segmento* nuevoSegment
 
         // ACA GUARDO EL SEGMENTO
         segmento_set_base(nuevoSegmento, segmento_get_base(segmentoReal));
-        segmento_set_limite(nuevoSegmento, segmento_get_tamanio(segmentoReal) + segmento_get_base(nuevoSegmento)); //tamanio viene x default
+        uint32_t limite = segmento_get_tamanio(nuevoSegmento) + segmento_get_base(nuevoSegmento);
+        segmento_set_limite(nuevoSegmento, limite); //tamanio viene x default
         segmento_set_bit_validez(nuevoSegmento,1);
         list_replace(listaDeSegmentos,index, nuevoSegmento);
 
         uint32_t tamanioDelHuecoLibre = segmento_get_tamanio(segmentoReal) - segmento_get_tamanio(nuevoSegmento);
-        uint32_t baseDelHuecoLibre = segmento_get_limite(nuevoSegmento) +1;            //segmento_get_limite(segmentoReal) ;
+        uint32_t baseDelHuecoLibre = segmento_get_limite(nuevoSegmento);            //segmento_get_limite(segmentoReal) ;
+        log_info(memoriaLogger,"PID: <%i> - Crear Segmento: <%i> - Base: <%i> - TAMAÑO: <%i> - LIMITE <%i>", segmento_get_pid(nuevoSegmento), segmento_get_id(nuevoSegmento), segmento_get_base(nuevoSegmento), segmento_get_tamanio(nuevoSegmento), segmento_get_limite(nuevoSegmento));
 
         // ACA TRABAJO CON LA FRAGMENTACION INTERNA QUE GENERA
         segmento_set_base(nuevoHuecoLibre,baseDelHuecoLibre);
         segmento_set_tamanio(nuevoHuecoLibre,tamanioDelHuecoLibre);
-        segmento_set_limite(nuevoHuecoLibre,tamanioDelHuecoLibre + baseDelHuecoLibre); //coincide con el limite de segmentoReal
+        uint32_t limiteHuecoLibre = tamanioDelHuecoLibre + baseDelHuecoLibre;
+        segmento_set_limite(nuevoHuecoLibre,limiteHuecoLibre); //coincide con el limite de segmentoReal
         segmento_set_bit_validez(nuevoHuecoLibre,0);
         list_add_in_index(listaDeSegmentos,index+1,nuevoHuecoLibre);
+        log_info(memoriaLogger,"Crear Hueco Libre: Base: <%i> - TAMAÑO: <%i>", baseDelHuecoLibre, tamanioDelHuecoLibre);
 
         
     }
@@ -88,15 +97,31 @@ void administrar_primer_hueco_libre(t_list* huecosLibres, Segmento* nuevoSegment
  
  
 void administrar_nuevo_segmento(Segmento* nuevoSegmento){
+    
+
+    
+   // t_list* listaDeHuecosLibres = listaDeSegmentos;
+  
+
+    t_list* listaDeHuecosLibres = listaDeSegmentos; //t_list* listaDeHuecosLibres = list_filter(listaDeSegmentos,segmentos_validez_0);
+    //listaDeHuecosLibres = list_filter(listaDeSegmentos,segmentos_validez_0);
+    //listaDeHuecosLibres = segmento_disponibles_del_tamanio(nuevoSegmento, listaDeHuecosLibres);
  
-    t_list* listaDeHuecosLibres = segmento_disponibles_del_tamanio(nuevoSegmento);
- 
+    listaDeHuecosLibres = list_filter(listaDeHuecosLibres,segmentos_validez_0);
+    Segmento* test = list_get(listaDeHuecosLibres,0);
+    log_info(memoriaLogger, "base : <%i>", segmento_get_base(test));
+    //128
+    //256
+    //
+    listaDeHuecosLibres = list_filter_ok(listaDeHuecosLibres,hay_segmento_libre_de_ese_tamanio,nuevoSegmento);
+    
+
     if( list_is_empty(listaDeHuecosLibres) ){
-        // Hay que hacer compactacion 
+        // Hay que hacer compactacion
+        printf("entre aca"); 
     } else {
         
         administrar_primer_hueco_libre(listaDeHuecosLibres, nuevoSegmento);
-
     // Aca se elije el algoritmo dependiendo como 
     // Hagamos uno de test
  
@@ -113,14 +138,14 @@ return ( segmento_get_id(unSegmento) == segmento_get_id(otroSegmento) ) && ( seg
 
 }
 
-bool segmento_anterior_esta_libre(int index){
+int segmento_anterior_esta_libre(int index){
     Segmento* segmentoAnterior = list_get(listaDeSegmentos, index - 1);
 
     return segmento_get_bit_validez(segmentoAnterior);
 }
 
 
-bool segmento_siguiente_esta_libre(int index){
+int segmento_siguiente_esta_libre(int index){
     Segmento* segmentoAnterior = list_get(listaDeSegmentos, index + 1);
 
     return segmento_get_bit_validez(segmentoAnterior);
@@ -160,7 +185,7 @@ void eliminar_segmento_memoria(Segmento* segmentoAEliminar){
 
         if(segmento_anterior_esta_libre(index) == 0){ 
 
-            Segmento* segmentoAnterior =list_get(listaDeSegmentos, index - 1);    
+            Segmento* segmentoAnterior = list_get(listaDeSegmentos, index - 1);    
             Segmento* segmentoConsolidado  = consolidar_segmentos(segmentoAnterior, segmentoAEliminar);
             list_replace(listaDeSegmentos,index - 1,segmentoConsolidado);
             list_remove(listaDeSegmentos, index);

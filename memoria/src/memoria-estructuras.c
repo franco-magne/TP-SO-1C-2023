@@ -1,7 +1,8 @@
 #include <../include/memoria-estructuras.h>
 
+extern t_log *memoriaLogger;
 extern t_memoria_config* memoriaConfig;
-void* memoriaPrincipal;
+
 uint32_t tamActualMemoria;
 extern Segmento* segCompartido; // tipo lista enlazada (obligatorio)
 
@@ -27,7 +28,7 @@ void segmento_set_id(Segmento* un_segmento, int id_segment){
     un_segmento->segmento_id = id_segment;
 }
 
-uint32_t* segmento_get_limite(Segmento* un_segmento){
+uint32_t segmento_get_limite(Segmento* un_segmento){
     return un_segmento->limite;
 }
 
@@ -43,7 +44,7 @@ void segmento_set_tamanio(Segmento* un_segmento, uint32_t tamanio){
     un_segmento->tamanio = tamanio;
 }
 
-uint32_t* segmento_get_base(Segmento* un_segmento){
+uint32_t segmento_get_base(Segmento* un_segmento){
     return un_segmento->base;
 }
 
@@ -67,7 +68,7 @@ void segmento_set_bit_validez(Segmento* un_segmento, int validezValor){
     un_segmento->validez = validezValor;
 }
 
-int segmento_get_contenido(Segmento* un_segmento){
+char* segmento_get_contenido(Segmento* un_segmento){
     return un_segmento->contenido; 
 }
 
@@ -100,8 +101,8 @@ Segmento* crear_segmento(int tamSegmento){
     return this;
 }
 
-bool es_el_segmento_victima_id(Segmento* element, int pid_segmento, int id_segmento) {
-   return (element->segmento_id == id_segmento) && (element->pid == pid_segmento);
+bool es_el_segmento_victima_id(Segmento* unSegmento, Segmento* otroSegmento) {
+   return (unSegmento->segmento_id == otroSegmento->segmento_id) && (unSegmento->pid == otroSegmento->pid);
 }
 
 Segmento* obtener_segmento_por_id(int pid_victima, int id_victima){
@@ -110,6 +111,7 @@ Segmento* obtener_segmento_por_id(int pid_victima, int id_victima){
     segmento_set_pid(aux1, pid_victima);
 
     uint32_t index = list_get_index(listaDeSegmentos, es_el_segmento_victima_id, aux1);
+    printf("Valor de index <%i>", index);
     Segmento* aux2 = list_get(listaDeSegmentos, index);
     free(aux1);
     
@@ -161,14 +163,15 @@ void sumar_memoriaRecuperada_a_tamMemoriaActual(uint32_t tamMemorRecuperada){
 
 ////////////deberia estar en memoria.c
 void inicializar_memoria(){
-    int tamanioMP = (int) memoria_config_get_tamanio_memoria(memoriaConfig); 
-    memoriaPrincipal = malloc(tamanioMP);
-    tamActualMemoria = tamanioMP;
+    
+    
+
+
 }
 
 void inicializar_estructuras(){
-    segCompartido = crear_segmento(memoria_config_get_tamanio_segmento_0(memoriaConfig));
-    listaDeSegmentos = list_create();
+    
+    
 }
 //----------------------------------------------
 

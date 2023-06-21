@@ -15,14 +15,14 @@ extern t_list* listaDeSegmentos; //la VERDADERA
 //t_config *memoriaConfig;
 
 bool puedo_crear_proceso_o_segmento(uint32_t tamanio){ //cambiar, solo puedo crear si tengo algun hueco libre de tamanio > tamanio
-    return tamanio <= tamActualMemoria;  
+    return tamanio <= 4096;  
 }
 
 void atender_peticiones_kernel(int socketKernel) {
     uint8_t header;
     for (;;) {
         header = stream_recv_header(socketKernel);
-        pthread_mutex_lock(&mutexMemoriaData);
+        //pthread_mutex_lock(&mutexMemoriaData);
         t_buffer* buffer = buffer_create();
         stream_recv_buffer(socketKernel, buffer);
 
@@ -46,7 +46,7 @@ void atender_peticiones_kernel(int socketKernel) {
              
             }
             case HEADER_create_segment: { 
-                log_info(memoriaLogger,"socket kernel -> 1- <%i> ", socketKernel);
+                //log_info(memoriaLogger,"socket kernel -> 1- <%i> ", socketKernel);
 
                 uint32_t tamanio_de_segmento;  
                 uint32_t id_de_segmento;
@@ -56,7 +56,7 @@ void atender_peticiones_kernel(int socketKernel) {
                 buffer_unpack(buffer, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
                 buffer_unpack(buffer, &pid, sizeof(pid));
 
-                log_info(memoriaLogger,"tamanio de segmento <%i> y tamActualMemoria <%i>", tamanio_de_segmento, tamActualMemoria);
+                log_info(memoriaLogger,"tamanio de segmento <%i> con id <%i>", tamanio_de_segmento, id_de_segmento);
 
                 // (!) este if es clave, borrar todos los segments del Proceso que 
                 // se crearon antes si es que uno de sus segments no se puede crear.
@@ -72,13 +72,13 @@ void atender_peticiones_kernel(int socketKernel) {
                 Segmento* unSegmento = crear_segmento(tamanio_de_segmento);
                 segmento_set_id(unSegmento, id_de_segmento);
                 segmento_set_pid(unSegmento, pid);
-
+                log_info(memoriaLogger, "\e[1;93mSe crea nuevo segmento con id [%i] y tamanio [%i]\e[0m", id_de_segmento, tamanio_de_segmento);
                 pthread_mutex_lock(&mutexTamMemoriaActual);
                 //tamActualMemoria -= tamanio_de_segmento;
                 administrar_nuevo_segmento(unSegmento);
                 pthread_mutex_unlock(&mutexTamMemoriaActual);
 
-                log_info(memoriaLogger, "\e[1;93mSe crea nuevo segmento con id [%i] y tamanio [%i]\e[0m", id_de_segmento, tamanio_de_segmento);
+                //log_info(memoriaLogger, "\e[1;93mSe crea nuevo segmento con id [%i] y tamanio [%i]\e[0m", id_de_segmento, tamanio_de_segmento);
 
                 stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
                 
@@ -100,7 +100,9 @@ void atender_peticiones_kernel(int socketKernel) {
 
                 log_info(memoriaLogger,"Segmento a eliminar <%i> ", id_de_segmento);
 
-                Segmento* segABorrar = obtener_segmento_por_id(pid, id_de_segmento);
+                Segmento* segABorrar = crear_segmento(-1);
+                segmento_set_id(segABorrar, id_de_segmento);
+                segmento_set_pid(segABorrar, pid);
                 //sumar_memoriaRecuperada_a_tamMemoriaActual(segABorrar->tamanio); 
                 eliminar_segmento_memoria(segABorrar);
                 log_info(memoriaLogger, "Borramos el segmento <%i> del proceos <%i>", id_de_segmento, pid);
@@ -126,7 +128,7 @@ void atender_peticiones_kernel(int socketKernel) {
                 //exit(-1);
                 break;
         }
-        pthread_mutex_unlock(&mutexMemoriaData);
+        //pthread_mutex_unlock(&mutexMemoriaData);
     }
 }
 
