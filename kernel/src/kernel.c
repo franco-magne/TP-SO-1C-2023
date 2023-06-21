@@ -7,8 +7,6 @@ t_kernel_recurso* recursoConfig;
 static t_estado* elegir_pcb;
 t_list* tablaGlobalDeArchivosAbiertos;
 
-//static t_preemption_handler evaluar_desalojo;
-
 /////////// LA USAN VARIOS PROCESOS "HILOS" /////////////
 static uint32_t nextPid ;
 static int cantidad_de_recursos;
@@ -66,57 +64,24 @@ int main(int argc, char* argv[]) {
     nextPid++;
     pthread_mutex_init(&nextPidMutex, NULL);
 
-    //kernelConfig = kernel_config_create(argv[1], kernelLogger);
    kernelConfig = kernel_config_initializer(kernelConfigPath);
    cantidad_de_recursos = size_recurso_list(kernel_config_get_recurso(kernelConfig));
-  
    recursoConfig = iniciar_estructuras_de_recursos(cantidad_de_recursos, kernel_config_get_instancias(kernelConfig), kernel_config_get_recurso(kernelConfig));
     
-   
    /////////////////////////////// CONEXION CON CPU /////////////////////////////
     conectar_a_servidor_cpu_dispatch(kernelConfig,kernelLogger);
-  
     /////////////////////////////// CONEXION CON FILE_SYSTEM /////////////////////////////
-
-    int kernelSocketFS = conectar_a_servidor("127.0.0.1", "8003");
-    if (kernelSocketFS == -1) {
-        log_error(kernelLogger, "Error al intentar establecer conexión inicial con módulo FILE_SYSTEM");
-
-        log_destroy(kernelLogger);
-
-    return -2;
-    }
-
-kernel_config_set_socket_file_system(kernelConfig,kernelSocketFS);
-
-
+    conectar_con_servidor_file_system(kernelConfig,kernelLogger);
    /////////////////////////////// CONEXION CON MEMORIA /////////////////////////////
-    
-    int kernelSocketMemoria = conectar_a_servidor("127.0.0.1", "8002");
-      if (kernelSocketMemoria == -1) {
-        log_error(kernelLogger, "Error al intentar establecer conexión inicial con módulo Memoria");
-        log_destroy(kernelLogger);
-
-        return -2;
-      }
-
-    stream_send_empty_buffer(kernelSocketMemoria, HANDSHAKE_kernel);
-
-    kernel_config_set_socket_memoria(kernelConfig,kernelSocketMemoria);
-   
+    conectar_con_servidor_memoria(kernelConfig,kernelLogger);
    ////////////////////////////// CONEXION CON CONSOLA //////////////////////////////
-    
-
-
    int server_fd = iniciar_servidor(kernel_config_get_ip_escucha(kernelConfig), kernel_config_get_puerto_escucha(kernelConfig));
-   log_info(kernelLogger,"Servidor listo para recibir al cliente\n");
+   log_info(kernelLogger,"Servidor listo para recibir a los procesos\n");
    inicializar_estructuras();
    aceptar_conexiones_kernel(server_fd);
 
-  
-
    log_destroy(kernelLogger);
-   config_destroy(kernelConfig);    //OJO falta Free
+   config_destroy(kernelConfig);    
 
    return 0;
 }
@@ -135,16 +100,10 @@ void aceptar_conexiones_kernel(const int socketEscucha)
         const int clienteAceptado = accept(socketEscucha, &cliente, &len);
         
         if (clienteAceptado > -1) {
-            
-          //  int* socketCliente = malloc(sizeof(*socketCliente));
-          //  *socketCliente = clienteAceptado;
-              
+        
             crear_hilo_cliente_conexion_entrante(clienteAceptado);
-            
-           
         } 
         else {
-
             log_error(kernelLogger, "Error al aceptar conexión: %s", strerror(errno));
         }
     }
@@ -152,14 +111,10 @@ void aceptar_conexiones_kernel(const int socketEscucha)
 
 ////////////////////////////////////// CAMBIOS DE ESTADOS ////////////////////////////////
 
-
-
 void encolar_en_new_a_nuevo_proceso(int cliente){
 
     log_info(kernelLogger, "Nuevo proceso en la cola de new \n");
    
-    
-
     // RECIBO LAS INSTRUCCIONES DE CONSOLA
     t_buffer* bufferIntrucciones = buffer_create();
 
@@ -173,9 +128,7 @@ void encolar_en_new_a_nuevo_proceso(int cliente){
 
     
         uint32_t newPid = obtener_siguiente_pid();
-
         t_pcb* newPcb = pcb_create(newPid); // Me rompe pcb_create()
-        
         // LE SETEO LOS VALORES BASICOS
         pcb_set_rafaga_actual(newPcb, kernel_config_get_estimacion_inicial(kernelConfig));
         pcb_set_rafaga_anterior(newPcb, kernel_config_get_estimacion_inicial(kernelConfig));
@@ -186,7 +139,6 @@ void encolar_en_new_a_nuevo_proceso(int cliente){
         log_info(kernelLogger, "Creación de nuevo proceso ID %d mediante <socket %d>", pcb_get_pid(newPcb), cliente);
 
         //////// LE ENVIO A CONSOLA EL PID ///////
-
         t_buffer* bufferPID = buffer_create();
         buffer_pack(bufferPID, &newPid, sizeof(newPid));
         stream_send_buffer(cliente, HEADER_pid, bufferPID);
@@ -261,18 +213,7 @@ void* planificador_largo_plazo(void* args)
         } 
         else {*/
 
-                
-                pcb_set_estado_anterior(pcbQuePasaAReady, pcb_get_estado_actual(pcbQuePasaAReady));
-                
-                pcb_set_estado_actual(pcbQuePasaAReady, READY);     
-                estado_encolar_pcb_atomic(estadoReady, pcbQuePasaAReady);
-                setear_tiempo_ready(pcbQuePasaAReady); // EMPIEZA A CONTAR EL TIEMPO 
-                char* stringPidsReady = string_pids_ready(estadoReady);
-                log_transition("NEW", "READY", pcb_get_pid(pcbQuePasaAReady));
-
-                log_info(kernelLogger,  "Cola Ready <%s>: %s", kernel_config_get_algoritmo_planificacion(kernelConfig), stringPidsReady);
-                free(stringPidsReady);
-                sem_post(estado_get_sem(estadoReady));
+        proceso_pasa_a_ready(pcbQuePasaAReady, "NEW");
             
         //}
         pcbQuePasaAReady = NULL;

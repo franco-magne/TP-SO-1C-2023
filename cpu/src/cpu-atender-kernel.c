@@ -254,7 +254,7 @@ static void set_registro_segun_tipo(t_registro tipoRegistro, char* valorASetear,
     log_info(cpuLogger, "Registro %s seteado con valor: %s", t_registro_to_char(tipoRegistro), valorASetear ); // ver el tema de valor a setear para utilizar la funcion get_registro_segun_tipo que no la estamos usando
 }
 
-static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstruccion, void* operando1, void* operando2) 
+static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstruccion, void* operando1, void* operando2, void* operando3) 
 {
     uint32_t programCounterActualizado = cpu_pcb_get_program_counter(pcb) + 1;
     bool shouldStopExec = false;
@@ -442,16 +442,25 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
 
     } else if (tipoInstruccion == INSTRUCCION_F_READ ) {
         
+        char* nombreArchivo = string_duplicate((char*) operando1);
+        uint32_t puntero = *((uint32_t*) operando2);
+        uint32_t direccionMemoria = *((uint32_t*) operando3);
+
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_READ> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_READ> - <%s> - <%i> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo, puntero, direccionMemoria);
 
         intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
 
     } else if (tipoInstruccion == INSTRUCCION_F_WRITE ) {
         
+
+        char* nombreArchivo = string_duplicate((char*) operando1);
+        uint32_t puntero = *((uint32_t*) operando2);
+        uint32_t direccionMemoria = *((uint32_t*) operando3);
+
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_WRITE> - <NULL> - <NULL>", cpu_pcb_get_pid(pcb));
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_WRITE> - <%s> - <%i> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo, puntero, direccionMemoria);
 
         intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
@@ -509,70 +518,72 @@ static bool cpu_ejecutar_ciclos_de_instruccion(t_cpu_pcb* pcb)
             registro1 = instruccion_get_registro1(nextInstruction);
             dispositivo = instruccion_get_dispositivo(nextInstruction);
                 
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &registro1, (void*) dispositivo);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &registro1, (void*) dispositivo, NULL);
             break;
         case INSTRUCCION_EXIT:
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL, NULL);
             break;
         case INSTRUCCION_YIELD:
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL, NULL);
             break;
         case INSTRUCCION_IO:
             
             operando1 = instruccion_get_operando1(nextInstruction);
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion,(void*) &operando1, NULL);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion,(void*) &operando1, NULL, NULL);
             break;
         case INSTRUCCION_SIGNAL:
             dispositivo = instruccion_get_dispositivo(nextInstruction);
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo, NULL);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo, NULL, NULL);
             break;
         case INSTRUCCION_WAIT:
             dispositivo = instruccion_get_dispositivo(nextInstruction);
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo, NULL);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo, NULL, NULL);
             break;
         case INSTRUCCION_CREATE_SEGMENT:
             operando1 = instruccion_get_operando1(nextInstruction);
             operando2 = instruccion_get_operando2(nextInstruction);
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &operando1, (void*) &operando2);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &operando1, (void*) &operando2, NULL);
             break;
         case INSTRUCCION_DELETE_SEGMENT:
             operando1 = instruccion_get_operando1(nextInstruction);
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &operando1 , NULL);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &operando1 , NULL, NULL);
             break;
         case INSTRUCCION_F_OPEN:
             dispositivo = instruccion_get_dispositivo(nextInstruction);
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo, NULL);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo, NULL, NULL);
             break;
         case INSTRUCCION_F_CLOSE:
             dispositivo = instruccion_get_dispositivo(nextInstruction);
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo, NULL);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo, NULL, NULL);
             break;
         case INSTRUCCION_F_SEEK:
             dispositivo = instruccion_get_dispositivo(nextInstruction);
             operando2 = instruccion_get_operando2(nextInstruction);
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo, (void*) &operando2);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo, (void*) &operando2, NULL);
             break;
         case INSTRUCCION_F_TRUNCATE:
             dispositivo = instruccion_get_dispositivo(nextInstruction);
             operando2 = instruccion_get_operando2(nextInstruction);
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo,  (void*) &operando2);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo,  (void*) &operando2, NULL);
             break;
         case INSTRUCCION_F_READ:
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);
-            break;
         case INSTRUCCION_F_WRITE:
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL);
+
+            dispositivo = instruccion_get_dispositivo(nextInstruction);
+            operando1 = instruccion_get_operando1(nextInstruction);
+            operando2 = instruccion_get_operando2(nextInstruction);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, dispositivo,  (void*) &operando1,  (void*) &operando2);
             break;
         case INSTRUCCION_MOV_IN:
             registro1 = instruccion_get_registro1(nextInstruction);
             operando2 = instruccion_get_operando2(nextInstruction);
             dispositivo = cpu_fetch_operands(nextInstruction, pcb);
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &registro1, dispositivo);
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &registro1, dispositivo, NULL);
             break;
         case INSTRUCCION_MOV_OUT:
             operando1 = instruccion_get_operando1(nextInstruction);
             registro2 = instruccion_get_registro2(nextInstruction);
-            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &operando1, (void*) &registro2 );
+            shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &operando1, (void*) &registro2,NULL );
             break;
             
         default:
