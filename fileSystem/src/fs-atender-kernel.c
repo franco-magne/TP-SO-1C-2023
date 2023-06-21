@@ -8,14 +8,14 @@ void atender_kernel(t_filesystem* fs) {
     lista_fcbs = list_create();
     
     // PARA HACER PRUEBAS RAPIDAS
-    /*
+    
     operacion_OK = abrir_archivo("Notas1erParcialK9999", fs);    
     if (operacion_OK) {
         log_info(fs->logger, "Apertura ok");
     } else {
         log_error(fs->logger, "error al abrir");
     }
-    operacion_OK = abrir_archivo("RecuperatorioSO", fs);*/
+    operacion_OK = abrir_archivo("RecuperatorioSO", fs);
     
     while (fs->socket_kernel != -1) {
 

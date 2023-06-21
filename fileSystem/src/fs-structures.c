@@ -19,21 +19,35 @@ void crear_superbloque_dat(t_filesystem* fs, t_config* superbloque) {
 
 void levantar_bitmap(t_filesystem* fs) {
 
-    fd_bitmap = open(fs->bitmap_path, O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO); // 664 permiso de lectura y escritura a mi usuario
+    FILE * bitmap_file = fopen(fs->bitmap_path, "rb");
+
+    if (bitmap_file == NULL) {
+        crear_bitmap(fs);
+    } else {
+        log_info(fs->logger, "Levantamos el bitmap ya creado.");
+        fclose(bitmap_file);
+    }
+
+    // void* blq = mmap();
+    // memcpy([bloque], offset: nro bloque + tamanio);    
+}
+
+void crear_bitmap(t_filesystem* fs) {
+
+    fd_bitmap = open(fs->bitmap_path, O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
     if (fd_bitmap == -1) {
         log_error(fs->logger, "Error al abrir el archivo de bitmap. %s", strerror(errno));
         exit(1);
     }
 
-    off_t valor = lseek(fd_bitmap, fs->block_count - 1, SEEK_SET); // Me aseguro que el fd tenga -block_count- bytes. Me desplazo
-    if (valor == -1) {
-        log_error(fs->logger, "Error al desplazarse por el archivo. %s", strerror(errno));
+    uint32_t size_bitarray = ceil(fs->block_count / 8); // Redondea hacia arriba
+
+    if (ftruncate(fd_bitmap, size_bitarray) == -1) {
+        log_info(fs->logger, "Error al setear el tamaño del bitmap. %s", strerror(errno));
         exit(1);
     }
 
-    uint32_t size_bitarray = ceil(fs->block_count / 8); // Redondea hacia arriba
-    void* map = mmap(NULL, fs->block_count, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bitmap, 0);
-
+    void* map = mmap(NULL, size_bitarray, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bitmap, 0); // iba fs.block_count en el segundo parametro
     if (map == MAP_FAILED) {
         log_error(fs->logger, "Fallo en el mmap. %s", strerror(errno));
         exit(1);
@@ -41,10 +55,27 @@ void levantar_bitmap(t_filesystem* fs) {
         log_info(fs->logger, "Tenemos bitmap ok.");
     }
 
+    memset(map, 0, size_bitarray); // Seteo en cero a todo el map
+
+    if (msync(map, size_bitarray, MS_SYNC) == -1) {
+        log_info(fs->logger, "Error al sincronizar el bitmap. %s", strerror(errno));
+        exit(1);
+    }
+
     bitmap = bitarray_create(map, size_bitarray);
 
-    // void* blq = mmap();
-    // memcpy([bloque], offset: nro bloque + tamanio);
+}
+
+void levantar_archivo_de_bloques(t_filesystem* fs) {
+
+    FILE * bloques_file = fopen(fs->bloques_path, "rb");
+
+    if (bloques_file == NULL) {
+        crear_archivo_de_bloques(fs);
+    } else {
+        log_info(fs->logger, "Levantamos el archivo de bloques ya creado.");
+        fclose(bloques_file);
+    }
 
 }
 
@@ -59,15 +90,14 @@ void crear_archivo_de_bloques(t_filesystem* fs) {
         exit(1);
     }
 
-    off_t valor = lseek(fd_bloques, (fs->block_count * fs->block_size) - 1, SEEK_SET); // Me aseguro que el fd tenga -block_count * block_size- bytes. Me desplazo
-    if (valor == -1) {
-        log_error(fs->logger, "Error al desplazarse por el archivo. %s", strerror(errno));
+    uint32_t size = fs->block_count * fs->block_size;
+
+    if (ftruncate(fd_bloques, size) == -1) {
+        log_info(fs->logger, "Error al setear el tamaño del archivo de bloques. %s", strerror(errno));
         exit(1);
     }
 
-    uint32_t size = fs->block_count * fs->block_size;
     map_bloques = mmap(NULL, size, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bloques, 0); // map_bloques REEMPLAZA AL ARRAY DE BLOQUES
-
     if (map_bloques == MAP_FAILED) {
         log_error(fs->logger, "Fallo en el mmap. %s", strerror(errno));
         exit(1);
@@ -185,8 +215,6 @@ void crear_directorios(t_filesystem* fs) {
 
     if (!resultado) {
         log_info(fs->logger, "Se crearon los directorios necesarios.");
-    } else {
-        log_error(fs->logger, "Los directorios fueron creados anteriormente. No problem. %s", strerror(errno));
     }
 
 }

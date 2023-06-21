@@ -60,6 +60,8 @@ typedef struct {
 void crear_superbloque_dat(t_filesystem*, t_config*);
 void cargar_t_filesystem(t_config*, t_config*, t_filesystem*);
 void levantar_bitmap(t_filesystem*);
+void crear_bitmap(t_filesystem*);
+void levantar_archivo_de_bloques(t_filesystem*);
 void crear_archivo_de_bloques(t_filesystem*);
 t_fcb* crear_fcb(char*, t_filesystem*);
 

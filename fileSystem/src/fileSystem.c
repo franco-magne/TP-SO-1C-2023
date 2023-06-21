@@ -34,11 +34,11 @@ int main() {
    crear_directorios(fs);
    levantar_bitmap(fs);
    crear_superbloque_dat(fs, superbloque_config);
-   crear_archivo_de_bloques(fs);
+   levantar_archivo_de_bloques(fs);
 
 
    ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////
-
+/*
    int serverFS = iniciar_servidor(fs->ip_memoria, fs->puerto_escucha);
    log_info(fs->logger, "Servidor FILESYSTEM listo para recibir a KERNEL\n");
    
@@ -48,7 +48,7 @@ int main() {
 
    config_destroy(fs_config);
    config_destroy(superbloque_config);
-   cerrar_archivos();
+   cerrar_archivos();*/
 
    return 0;
 }
