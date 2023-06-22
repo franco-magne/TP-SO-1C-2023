@@ -89,12 +89,11 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
 
         //Empaqueto pc
         buffer_pack(buffer, &programCounterActualizado, sizeof(programCounterActualizado));
-
         //Empaquetamos registros
-        buffer_pack(buffer, &registrosCpuActualizado->registroAx, sizeof(registrosCpuActualizado->registroAx));
-        buffer_pack(buffer, &registrosCpuActualizado->registroBx, sizeof(registrosCpuActualizado->registroBx));
-        buffer_pack(buffer, &registrosCpuActualizado->registroCx, sizeof(registrosCpuActualizado->registroCx));
-        buffer_pack(buffer, &registrosCpuActualizado->registroDx, sizeof(registrosCpuActualizado->registroDx));
+        buffer_pack_string(buffer, cpu_pcb_get_registros(pcb)->registroAx);
+        buffer_pack_string(buffer, cpu_pcb_get_registros(pcb)->registroBx);
+        buffer_pack_string(buffer, cpu_pcb_get_registros(pcb)->registroCx);
+        buffer_pack_string(buffer, cpu_pcb_get_registros(pcb)->registroDx);
         
         switch(header){
             case HEADER_proceso_bloqueado : buffer_pack(buffer, &unidadesDeTrabajo, sizeof(unidadesDeTrabajo));
@@ -196,67 +195,34 @@ static char*  get_registro_segun_tipo(t_registro tipoRegistro, t_cpu_pcb* pcb)
     }
 }
 
-static void set_registro_segun_tipo(t_registro tipoRegistro, char* valorASetear, t_cpu_pcb* pcb)
-{
-    switch (tipoRegistro)
-    {
+void cpu_pcb_set_registro(t_registros_cpu* registros, t_registro tipoRegistro, char* valor) {
+    switch (tipoRegistro) {
         case REGISTRO_ax:
-            
-            cpu_pcb_set_registro_ax(pcb, valorASetear);
+            free(registros->registroAx); // Liberar la memoria del registro anterior
+            registros->registroAx = strdup(valor); // Asignar el nuevo valor al registro
             break;
 
         case REGISTRO_bx:
-            
-            cpu_pcb_set_registro_bx(pcb, valorASetear);
+            free(registros->registroBx);
+            registros->registroBx = strdup(valor);
             break;
 
         case REGISTRO_cx:
-            
-            cpu_pcb_set_registro_cx(pcb, valorASetear);
+            free(registros->registroCx);
+            registros->registroCx = strdup(valor);
             break;
 
         case REGISTRO_dx:
-            
-            cpu_pcb_set_registro_dx(pcb, valorASetear);
-            break;
-        
-        case REGISTRO_eax:
-            cpu_pcb_set_registro_eax(pcb,valorASetear);
-            break;
-
-        case REGISTRO_ebx:
-            cpu_pcb_set_registro_ebx(pcb,valorASetear);
-            break;
-
-        case REGISTRO_ecx:
-            cpu_pcb_set_registro_ecx(pcb,valorASetear);
-            break;
-        
-        case REGISTRO_edx:
-            cpu_pcb_set_registro_edx(pcb,valorASetear);
-            break;
-        
-        case REGISTRO_rax:
-            cpu_pcb_set_registro_rax(pcb,valorASetear);
-            break;
-
-        case REGISTRO_rbx:
-            cpu_pcb_set_registro_rbx(pcb,valorASetear);
-            break;
-
-        case REGISTRO_rcx:
-            cpu_pcb_set_registro_rcx(pcb,valorASetear);
-            break;
-        
-        case REGISTRO_rdx:
-            cpu_pcb_set_registro_rdx(pcb,valorASetear);
+            free(registros->registroDx);
+            registros->registroDx = strdup(valor);
             break;
 
         default:
+            // Registro inválido, no se hace nada
             break;
     }
+        log_info(cpuLogger, "Registro %s seteado con valor: %s", t_registro_to_char(tipoRegistro), valor  ); 
 
-    log_info(cpuLogger, "Registro %s seteado con valor: %s", t_registro_to_char(tipoRegistro), valorASetear ); // ver el tema de valor a setear para utilizar la funcion get_registro_segun_tipo que no la estamos usando
 }
 
 static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstruccion, void* operando1, void* operando2, void* operando3) 
@@ -276,9 +242,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <SET> - <%s> - <%s>", cpu_pcb_get_pid(pcb), t_registro_to_char(registroASetear), valorASetear);
         
         intervalo_de_pausa(retardoInstruccion);
-        
-        set_registro_segun_tipo(registroASetear, valorASetear, pcb);
-        free(valorASetear);
+        cpu_pcb_set_registro(cpu_pcb_get_registros(pcb),registroASetear,valorASetear);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
     } else if (tipoInstruccion == INSTRUCCION_EXIT) {
         
@@ -298,7 +262,6 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <YIELD> ", cpu_pcb_get_pid(pcb));
 
         uint32_t pid = cpu_pcb_get_pid(pcb);
-      //  uint32_t* arrayTablaPaginasActualizado = cpu_pcb_get_array_tabla_paginas(pcb);
         t_registros_cpu* registrosCpuActualizado = cpu_pcb_get_registros(pcb);
         
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
@@ -335,6 +298,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         char* recurso1 = string_duplicate((char*) operando1);
         cpu_set_recurso_sem(recursos, recurso1);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+        t_registros_cpu* registrosCpuActualizado = cpu_pcb_get_registros(pcb);
 
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <SIGNAL> - <%s> ", cpu_pcb_get_pid(pcb), recurso1);
 
@@ -371,7 +335,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         cpu_pcb_set_id_de_segmento(pcb,id_de_segmento);
         cpu_pcb_set_tamanio_de_segmento(pcb,tamanio_de_segmento);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
-
+        t_registros_cpu* registrosCpuActualizado = cpu_pcb_get_registros(pcb);
         empaquetar_instruccion(pcb, HEADER_create_segment);
         shouldStopExec = true;
 
@@ -485,7 +449,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
 
         intervalo_de_pausa(retardoInstruccion);
         
-        set_registro_segun_tipo(registroASetear,valorASetear, pcb);
+        //set_registro_segun_tipo(registroASetear,valorASetear, pcb);
         
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
 
@@ -495,7 +459,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         t_registro registro = *((t_registro*) operando2);
         
         char* contenidoAEnviar = get_registro_segun_tipo(registro, pcb);
-        cpu_escribir_en_memoria(cpu_config_get_socket_memoria(pcb) , dirLogica, contenidoAEnviar, cpu_pcb_get_pid(pcb));
+        cpu_escribir_en_memoria(cpu_config_get_socket_memoria(cpuConfig) , dirLogica, contenidoAEnviar, cpu_pcb_get_pid(pcb));
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <MOV_OUT> - <%i> - <%s>", cpu_pcb_get_pid(pcb), dirLogica,  t_registro_to_char(registro) );
 
@@ -634,10 +598,11 @@ static void dispatch_peticiones_de_kernel()
 
             registrosCpu = registros_cpu_create();
             //Desempaquetamos registros cpu
-            buffer_unpack(bufferPcb, &registrosCpu->registroAx, sizeof(registrosCpu->registroAx));
-            buffer_unpack(bufferPcb, &registrosCpu->registroBx, sizeof(registrosCpu->registroBx));
-            buffer_unpack(bufferPcb, &registrosCpu->registroCx, sizeof(registrosCpu->registroCx));
-            buffer_unpack(bufferPcb, &registrosCpu->registroDx, sizeof(registrosCpu->registroDx));
+
+            registrosCpu->registroAx = buffer_unpack_string(bufferPcb);
+            registrosCpu->registroBx = buffer_unpack_string(bufferPcb);
+            registrosCpu->registroCx = buffer_unpack_string(bufferPcb);
+            registrosCpu->registroDx = buffer_unpack_string(bufferPcb);
             
             /*Desempaquetamos todo los datos que nos trae socket dispatch y lo guardamos*/
 

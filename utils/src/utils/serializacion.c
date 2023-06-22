@@ -46,13 +46,17 @@ t_buffer* buffer_unpack(t_buffer* self, void* dest, int size)
     return self;
 }
 
-void buffer_pack_string(t_buffer* self, char* stringToAdd) 
-{
-    uint32_t length = strlen(stringToAdd) + 1;
-    buffer_pack(self, &length, sizeof(length));
-    self->stream = realloc(self->stream, self->size + length);
-    memcpy(self->stream + self->size, stringToAdd, length);
-    self->size += length;
+void buffer_pack_string(t_buffer* self, char* stringToAdd) {
+    if (stringToAdd == NULL) {
+        char* cadenaVacia = "vacio";
+        buffer_pack_string(self, cadenaVacia);
+    } else {
+        uint32_t length = strlen(stringToAdd) + 1;
+        buffer_pack(self, &length, sizeof(length));
+        self->stream = realloc(self->stream, self->size + length);
+        memcpy(self->stream + self->size, stringToAdd, length);
+        self->size += length;
+    }
 }
 
 char* buffer_unpack_string(t_buffer* self) 

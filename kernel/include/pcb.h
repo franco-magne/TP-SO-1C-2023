@@ -87,6 +87,10 @@ void pcb_set_rafaga_anterior(t_pcb* this,double );
 void pcb_set_lista_de_segmentos(t_pcb* this, t_segmento* unSegmento);
 void pcb_add_lista_de_archivos(t_pcb* this,t_pcb_archivo* unArchivo );
 
+void pcb_set_registro_ax_cpu(t_pcb* this, char* registro);
+void pcb_set_registro_bx_cpu(t_pcb* this, char* registro);
+void pcb_set_registro_cx_cpu(t_pcb* this, char* registro);
+void pcb_set_registro_dx_cpu(t_pcb* this, char* registro);
 
 
 #endif

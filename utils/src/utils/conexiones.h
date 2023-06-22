@@ -37,8 +37,10 @@ typedef enum {
     HEADER_f_truncate,
     HEADER_f_read,
     HEADER_f_write,
-    HEADER_movin,
-    HEADER_movout
+    HEADER_move_in,
+    HEADER_move_out,
+    HEADER_iniciar_proceso,
+    HEADER_tabla_segmentos
 
 
 

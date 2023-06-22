@@ -195,22 +195,22 @@ void pcb_set_estado_anterior(t_pcb* this, uint32_t estadoAnterior)
    this->estadoAnterior = estadoAnterior;
 }
 
-void pcb_set_registro_ax_cpu(t_pcb* this, uint32_t registro)
+void pcb_set_registro_ax_cpu(t_pcb* this, char* registro)
 {
     this->registros->registroAx = registro;
 }
 
-void pcb_set_registro_bx_cpu(t_pcb* this, uint32_t registro)
+void pcb_set_registro_bx_cpu(t_pcb* this, char* registro)
 {
     this->registros->registroBx = registro;
 }
 
-void pcb_set_registro_cx_cpu(t_pcb* this, uint32_t registro)
+void pcb_set_registro_cx_cpu(t_pcb* this, char* registro)
 {
     this->registros->registroCx = registro;
 }
 
-void pcb_set_registro_dx_cpu(t_pcb* this, uint32_t registro)
+void pcb_set_registro_dx_cpu(t_pcb* this, char* registro)
 {
     this->registros->registroDx = registro;
 }
