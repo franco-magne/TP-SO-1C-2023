@@ -1,8 +1,9 @@
 #include <../include/kernel-memoria-adapter.h>
 
 void instruccion_iniciar_proceso(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger){
-    int pid = pcb_get_pid(pcbAIniciar);
-
+    int pid = -1; //pcb_get_pid(pcbAIniciar);   ponemos -1 xq es el pid generico cuando creamos el segCompartido
+    uint32_t tam_segmento;
+    uint32_t id_segmento;
     t_buffer* bufferNuevoProceso = buffer_create();
 
     buffer_pack(bufferNuevoProceso, &pid, sizeof(pid));
@@ -10,10 +11,12 @@ void instruccion_iniciar_proceso(t_pcb* pcbAIniciar, t_kernel_config* kernelConf
 
     buffer_destroy(bufferNuevoProceso);
     t_buffer* bufferResponse = buffer_create();
-    t_list* lista_de_segmentos = list_create();
     stream_recv_buffer(kernel_config_get_socket_memoria(kernelConfig), bufferResponse);
-    buffer_unpack(bufferResponse, lista_de_segmentos, sizeof(lista_de_segmentos));
-    pcbAIniciar->listaDeSegmento = lista_de_segmentos;
+    buffer_unpack(bufferResponse, &id_segmento, sizeof(id_segmento));
+    buffer_unpack(bufferResponse, &tam_segmento, sizeof(tam_segmento));
+
+    t_segmento* segmentoCero = segmento_create(id_segmento, tam_segmento);
+    list_add(pcbAIniciar->listaDeSegmento, segmentoCero);
 
     buffer_destroy(bufferNuevoProceso);
 }
