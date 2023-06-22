@@ -174,7 +174,10 @@ t_fcb* crear_fcb(char* nombre_archivo, t_filesystem* fs) {
 
 t_fcb* crear_fcb_inexistente(char* nombre_archivo, t_filesystem* fs) {
 
-    char* nuevo_path = concatenar("./fcbs/", nombre_archivo, fs);
+    char* nuevo_path = string_new();
+	string_append(&nuevo_path, "./fcbs/");
+    string_append(&nuevo_path, nombre_archivo);
+    string_append(&nuevo_path, ".config");
 
     FILE * fd = fopen(nuevo_path, "w+");
     if (fd == NULL) {
@@ -183,18 +186,22 @@ t_fcb* crear_fcb_inexistente(char* nombre_archivo, t_filesystem* fs) {
         log_info(fs->logger, "Un nuevo .config se creo en nuestro directorio.");
     }
 
+    fprintf(fd, "NOMBRE_ARCHIVO=%s\n", nombre_archivo);
+    fprintf(fd, "TAMANIO_ARCHIVO=%s\n", "0");
+    fprintf(fd, "PUNTERO_DIRECTO=%u\n", 0);
+    fprintf(fd, "PUNTERO_INDIRECTO=%u\n", 0);
+
     t_fcb* fcb_nuevo = malloc(sizeof(t_fcb));
     fcb_nuevo->nombre_archivo = nombre_archivo;
     fcb_nuevo->tamanio_archivo = "0";
     fcb_nuevo->puntero_directo = 0;
-    fcb_nuevo->puntero_indirecto = 0;
-    fcb_nuevo->bloques = list_create();
+    fcb_nuevo->puntero_indirecto = 0;    
 
-    fwrite(fcb_nuevo, sizeof(t_fcb), 1, fd);
     fclose(fd);
 
     t_config* config_nuevo_file = config_create(nuevo_path);
     fcb_nuevo->fcb_config = config_nuevo_file;
+    fcb_nuevo->bloques = list_create();
 
     crear_fcb_config_en_el_path(config_nuevo_file, fs, nombre_archivo);
 

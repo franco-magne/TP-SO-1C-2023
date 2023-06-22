@@ -9,13 +9,13 @@ void atender_kernel(t_filesystem* fs) {
     
     // PARA HACER PRUEBAS RAPIDAS
     /*
-    operacion_OK = abrir_archivo("Notas1erParcialK9999", fs);    
+    operacion_OK = crear_archivo("ejemplo", fs);    
     if (operacion_OK) {
-        log_info(fs->logger, "Apertura ok");
+        log_info(fs->logger, "Creacion ok");
     } else {
-        log_error(fs->logger, "error al abrir");
-    }
-    operacion_OK = abrir_archivo("RecuperatorioSO", fs);*/
+        log_error(fs->logger, "error al crear");
+    }*/
+    //operacion_OK = abrir_archivo("RecuperatorioSO", fs);
     
     while (fs->socket_kernel != -1) {
 
@@ -186,7 +186,6 @@ int crear_archivo(char* nombre_archivo, t_filesystem* fs) {
     }     
 
     return resultado;
-
 }
 
 int abrir_archivo(char* nombre_archivo, t_filesystem* fs) {
@@ -224,6 +223,7 @@ int buscar_archivo(char* nombre_archivo) {
 int fs_escuchando_en(int server_fs, t_filesystem* fs) {
 
     pthread_t hilo;
+    log_info(fs->logger, "Entra");
     int socket_kernel = esperar_cliente(server_fs);
     
     fs->socket_kernel = socket_kernel;

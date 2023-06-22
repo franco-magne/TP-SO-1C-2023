@@ -38,8 +38,9 @@ int main() {
 
    ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////
 
-   int serverFS = iniciar_servidor(fs->ip_memoria, fs->puerto_escucha);
+   int serverFS = iniciar_servidor("127.0.0.1", fs->puerto_escucha);
    log_info(fs->logger, "Servidor FILESYSTEM listo para recibir a KERNEL\n");
+   log_info(fs->logger, "Socket servidor: %d", serverFS);
    
    while (fs_escuchando_en(serverFS, fs)); // Escucho a Kernel
 
