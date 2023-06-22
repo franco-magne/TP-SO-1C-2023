@@ -8,14 +8,14 @@ void atender_kernel(t_filesystem* fs) {
     lista_fcbs = list_create();
     
     // PARA HACER PRUEBAS RAPIDAS
-    
+    /*
     operacion_OK = abrir_archivo("Notas1erParcialK9999", fs);    
     if (operacion_OK) {
         log_info(fs->logger, "Apertura ok");
     } else {
         log_error(fs->logger, "error al abrir");
     }
-    operacion_OK = abrir_archivo("RecuperatorioSO", fs);
+    operacion_OK = abrir_archivo("RecuperatorioSO", fs);*/
     
     while (fs->socket_kernel != -1) {
 
@@ -62,18 +62,18 @@ void atender_kernel(t_filesystem* fs) {
                 char* nombre_archivo_truncate;
                 t_buffer* buffer_nombre_archivo_truncate = buffer_create();
 
-                char* tamanio_archivo_truncate;
+                uint32_t tamanio_archivo_truncate;
                 t_buffer* buffer_tamanio_archivo_truncate = buffer_create();
 
                 stream_recv_buffer(fs->socket_kernel, buffer_nombre_archivo_truncate); // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
                 nombre_archivo_truncate = buffer_unpack_string(buffer_nombre_archivo_truncate); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
                 stream_recv_buffer(fs->socket_kernel, buffer_tamanio_archivo_truncate); // RECIBO EL BUFFER TAMANIO DE ARCHIVO DE KERNEL
-                tamanio_archivo_truncate = buffer_unpack_string(buffer_tamanio_archivo_truncate);
+                buffer_unpack(buffer_tamanio_archivo_truncate, &tamanio_archivo_truncate, sizeof(tamanio_archivo_truncate));
 
                 operacion_OK = truncar_archivo(nombre_archivo_truncate, tamanio_archivo_truncate);
 
                 if (operacion_OK) {
-                    log_info(fs->logger, "Truncar Archivo: <%s> - Tamaño: <%s>", nombre_archivo_truncate, tamanio_archivo_truncate);
+                    log_info(fs->logger, "Truncar Archivo: <%s> - Tamaño: <%d>", nombre_archivo_truncate, tamanio_archivo_truncate);
                     stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO SE TRUNCO
                 } else {
                     stream_send_empty_buffer(fs->socket_kernel, HEADER_error); // FALLO EN EL TRUNCATE
@@ -103,7 +103,7 @@ void atender_kernel(t_filesystem* fs) {
     return;
 }
 
-int truncar_archivo(char* nombre_archivo, char* nuevo_tamanio_archivo) {
+int truncar_archivo(char* nombre_archivo, uint32_t nuevo_tamanio_archivo) {
 
     int truncado_ok;
     int pos_archivo_a_truncar = -1;
@@ -125,19 +125,18 @@ int truncar_archivo(char* nombre_archivo, char* nuevo_tamanio_archivo) {
         t_fcb* fcb_a_truncar = list_get(lista_fcbs, pos_archivo_a_truncar);
 
         int fcb_a_truncar_tamanio = atoi(fcb_a_truncar->tamanio_archivo);
-        int nuevo_tamanio = atoi(nuevo_tamanio_archivo);
 
-        if (fcb_a_truncar_tamanio > nuevo_tamanio) {
-            // CASO REDUCIR EL TAMANIO DEL ARCHIVO
+        if (fcb_a_truncar_tamanio > nuevo_tamanio_archivo) {
+            // CASO REDUCIR EL TAMANIO DEL ARCHIVO: TIENE QUE LIBERAR BLOQUES
 
-            fcb_a_truncar->tamanio_archivo = nuevo_tamanio_archivo;
-            config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", nuevo_tamanio_archivo);
+            fcb_a_truncar->tamanio_archivo = string_itoa(nuevo_tamanio_archivo);
+            config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", string_itoa(nuevo_tamanio_archivo));
             config_save(fcb_a_truncar->fcb_config);
         } else {
-            // CASO AMPLIAR EL TAMANIO DEL ARCHIVO
+            // CASO AMPLIAR EL TAMANIO DEL ARCHIVO: TIENE QUE ASIGNAR BLOQUES
 
-            fcb_a_truncar->tamanio_archivo = nuevo_tamanio_archivo;
-            config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", nuevo_tamanio_archivo);
+            fcb_a_truncar->tamanio_archivo = string_itoa(nuevo_tamanio_archivo);
+            config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", string_itoa(nuevo_tamanio_archivo));
             config_save(fcb_a_truncar->fcb_config);
         }
 

@@ -24,7 +24,7 @@ void levantar_bitmap(t_filesystem* fs) {
     if (bitmap_file == NULL) {
         crear_bitmap(fs);
     } else {
-        log_info(fs->logger, "Levantamos el bitmap ya creado.");
+        log_info(fs->logger, "Levantamos el bitmap ya creado.");        
         fclose(bitmap_file);
     }
 
@@ -148,16 +148,16 @@ t_fcb* crear_fcb(char* nombre_archivo, t_filesystem* fs) {
             fcb_nuevo->tamanio_archivo = config_get_string_value(config_aux, "TAMANIO_ARCHIVO");
             fcb_nuevo->puntero_directo = config_get_int_value(config_aux, "PUNTERO_DIRECTO");
             fcb_nuevo->puntero_indirecto = config_get_int_value(config_aux, "PUNTERO_INDIRECTO");
+            fcb_nuevo->bloques = list_create();
             fcb_nuevo->fcb_config = config_aux;
 
             crear_fcb_config_en_el_path(config_aux, fs, nombre_archivo);
             creado = 1;
 
             log_info(fs->logger, "Fue creado un FCB con nombre %s", fcb_nuevo->nombre_archivo);
-        } else {
-            config_destroy(config_aux);
         }
 
+        config_destroy(config_aux);
         free(nombre_temporal);
         free(path_fcbs_config);
     }
@@ -167,6 +167,19 @@ t_fcb* crear_fcb(char* nombre_archivo, t_filesystem* fs) {
     }
     
     closedir(fcbs_path);    
+
+    return fcb_nuevo;
+}
+
+t_fcb* crear_fcb_inexistente(char* nombre_archivo, t_filesystem* fs) {
+
+    t_fcb* fcb_nuevo = malloc(sizeof(t_fcb));
+
+    fcb_nuevo->nombre_archivo = nombre_archivo;
+    fcb_nuevo->tamanio_archivo = "0";
+    fcb_nuevo->puntero_directo = 0;
+    fcb_nuevo->puntero_indirecto = 0;
+
 
     return fcb_nuevo;
 }

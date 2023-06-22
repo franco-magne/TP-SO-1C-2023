@@ -50,6 +50,7 @@ typedef struct {
     uint32_t puntero_directo;
     uint32_t puntero_indirecto;
 
+    t_list* bloques;
     t_config* fcb_config;
 } t_fcb;
 
