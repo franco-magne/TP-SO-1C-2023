@@ -1,9 +1,15 @@
 #include <../include/memoria-estructuras.h>
 
+extern t_log *memoriaLogger;
 extern t_memoria_config* memoriaConfig;
-void* memoriaPrincipal;
+
 uint32_t tamActualMemoria;
-extern Segmento* segCompartido;
+extern Segmento* segCompartido; // tipo lista enlazada (obligatorio)
+
+extern t_list* listaDeSegmentos;
+
+extern pthread_mutex_t* mutexTamMemoriaActual;
+pthread_mutex_t* mutexMemoriaEstruct; //seria mutexMemoriaData
 
 /*
 inicializar mp
@@ -22,28 +28,36 @@ void segmento_set_id(Segmento* un_segmento, int id_segment){
     un_segmento->segmento_id = id_segment;
 }
 
-uint32_t* segmento_get_limite(Segmento* un_segmento){
+uint32_t segmento_get_limite(Segmento* un_segmento){
     return un_segmento->limite;
 }
 
-void segmento_set_limite(Segmento* un_segmento, uint32_t* limite){
+void segmento_set_limite(Segmento* un_segmento, uint32_t limite){
     un_segmento->limite = limite;
 }
 
-uint32_t* segmento_get_base(Segmento* un_segmento){
+uint32_t segmento_get_tamanio(Segmento* un_segmento){
+    return un_segmento->tamanio;
+}
+
+void segmento_set_tamanio(Segmento* un_segmento, uint32_t tamanio){
+    un_segmento->tamanio = tamanio;
+}
+
+uint32_t segmento_get_base(Segmento* un_segmento){
     return un_segmento->base;
 }
 
-void segmento_set_base(Segmento* un_segmento, uint32_t* base){
-    un_segmento->base = base;       //habria que hacer malloc???
+void segmento_set_base(Segmento* un_segmento, uint32_t base){
+    un_segmento->base = base;       
 }
 
-int segmento_get_socket(Segmento* un_segmento){
-    return un_segmento->socket; 
+int segmento_get_pid(Segmento* un_segmento){
+    return un_segmento->pid; 
 }
 
-void segmento_set_socket(Segmento* un_segmento, int socket){
-    un_segmento->socket = socket;
+void segmento_set_pid(Segmento* un_segmento, int pid){
+    un_segmento->pid = pid;
 }
 
 int segmento_get_bit_validez(Segmento* un_segmento){
@@ -54,31 +68,110 @@ void segmento_set_bit_validez(Segmento* un_segmento, int validezValor){
     un_segmento->validez = validezValor;
 }
 
-void inicializar_memoria(){
-    int tamanioMP = (int) memoria_config_get_tamanio_memoria(memoriaConfig); 
-    memoriaPrincipal = malloc(tamanioMP);
-    tamActualMemoria = tamanioMP;
+char* segmento_get_contenido(Segmento* un_segmento){
+    return un_segmento->contenido; 
 }
+
+void segmento_set_contenido(Segmento* un_segmento, char* contenido){
+    un_segmento->contenido = contenido;
+}
+
+
+bool es_el_segmento_victima_pid(Segmento* element, int pid_segmento) {
+   return element->pid == pid_segmento;
+}
+
+t_list* obtener_tabla_de_segmentos_por_pid(int pid){
+    t_list* tablaDeSegdelProceso = list_create();
+    tablaDeSegdelProceso = list_filter(listaDeSegmentos, es_el_segmento_victima_pid);
+
+    return tablaDeSegdelProceso;
+}
+
 
 Segmento* crear_segmento(int tamSegmento){
     Segmento* this = malloc(sizeof(*this)); //no seria sizeof(limite)?? que pasa si limite es muy chico, no puedo guardar id_segmento...
     this->segmento_id = -1;
-    this->base = NULL;
-    segmento_set_limite(this, tamSegmento);
-    this->socket = -1;
+    this->base = -1;
+    segmento_set_tamanio(this, tamSegmento);
+    this->pid = -1;
     this->validez = -1;
+    this->contenido = NULL;
 
     return this;
 }
-void inicializar_estructuras(){
-    inicializar_memoria();
-    segCompartido = crear_segmento(memoria_config_get_tamanio_segmento_0(memoriaConfig));
+
+bool es_el_segmento_victima_id(Segmento* unSegmento, Segmento* otroSegmento) {
+   return (unSegmento->segmento_id == otroSegmento->segmento_id) && (unSegmento->pid == otroSegmento->pid);
+}
+
+Segmento* obtener_segmento_por_id(int pid_victima, int id_victima){
+    Segmento* aux1 = crear_segmento(-1);
+    segmento_set_id(aux1, id_victima);
+    segmento_set_pid(aux1, pid_victima);
+
+    uint32_t index = list_get_index(listaDeSegmentos, es_el_segmento_victima_id, aux1);
+    printf("Valor de index <%i>", index);
+    Segmento* aux2 = list_get(listaDeSegmentos, index);
+    free(aux1);
+    
+    return aux2;
+}
+
+Segmento* desencolar_segmento_por_id(int pid_segmento, int id_segmento){
+    if(list_is_empty(listaDeSegmentos)){
+      exit(EXIT_FAILURE);
+    }
+    else{
+        pthread_mutex_lock(&mutexMemoriaEstruct);
+        return list_remove(listaDeSegmentos, obtener_segmento_por_id(pid_segmento, id_segmento));
+        pthread_mutex_unlock(&mutexMemoriaEstruct);
+    }
+}
+
+Segmento* desencolar_segmento_primer_segmento_atomic(){
+    if(list_is_empty(listaDeSegmentos)){
+      exit(EXIT_FAILURE);
+    }
+    else{
+        pthread_mutex_lock(&mutexMemoriaEstruct);
+        return list_remove(listaDeSegmentos, 1);
+        pthread_mutex_unlock(&mutexMemoriaEstruct);
+    }
+}
+
+void encolar_segmento_atomic(Segmento* targetSegmento) 
+{
+  pthread_mutex_lock(&mutexMemoriaEstruct);
+  list_add(listaDeSegmentos, targetSegmento);
+  pthread_mutex_unlock(&mutexMemoriaEstruct);
+}
+
+void encolar_segmento_atomic_en_tablaDada(t_list* tablaDada, Segmento* targetSegmento) 
+{
+  pthread_mutex_lock(&mutexMemoriaEstruct);
+  list_add(tablaDada, targetSegmento);
+  pthread_mutex_unlock(&mutexMemoriaEstruct);
+}
+
+void sumar_memoriaRecuperada_a_tamMemoriaActual(uint32_t tamMemorRecuperada){
+    pthread_mutex_lock(&mutexTamMemoriaActual);
+    tamActualMemoria += tamMemorRecuperada;
+    pthread_mutex_unlock(&mutexTamMemoriaActual);
 }
 
 
+////////////deberia estar en memoria.c
+void inicializar_memoria(){
+    
+    
 
-/*
-primero voy a crear segmentos y asignarlos de manera contigua, sin importar el algoritmo
-una vez que implemente y pueda chequearlo recien ahi busco hacer realloc por si se agrandan los segmentos
-y cuando tenga los algoritmos vere compactaion
-*/
+
+}
+
+void inicializar_estructuras(){
+    
+    
+}
+//----------------------------------------------
+
