@@ -14,7 +14,7 @@
 #include "cpu-estructuras.h"
 #include "cpu.h"
 #include "cpu-pcb.h"
-
+#include "cpu-memoria-adapter.h"
 
 
 

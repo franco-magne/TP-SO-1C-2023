@@ -25,6 +25,7 @@ typedef struct  {
     char* PUERTO_ESCUCHA_DISPATCH;
     int SOCKET_MEMORIA;
     int SOCKET_DISPATCH_CPU;
+    int TAMANIO_MAXIMO_SEGMENTO;
 
 } t_cpu_config;
 
@@ -39,7 +40,9 @@ typedef struct  {
     char* recursoUtilizado;
     uint32_t tamanio_de_segmento;
     uint32_t id_de_segmento;
-
+    char* nombreArchivo;
+    uint32_t tamanioArchivo;
+    uint32_t punteroArchivo;
 } t_cpu_pcb;
 
 typedef struct{
@@ -61,6 +64,10 @@ char* cpu_config_get_puerto_dispatch(t_cpu_config* self);
 char* cpu_config_get_ip_cpu(t_cpu_config* self);
 int cpu_config_get_socket_dispatch(t_cpu_config* self); 
 int cpu_config_get_socket_memoria(t_cpu_config* self);
+int cpu_config_get_tamanio_maximo_segmento(t_cpu_config* self);
+
+
+
 void cpu_config_set_socket_memoria(t_cpu_config* self, int socketMemoria);
 void cpu_config_set_socket_dispatch(t_cpu_config* self, int socketDispatch); 
 void cpu_set_recurso_sem(recurso* this, char* recurso);

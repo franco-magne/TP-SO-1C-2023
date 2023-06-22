@@ -29,7 +29,17 @@ typedef enum {
     HEADER_proceso_pedir_recurso,
     HEADER_proceso_devolver_recurso,
     HEADER_create_segment,
-    HEADER_delete_segment
+    HEADER_delete_segment,
+    HEADER_f_open,
+    HEADER_f_create,
+    HEADER_f_close,
+    HEADER_f_seek,
+    HEADER_f_truncate,
+    HEADER_f_read,
+    HEADER_f_write,
+    HEADER_movin,
+    HEADER_movout
+
 
 
 } t_header;

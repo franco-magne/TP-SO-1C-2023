@@ -25,6 +25,8 @@ int main() {
         return -2;
       }
         stream_send_empty_buffer(cpuSocketMemoria,HANDSHAKE_cpu);
+        
+        cpu_config_set_socket_memoria(cpuConfig,cpuSocketMemoria);
 
   ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////
 

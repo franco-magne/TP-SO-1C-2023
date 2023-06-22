@@ -20,10 +20,95 @@ t_pcb* pcb_create(uint32_t pid)
    this->recursoUtilizado = NULL;
    this->rafaga_actual = -1;
    this->rafaga_anterior = -1;
-   this->tamanio_de_segmento = -1;
-   this->id_de_segmento = -1;
+   this->listaDeSegmento = list_create();
+   this->listaArchivosAbiertos = list_create();
    return this;
 }
+
+//////////////////////////////////// SEGMENTO /////////////////////////////////////////
+
+t_segmento* segmento_create(uint32_t id_de_segmento, uint32_t tamanio_de_segmento){
+    t_segmento* this = malloc(sizeof(*this));
+    this->id_de_segmento = id_de_segmento;
+    this->tamanio_de_segmento = tamanio_de_segmento;
+    this->victima = true;
+    return this;
+}
+
+void segmento_destroy(t_segmento* this){
+    free(this);
+}
+
+uint32_t segmento_get_id_de_segmento(t_segmento* this){
+    return this->id_de_segmento;
+}
+
+uint32_t segmento_get_tamanio_de_segmento(t_segmento* this){
+    return this->tamanio_de_segmento;
+}
+
+bool segmento_get_victima(t_segmento* this){
+    return this->victima;
+}
+
+void segmento_set_victima(t_segmento* this, bool cambioEstado){
+    this->victima = cambioEstado;
+}
+
+///////////////////////////// FUNCIONES UTILITARIAS DEL SEGMENTO POSIBLE MIGRACION A KERNEL-ESTRUCTURA-SEGMENTO //////////////////
+
+bool es_el_segmento_victima(t_segmento* element, t_segmento* target) {
+    if(element->victima)
+    return true;
+    return false;
+}
+
+bool es_el_segmento_victimaok(t_segmento* element) {
+    if(element->victima)
+    return true;
+    return false;
+}
+
+
+uint32_t index_posicion_del_segmento_victima(t_pcb* this){
+    t_segmento* aux1 = segmento_create(-1, -1);
+    segmento_set_victima(aux1, false);
+    uint32_t index = list_get_index(pcb_get_lista_de_segmentos(this), es_el_segmento_victima, aux1);
+    //segmento_destroy(aux1);
+    return index;
+}
+
+
+t_segmento* segmento_victima(t_pcb* this) {
+    t_segmento* aux2 = list_find(pcb_get_lista_de_segmentos(this), es_el_segmento_victimaok);
+    return aux2;
+}
+
+t_segmento* remover_segmento_victima_lista(t_pcb* this) {
+    uint32_t index = index_posicion_del_segmento_victima(this);
+    t_segmento* aux2 = list_remove(pcb_get_lista_de_segmentos,index);
+    
+    return aux2;
+}
+
+
+
+bool es_el_segmento_victima_id(t_segmento* element, t_segmento* target) {
+   return element->id_de_segmento == target ->id_de_segmento;
+}
+
+void modificar_victima_lista_segmento(t_pcb* this, uint32_t id_victima, bool cambiovictima){
+    uint32_t index = index_posicion_del_segmento_victima(this);
+    if (index != -1) {
+        t_segmento* aux2 = list_get(pcb_get_lista_de_segmentos(this), index);
+        segmento_set_victima(aux2, cambiovictima);
+        list_replace(pcb_get_lista_de_segmentos(this), index, aux2);
+        
+    } 
+}
+//////////////////////////////////////////////////////////////////////////////////////
+
+
 //////////////////////// GETTERS /////////////////////
 
 t_registros_cpu* pcb_get_registros_cpu(t_pcb* this)
@@ -74,13 +159,15 @@ double pcb_get_rafaga_actual(t_pcb* this){
    return this->rafaga_actual;
 }
 
-uint32_t pcb_get_tamanio_de_segmento(t_pcb* this){
-    return this->tamanio_de_segmento;
+
+t_list* pcb_get_lista_de_segmentos(t_pcb* this){
+    return this->listaDeSegmento;
 }
 
-uint32_t pcb_get_id_de_segmento(t_pcb* this){
-    return this->id_de_segmento;
+t_list* pcb_get_lista_de_archivos_abiertos(t_pcb* this){
+    return this->listaArchivosAbiertos;
 }
+
 /////////////////////// SETTER ////////////////////////
 
 void pcb_set_program_counter(t_pcb* this, uint32_t programCounter) 
@@ -155,10 +242,11 @@ void pcb_set_rafaga_actual(t_pcb* this, double rafaga){
     this->rafaga_actual = rafaga;
 }
 
-void pcb_set_tamanio_de_segmento(t_pcb* this, uint32_t tamanio){
-    this->tamanio_de_segmento = tamanio;
+
+void pcb_set_lista_de_segmentos(t_pcb* this, t_segmento* unSegmento){
+   list_add(this->listaDeSegmento,unSegmento);
 }
 
-void pcb_set_id_de_segmento(t_pcb* this, uint32_t id){
-    this->id_de_segmento = id;
+void pcb_add_lista_de_archivos(t_pcb* this,t_pcb_archivo* unArchivo ){
+    list_add(this->listaArchivosAbiertos,unArchivo);
 }

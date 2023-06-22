@@ -30,21 +30,19 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
 {
     uint32_t pidRecibido = 0;
     uint32_t programCounterActualizado = 0;
-    //uint32_t* tablaPagsActualizada = 0;
     uint32_t registroAxActualizado = 0, registroBxActualizado = 0, registroCxActualizado = 0, registroDxActualizado = 0;
-    //char* dispositivoIoEnUso = NULL;
     uint32_t cantidadUnidadesTiemposIo = 0;
-    //t_registro registroEnUsoIo = REGISTRO_null;
-
+    uint32_t id_de_segmento;
+    uint32_t tamanio_de_segmento;
+    char* nombreArchivo;
+    uint32_t tamanioArchivo;
+    uint32_t punteroArchivo;
     t_buffer* bufferPcb = buffer_create();
 
     stream_recv_buffer(kernel_config_get_socket_dispatch_cpu(kernelConfig), bufferPcb);
     buffer_unpack(bufferPcb, &pidRecibido, sizeof(pidRecibido));
     buffer_unpack(bufferPcb, &programCounterActualizado, sizeof(programCounterActualizado));
-    //desempaquetar tabla paginas
-    //uint32_t tamanioArrayTablaPaginas = tamanio_array_enteros(pcbAActualizar->arrayTablaPaginas) * sizeof(uint32_t);
-    //tablaPagsActualizada = malloc(tamanioArrayTablaPaginas);
-    //buffer_unpack(bufferPcb, tablaPagsActualizada, tamanioArrayTablaPaginas );
+    
 
     //desempaquetar regs 
     buffer_unpack(bufferPcb, &registroAxActualizado , sizeof(uint32_t));
@@ -67,13 +65,62 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         break;
 
         case HEADER_create_segment:
-        uint32_t id_de_segmento;
-        uint32_t tamanio_de_segmento;
+      
+
         buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
         buffer_unpack(bufferPcb, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
 
-        pcb_set_id_de_segmento(pcbAActualizar,id_de_segmento);
-        pcb_set_tamanio_de_segmento(pcbAActualizar,tamanio_de_segmento );
+        log_info(kernelLogger, "ID <%i> :",id_de_segmento );
+        t_segmento* unSegmento = segmento_create(id_de_segmento, tamanio_de_segmento);
+    
+        pcb_set_lista_de_segmentos(pcbAActualizar,unSegmento);
+
+        //segmento_destroy(unSegmento);
+
+        break;
+
+
+        case HEADER_delete_segment:
+        
+        buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
+        modificar_victima_lista_segmento(pcbAActualizar,id_de_segmento, true);
+
+
+        break;
+
+        case HEADER_f_open:
+        nombreArchivo = buffer_unpack_string(bufferPcb);
+        t_pcb_archivo *nuevoArchivo = archivo_create_pcb(nombreArchivo);
+        pcb_add_lista_de_archivos(pcbAActualizar, nuevoArchivo);
+        
+        break;
+
+        case HEADER_f_close:
+        nombreArchivo = buffer_unpack_string(bufferPcb);
+        modificar_victima_archivo(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),nombreArchivo,true);
+
+        break;
+
+        case HEADER_f_truncate:
+        nombreArchivo = buffer_unpack_string(bufferPcb);
+        buffer_unpack(bufferPcb, &tamanioArchivo, sizeof(tamanioArchivo));
+        int index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),nombreArchivo);
+        t_pcb_archivo* archivoTruncate = list_get(pcb_get_lista_de_archivos_abiertos(pcbAActualizar), index);
+        archivo_pcb_set_tamanio_archivo(archivoTruncate,tamanioArchivo);
+        archivo_pcb_set_victima(archivoTruncate,true);
+        list_replace(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),index,archivoTruncate);
+        
+        break;
+
+        case HEADER_f_seek:
+
+        nombreArchivo = buffer_unpack_string(bufferPcb);
+        buffer_unpack(bufferPcb, &punteroArchivo, sizeof(punteroArchivo));
+        index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),nombreArchivo);
+        t_pcb_archivo* archivoFSeek = list_get(pcb_get_lista_de_archivos_abiertos(pcbAActualizar), index);
+        archivo_pcb_set_puntero_archivo(archivoFSeek,punteroArchivo);
+        archivo_pcb_set_victima(archivoFSeek,true);
+        list_replace(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),index,archivoFSeek);
 
         break;
     }
@@ -86,7 +133,11 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
             case HEADER_proceso_pedir_recurso:
             case HEADER_proceso_devolver_recurso:
             case HEADER_create_segment:
-
+            case HEADER_delete_segment:
+            case HEADER_f_open:
+            case HEADER_f_close:
+            case HEADER_f_seek:
+            case HEADER_f_truncate:
 
              pcb_set_program_counter(pcbAActualizar, programCounterActualizado);
 
