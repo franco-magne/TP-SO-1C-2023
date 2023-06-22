@@ -223,5 +223,6 @@ void mostrar_tabla(t_list* tablaSolicitada){
         int index = list_get_index(listaDeSegmentos,es_el_mismo_segmento_pid_id, segmentoAMostrar );
         segmentoAMostrar = list_get(tablaSolicitada,index); 
         printf("Segmento PID<%d> con ID_Seg<%d>",segmentoAMostrar->pid, segmentoAMostrar->segmento_id);    
+        //falta el lista = lista sgte 
     }
 }
