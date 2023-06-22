@@ -30,7 +30,7 @@ void atender_peticiones_cpu(int socketCpu) {
                 segmentation_fault...
             }*/
             
-            uint32_t marco = desplazamiento_segmento + segmento_get_base(segmentoSolic);//obtener_marco(pid, id_segmento); //base y limite no +
+            uint32_t marco = segmento_get_base(segmentoSolic);//obtener_marco(pid, id_segmento); //base y limite no +
             
             t_buffer* buffer_rta = buffer_create();
             buffer_pack(buffer_rta, &marco, sizeof(marco));
@@ -43,18 +43,17 @@ void atender_peticiones_cpu(int socketCpu) {
         break;
         case HEADER_move_in :{ //"leer"
             uint32_t pid;
-            uint32_t id_segmento;
-            uint32_t desplazamiento_segmento;
+            uint32_t base_segmento;
 
-            buffer_unpack(buffer, &id_segmento, sizeof(id_segmento));
+            buffer_unpack(buffer, &base_segmento, sizeof(base_segmento));
             buffer_unpack(buffer, &pid, sizeof(pid));
-            buffer_unpack(buffer, &desplazamiento_segmento, sizeof(pid));
 
-            Segmento* unSegmento = obtener_segmento_por_id(pid, id_segmento);
+            //Segmento* unSegmento = obtener_segmento_por_id(pid, base_segmento);
     
-            char* contenidoAenviar = segmento_get_contenido(unSegmento);
+            char* contenidoAenviar = malloc(strlen("hola") + 1);
+            strcpy(contenidoAenviar, "hola");
 
-            log_info(memoriaLogger, "Contenido leio : <%s> - En el segmento ID : <%i> ", contenidoAenviar, id_segmento);
+            log_info(memoriaLogger, "Contenido leio : <%s> - En el segmento de base : <%i> ", contenidoAenviar, base_segmento);
             t_buffer* bufferContenido = buffer_create();        
         
             buffer_pack_string(bufferContenido, contenidoAenviar);
@@ -76,9 +75,9 @@ void atender_peticiones_cpu(int socketCpu) {
             buffer_unpack(buffer, &pid, sizeof(pid));
             contenidoAEscribir = buffer_unpack_string(buffer);
             
-            Segmento* unSegmento = obtener_segmento_por_id(pid, id_segmento);
+            //Segmento* unSegmento = obtener_segmento_por_id(pid, id_segmento);
             //cada vez que hago un obtener segmento hago un list_replace
-            segmento_set_contenido(unSegmento, contenidoAEscribir);
+            //segmento_set_contenido(unSegmento, contenidoAEscribir);
 
             log_info(memoriaLogger, "Contenido escrito : <%s> - En el segmento ID : <%i> ", contenidoAEscribir, id_segmento);
 

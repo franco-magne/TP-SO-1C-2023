@@ -35,7 +35,7 @@ void atender_peticiones_kernel(int socketKernel) {
                 if(!puedo_crear_proceso_o_segmento(memoria_config_get_tamanio_segmento_0(memoriaConfig))){ //+sizeof(*tabla_de_segmentos)
                     log_error(memoriaLogger, "No se pudo crear el proceso, no hay espacio en memoria");
                 }
-                inicializar_estructuras();
+                //inicializar_estructuras();
                 //aca dentro deberia restar el tamActualMemoria
                 
                 t_buffer* buffer_rta = buffer_create();

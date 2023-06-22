@@ -45,6 +45,8 @@ typedef struct {
 ////////////////////////// DEFINICION DE LAS FUNCIONES ////////////////
 t_pcb* pcb_create(uint32_t pid);
 bool pcb_es_este_pcb_por_pid(void* unPcb, void* otroPcb);
+bool es_el_segmento_victima_id(t_segmento* element, t_segmento* target);
+bool es_el_segmento_victimaok(t_segmento* element);
 
 ///////////////////////////// SEGMENTO ////////////////////////////////////////////
 

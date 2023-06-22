@@ -86,7 +86,7 @@ t_segmento* segmento_victima(t_pcb* this) {
 
 t_segmento* remover_segmento_victima_lista(t_pcb* this) {
     uint32_t index = index_posicion_del_segmento_victima(this);
-    t_segmento* aux2 = list_remove(pcb_get_lista_de_segmentos,index);
+    t_segmento* aux2 = list_remove(pcb_get_lista_de_segmentos(this),index);
     
     return aux2;
 }

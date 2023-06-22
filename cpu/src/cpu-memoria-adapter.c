@@ -37,7 +37,7 @@ static uint32_t cpu_obtener_marco(int toSocket, uint32_t direccionLogica, uint32
     int marco = cpu_solicitar_a_memoria(toSocket, num_segmento, pid,desplazamiento_segmento, HEADER_marco);
     
 
-    return marco + desplazamiento_segmento;
+    return marco;
 }
 
 // Write
@@ -46,6 +46,7 @@ void cpu_escribir_en_memoria(int toSocket, uint32_t direccionAEscribir, char* co
     t_buffer *buffer = buffer_create();
     uint32_t marcoSend = marco;
     buffer_pack(buffer, &marcoSend, sizeof(marcoSend));
+    buffer_pack(buffer, &pid, sizeof(pid));
     buffer_pack_string(buffer, contenidoAEscribir);
     stream_send_buffer(toSocket, HEADER_move_out, buffer);
     buffer_destroy(buffer);
@@ -57,6 +58,7 @@ char* cpu_leer_en_memoria( int toSocket, uint32_t direccionALeer, uint32_t pid )
     t_buffer *requestBuffer = buffer_create();
     uint32_t marcoAEnviar = marco;
     buffer_pack(requestBuffer, &marcoAEnviar, sizeof(marcoAEnviar));
+    buffer_pack(requestBuffer,&pid,sizeof(pid));
     stream_send_buffer(toSocket, HEADER_move_in, requestBuffer);
     buffer_destroy(requestBuffer);
     uint32_t responseHeader = stream_recv_header(toSocket);

@@ -83,8 +83,10 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         case HEADER_delete_segment:
         
         buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
-        modificar_victima_lista_segmento(pcbAActualizar,id_de_segmento, true);
-
+        int index = list_get_index(pcb_get_lista_de_segmentos(pcbAActualizar),es_el_segmento_victima_id,id_de_segmento);
+        t_segmento* segmentoAEliminar = list_get(pcb_get_lista_de_segmentos(pcbAActualizar),index);
+        segmento_set_victima(segmentoAEliminar,true);
+        list_replace(pcb_get_lista_de_segmentos(pcbAActualizar),index,segmentoAEliminar);
 
         break;
 
@@ -104,7 +106,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         case HEADER_f_truncate:
         nombreArchivo = buffer_unpack_string(bufferPcb);
         buffer_unpack(bufferPcb, &tamanioArchivo, sizeof(tamanioArchivo));
-        int index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),nombreArchivo);
+        index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),nombreArchivo);
         t_pcb_archivo* archivoTruncate = list_get(pcb_get_lista_de_archivos_abiertos(pcbAActualizar), index);
         archivo_pcb_set_tamanio_archivo(archivoTruncate,tamanioArchivo);
         archivo_pcb_set_victima(archivoTruncate,true);

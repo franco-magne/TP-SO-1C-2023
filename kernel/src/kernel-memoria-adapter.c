@@ -1,20 +1,21 @@
 #include <../include/kernel-memoria-adapter.h>
 
-
-
-
+void instruccion_iniciar_proceso(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger){
+    int pid = pcb_get_pid(pcbAIniciar);
+}
 void memoria_adapter_enviar_create_segment(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig) {
     
     t_segmento* unSegmentoAEnviar = segmento_victima(pcbAIniciar);
 
     uint32_t id_de_segmento = segmento_get_id_de_segmento(unSegmentoAEnviar);
     uint32_t tamanio_de_segmento = segmento_get_tamanio_de_segmento(unSegmentoAEnviar);
-
+    int pid = pcb_get_pid(pcbAIniciar);
     printf("ID <%i>", id_de_segmento);
     t_buffer* bufferNuevoSegmento = buffer_create();
 
     buffer_pack(bufferNuevoSegmento, &id_de_segmento, sizeof(id_de_segmento));
     buffer_pack(bufferNuevoSegmento, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
+    buffer_pack(bufferNuevoSegmento, &pid, sizeof(pid));
 
     stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig), HEADER_create_segment ,bufferNuevoSegmento);
 
@@ -50,13 +51,18 @@ uint8_t memoria_adapter_recibir_create_segment(t_pcb* pcbAActualizar, t_kernel_c
 
 void memoria_adapter_enviar_delete_segment(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig) {
 
-    t_segmento* unSegmentoAEnviar = segmento_victima(pcbAIniciar);
-
+    t_segmento* unSegmentoAEnviar = list_find(pcb_get_lista_de_segmentos(pcbAIniciar), es_el_segmento_victimaok);
+    if(unSegmentoAEnviar == NULL){
+        printf("hola");
+    }
+    printf("\nid del segmentoAEnviar [%i]\n", segmento_get_id_de_segmento(unSegmentoAEnviar));
+    int pid = (int) pcb_get_pid(pcbAIniciar);
     uint32_t id_de_segmento = segmento_get_id_de_segmento(unSegmentoAEnviar);
 
     t_buffer* bufferNuevoSegmento = buffer_create();
 
     buffer_pack(bufferNuevoSegmento, &id_de_segmento, sizeof(id_de_segmento));
+    buffer_pack(bufferNuevoSegmento, &pid, sizeof(pid));
 
     stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig), HEADER_delete_segment ,bufferNuevoSegmento);
 
