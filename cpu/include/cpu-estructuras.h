@@ -42,6 +42,7 @@ typedef struct  {
     uint32_t id_de_segmento;
     char* nombreArchivo;
     uint32_t tamanioArchivo;
+    uint32_t punteroArchivo;
 } t_cpu_pcb;
 
 typedef struct{

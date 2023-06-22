@@ -303,7 +303,7 @@ void* atender_pcb(void* args)
                 instruccion_f_close(pcb);
                 break;
             case HEADER_f_seek:
-                instruccion_f_seek(pcb,kernelConfig, kernelLogger);
+                instruccion_f_seek(pcb);
                 break;
             case HEADER_f_truncate:
                 sem_post(&dispatchPermitido);

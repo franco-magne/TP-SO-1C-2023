@@ -24,6 +24,7 @@ typedef struct{
 typedef struct{
     char* nombreDeArchivo;
     uint32_t tamanioArchivo;
+    uint32_t punteroArchivo;
     bool victimaDelArchivo;
 
 }t_pcb_archivo;
@@ -48,6 +49,8 @@ void kernel_archivo_set_cola_procesos_bloqueados(t_kernel_archivo* this , t_queu
 uint32_t archivo_pcb_get_tamanio_archivo(t_pcb_archivo* this);
 void archivo_pcb_set_tamanio_archivo(t_pcb_archivo* this, uint32_t tamanio);
 int index_de_archivo_pcb(t_list* listaDeArchivosDePcb, char* nombreArchivo);
+uint32_t archivo_pcb_get_puntero_archivo(t_pcb_archivo* this);
+void archivo_pcb_set_puntero_archivo(t_pcb_archivo* this, uint32_t punteroArchivo);
 
 
 #endif

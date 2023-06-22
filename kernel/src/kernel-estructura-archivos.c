@@ -14,7 +14,7 @@ t_pcb_archivo* archivo_create_pcb(char* nombreArchivo){
     this->nombreDeArchivo = nombreArchivo;
     this->tamanioArchivo = 0;
     this->victimaDelArchivo = true;
-
+    this->punteroArchivo=-1;
     return this;
 
 }
@@ -51,6 +51,9 @@ uint32_t archivo_pcb_get_tamanio_archivo(t_pcb_archivo* this)
 {
     return this->tamanioArchivo;
 }
+uint32_t archivo_pcb_get_puntero_archivo(t_pcb_archivo* this){
+    return this->punteroArchivo;
+}
 ///////////////////////// SETTER /////////////////////////////
 
 void kernel_archivo_set_pid(t_kernel_archivo* this , uint32_t pid)
@@ -69,6 +72,9 @@ void archivo_pcb_set_tamanio_archivo(t_pcb_archivo* this, uint32_t tamanio)
     this->tamanioArchivo = tamanio;
 }
 
+void archivo_pcb_set_puntero_archivo(t_pcb_archivo* this, uint32_t punteroArchivo){
+    this->punteroArchivo = punteroArchivo;
+}
 
 void kernel_archivo_set_cola_procesos_bloqueados(t_kernel_archivo* this , t_queue* cola)
 {

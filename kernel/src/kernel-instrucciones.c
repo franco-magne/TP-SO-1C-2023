@@ -318,3 +318,11 @@ proceso_pasa_a_ready(pcb, "BLOCK");
 
 
 }
+
+/////////////////////// F_SEEK ///////////////////////
+
+void instruccion_f_seek(t_pcb* pcb){
+
+    atender_f_seek(pcb,kernelConfig, kernelLogger);
+
+}

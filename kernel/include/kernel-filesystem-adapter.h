@@ -19,6 +19,6 @@ t_pcb* atender_f_close(char* nombreArchivo);
 void file_system_adapter_send_f_truncate(t_pcb* pcb, t_kernel_config* kernelConfig, t_log* kernelLogger);
 void file_system_adapter_recv_f_truncate(t_kernel_config* kernelConfig, t_log* kernelLogger);
 
-void instruccion_f_seek(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger);
+void atender_f_seek(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger);
 
 #endif

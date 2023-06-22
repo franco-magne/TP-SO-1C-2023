@@ -36,6 +36,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
     uint32_t tamanio_de_segmento;
     char* nombreArchivo;
     uint32_t tamanioArchivo;
+    uint32_t punteroArchivo;
     t_buffer* bufferPcb = buffer_create();
 
     stream_recv_buffer(kernel_config_get_socket_dispatch_cpu(kernelConfig), bufferPcb);
@@ -111,7 +112,17 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         
         break;
 
+        case HEADER_f_seek:
 
+        nombreArchivo = buffer_unpack_string(bufferPcb);
+        buffer_unpack(bufferPcb, &punteroArchivo, sizeof(punteroArchivo));
+        index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),nombreArchivo);
+        t_pcb_archivo* archivoFSeek = list_get(pcb_get_lista_de_archivos_abiertos(pcbAActualizar), index);
+        archivo_pcb_set_puntero_archivo(archivoFSeek,punteroArchivo);
+        archivo_pcb_set_victima(archivoFSeek,true);
+        list_replace(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),index,archivoFSeek);
+
+        break;
     }
     
    if (pidRecibido == pcb_get_pid(pcbAActualizar)) {

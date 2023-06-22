@@ -112,6 +112,11 @@ void file_system_adapter_send_f_truncate(t_pcb* pcb, t_kernel_config* kernelConf
 
   stream_send_buffer(kernel_config_get_socket_file_system(kernelConfig), HEADER_f_truncate, bufferTruncate);
 
+  int index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
+  archivoTruncar = list_get(pcb_get_lista_de_archivos_abiertos(pcb), index);
+  archivo_pcb_set_victima(archivoTruncar,false);
+  list_replace(pcb_get_lista_de_archivos_abiertos(pcb),index,archivoTruncar);
+
   buffer_destroy(bufferTruncate);
 
 }
@@ -130,9 +135,19 @@ void file_system_adapter_recv_f_truncate(t_kernel_config* kernelConfig, t_log* k
 
 
 
-void instruccion_f_seek(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger){
+void atender_f_seek(t_pcb* pcb, t_kernel_config* kernelConfig, t_log* kernelLogger){
     
-log_info(kernelLogger,"PID: <%i> - Actualizar puntero Archivo: <NOMBRE ARCHIVO> - Puntero <PUNTERO>", pcb_get_pid(pcbAIniciar));
+  t_pcb_archivo* archivoFSeek = list_find(pcb_get_lista_de_archivos_abiertos(pcb), es_el_archivo_victima);
+
+  char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoFSeek);
+  uint32_t punteroArchivo = archivo_pcb_get_puntero_archivo(archivoFSeek);
+
+  log_info(kernelLogger,"PID: <%i> - Actualizar puntero Archivo: <%s> - Puntero <%i>", pcb_get_pid(pcb),nombreArchivo,punteroArchivo);
+
+  int index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
+  archivoFSeek = list_get(pcb_get_lista_de_archivos_abiertos(pcb), index);
+  archivo_pcb_set_victima(archivoFSeek,false);
+  list_replace(pcb_get_lista_de_archivos_abiertos(pcb),index,archivoFSeek);
 
 
 }

@@ -81,6 +81,7 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
         uint32_t tamanio_de_segmento = cpu_pcb_get_tamanio_de_segmento(pcb);
         char* nombreArchivo = cpu_pcb_get_nombre_archivo(pcb);
         uint32_t tamanioArchivo = cpu_pcb_get_tamanio_archivo(pcb);
+        uint32_t punteroArchivo = cpu_pcb_get_puntero_archivo(pcb);
         t_buffer* buffer = buffer_create();
 
          //Empaqueto pid
@@ -112,6 +113,10 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
             case HEADER_f_truncate:
             buffer_pack_string(buffer,nombreArchivo);
             buffer_pack(buffer,&tamanioArchivo, sizeof(tamanioArchivo));
+            break;
+            case HEADER_f_seek:
+            buffer_pack_string(buffer,nombreArchivo);
+            buffer_pack(buffer,&punteroArchivo, sizeof(punteroArchivo));
             break;
 
             default: 
@@ -411,12 +416,15 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
 
     } else if (tipoInstruccion == INSTRUCCION_F_SEEK ) {
         
-        char* recurso1 = string_duplicate((char*) operando1);
-        uint32_t tamanio_archivo = *((uint32_t*) operando2);
+        char* nombreArchivo = string_duplicate((char*) operando1);
+        uint32_t puntero = *((uint32_t*) operando2);
 
 
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_SEEK> - <%s> - <%i>", cpu_pcb_get_pid(pcb),recurso1,tamanio_archivo);
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_SEEK> - <%s> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo,puntero);
+
+        cpu_pcb_set_nombre_archivo(pcb,nombreArchivo);
+        cpu_pcb_set_puntero_archivo(pcb, puntero);
 
         intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
