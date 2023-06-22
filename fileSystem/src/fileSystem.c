@@ -12,8 +12,6 @@ int main() {
    fs_config = config_create(FS_CONFIG_UBICACION);
    superbloque_config = config_create(FS_SUPERBLOQUE_UBICACION);
 
-   // TODO: LLAMAR ACA A UNA FUNCION QUE INICIE LOS SEMAFOROS QUE VAYA A NECESITAR.
-
    cargar_t_filesystem(fs_config, superbloque_config, fs);
    fs->logger = fs_logger;
    log_info(fs->logger, "FILESYSTEM iniciado");
@@ -31,6 +29,7 @@ int main() {
    fs->socket_memoria = fsSocketMemoria;
    log_info(fs->logger, "Conexion con MEMORIA establecida");
    */
+  
    crear_directorios(fs);
    levantar_bitmap(fs);
    crear_superbloque_dat(fs, superbloque_config);
@@ -38,7 +37,7 @@ int main() {
 
 
    ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////
-/*
+
    int serverFS = iniciar_servidor(fs->ip_memoria, fs->puerto_escucha);
    log_info(fs->logger, "Servidor FILESYSTEM listo para recibir a KERNEL\n");
    
@@ -48,7 +47,7 @@ int main() {
 
    config_destroy(fs_config);
    config_destroy(superbloque_config);
-   cerrar_archivos();*/
+   cerrar_archivos();
 
    return 0;
 }

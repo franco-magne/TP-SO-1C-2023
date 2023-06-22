@@ -65,6 +65,7 @@ void crear_bitmap(t_filesystem*);
 void levantar_archivo_de_bloques(t_filesystem*);
 void crear_archivo_de_bloques(t_filesystem*);
 t_fcb* crear_fcb(char*, t_filesystem*);
+t_fcb* crear_fcb_inexistente(char*, t_filesystem*);
 
 void crear_fcb_config_en_el_path(t_config*, t_filesystem*, char*);
 char* concatenar(char*, char*, t_filesystem*);

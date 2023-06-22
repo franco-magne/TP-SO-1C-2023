@@ -23,6 +23,7 @@ void atender_kernel(t_filesystem* fs) {
         uint8_t header = stream_recv_header(fs->socket_kernel); // RECIBO LA OPERACION QUE KERNEL QUIERA SOLICITAR
 
         switch(header) {
+
             case HEADER_f_open:
                                         
                 char* nombre_archivo_open;
@@ -54,9 +55,29 @@ void atender_kernel(t_filesystem* fs) {
                 buffer_destroy(buffer_nombre_archivo_open);
 
             break;
+
             case HEADER_f_create:
 
+                char* nombre_archivo_create;
+                t_buffer* buffer_nombre_archivo_create = buffer_create();
+
+                stream_recv_buffer(fs->socket_kernel, buffer_nombre_archivo_create); // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
+                nombre_archivo_create = buffer_unpack_string(buffer_nombre_archivo_create); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
+
+                operacion_OK = crear_archivo(nombre_archivo_create, fs);
+                if (operacion_OK) {
+                    log_info(fs->logger, "Crear archivo: <%s>", nombre_archivo_create);
+                    stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue);
+                } else {
+                    log_info(fs->logger, "Error al crear el nuevo archivo.");
+                    stream_send_empty_buffer(fs->socket_kernel, HEADER_error);
+                }
+
+                free(nombre_archivo_create);
+                buffer_destroy(buffer_nombre_archivo_create);
+
             break;
+
             case HEADER_f_truncate:
 
                 char* nombre_archivo_truncate;
@@ -85,12 +106,19 @@ void atender_kernel(t_filesystem* fs) {
                 buffer_destroy(buffer_tamanio_archivo_truncate);
 
             break;
+
             case HEADER_f_read:
 
-            break;
-            case HEADER_f_write:
+
 
             break;
+
+            case HEADER_f_write:
+
+                
+
+            break;
+
             default:
                 log_error(fs->logger, "Peticion incorrecta.");
             break;
@@ -144,6 +172,21 @@ int truncar_archivo(char* nombre_archivo, uint32_t nuevo_tamanio_archivo) {
     }
 
     return truncado_ok;
+}
+
+int crear_archivo(char* nombre_archivo, t_filesystem* fs) {
+
+    int resultado = 0;
+    t_fcb* fcb_nuevo = malloc(sizeof(t_fcb));
+
+    fcb_nuevo = crear_fcb_inexistente(nombre_archivo, fs);
+    if (fcb_nuevo != NULL) {
+        resultado = 1;
+        list_add(lista_fcbs, fcb_nuevo);
+    }     
+
+    return resultado;
+
 }
 
 int abrir_archivo(char* nombre_archivo, t_filesystem* fs) {
