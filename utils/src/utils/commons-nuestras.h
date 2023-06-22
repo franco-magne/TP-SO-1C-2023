@@ -21,5 +21,6 @@ int position_in_list(char** list, char* object );
 int list_get_index(t_list* list, bool (*cutting_condition)(void*, void*), void* target);
 void set_timespec(struct timespec* timespec);
 double obtener_diferencial_de_tiempo_en_milisegundos(struct timespec end, struct timespec start);
+bool es_el_ultimo_elemento(t_list* lista, t_link_element* elemento);
 
 #endif

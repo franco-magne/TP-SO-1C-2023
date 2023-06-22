@@ -5,7 +5,7 @@
 extern t_cpu_config *cpuConfig;
 extern t_log *cpuLogger;
 
-static uint32_t cpu_solicitar_a_memoria(int toSocket, uint32_t num_segmento, uint32_t pid, uint32_t desplazamiento_segmento ,  t_header requestHeader) {
+static uint32_t cpu_solicitar_a_memoria(int toSocket, double num_segmento, uint32_t pid, uint32_t desplazamiento_segmento ,  t_header requestHeader) {
     t_buffer *requestBuffer = buffer_create();
     
     buffer_pack(requestBuffer, &num_segmento, sizeof(num_segmento));
@@ -30,7 +30,7 @@ static uint32_t cpu_solicitar_a_memoria(int toSocket, uint32_t num_segmento, uin
 static uint32_t cpu_obtener_marco(int toSocket, uint32_t direccionLogica, uint32_t pid) {
     int tamanioMaximoSegmento = cpu_config_get_tamanio_maximo_segmento(cpuConfig);
 
-    uint32_t num_segmento  = floor(direccionLogica / tamanioMaximoSegmento);
+    double num_segmento  = floor(direccionLogica / tamanioMaximoSegmento);
     uint32_t desplazamiento_segmento = direccionLogica % tamanioMaximoSegmento;
     
 
@@ -47,7 +47,7 @@ void cpu_escribir_en_memoria(int toSocket, uint32_t direccionAEscribir, char* co
     uint32_t marcoSend = marco;
     buffer_pack(buffer, &marcoSend, sizeof(marcoSend));
     buffer_pack_string(buffer, contenidoAEscribir);
-    stream_send_buffer(toSocket, HEADER_movout, buffer);
+    stream_send_buffer(toSocket, HEADER_move_out, buffer);
     buffer_destroy(buffer);
 }
 
@@ -57,10 +57,10 @@ char* cpu_leer_en_memoria( int toSocket, uint32_t direccionALeer, uint32_t pid )
     t_buffer *requestBuffer = buffer_create();
     uint32_t marcoAEnviar = marco;
     buffer_pack(requestBuffer, &marcoAEnviar, sizeof(marcoAEnviar));
-    stream_send_buffer(toSocket, HEADER_movin, requestBuffer);
+    stream_send_buffer(toSocket, HEADER_move_in, requestBuffer);
     buffer_destroy(requestBuffer);
     uint32_t responseHeader = stream_recv_header(toSocket);
-    if (responseHeader != HEADER_movin) 
+    if (responseHeader != HEADER_move_in) 
     {
         log_error(cpuLogger, "Error al leer en memoria");
         exit(-1);

@@ -22,6 +22,7 @@ typedef enum {
     HEADER_marco,
     HEADER_memoria_insuficiente,
     HEADER_pcb_a_ejecutar,
+    HEADER_iniciar_proceso,
     HEADER_proceso_bloqueado,
     HEADER_proceso_desalojado,
     HEADER_proceso_terminado,
@@ -30,6 +31,7 @@ typedef enum {
     HEADER_proceso_devolver_recurso,
     HEADER_create_segment,
     HEADER_delete_segment,
+    HEADER_tabla_segmentos,
     HEADER_f_open,
     HEADER_f_create,
     HEADER_f_close,
@@ -37,8 +39,8 @@ typedef enum {
     HEADER_f_truncate,
     HEADER_f_read,
     HEADER_f_write,
-    HEADER_movin,
-    HEADER_movout
+    HEADER_move_in,
+    HEADER_move_out
 
 
 
