@@ -4,11 +4,11 @@
 t_memoria_config* memoria_config_initializer(t_config* tempCfg) 
 {
     t_memoria_config* memoriaConfig = malloc(sizeof(*memoriaConfig));
-    
-    memoriaConfig->IP_ESCUCHA = strdup(config_get_string_value(tempCfg, "IP_ESCUCHA"));
-    memoriaConfig->PUERTO_ESCUCHA = strdup(config_get_string_value(tempCfg, "PUERTO_ESCUCHA"));
+
+    memoriaConfig->IP_ESCUCHA = strdup(config_get_string_value(tempCfg, "IP_MEMORIA"));
+    memoriaConfig->PUERTO_ESCUCHA = strdup(config_get_string_value(tempCfg, "PUERTO_MEMORIA"));
     memoriaConfig->TAM_MEMORIA = (uint32_t) config_get_int_value(tempCfg, "TAM_MEMORIA");
-    memoriaConfig->TAM_SEGMENTO = (uint32_t) config_get_int_value(tempCfg, "TAM_SEGMENTO");
+    memoriaConfig->TAM_SEGMENTO_0 = (uint32_t) config_get_int_value(tempCfg, "TAM_SEGMENTO_0");
     memoriaConfig->CANT_SEGMENTOS = (uint32_t) config_get_int_value(tempCfg, "CANT_SEGMENTOS");
     memoriaConfig->RETARDO_MEMORIA = (uint32_t) config_get_int_value(tempCfg, "RETARDO_MEMORIA");
     memoriaConfig->RETARDO_COMPACTACION = (uint32_t) config_get_int_value(tempCfg, "RETARDO_COMPACTACION");
@@ -18,57 +18,52 @@ t_memoria_config* memoria_config_initializer(t_config* tempCfg)
 }
 
 
-t_memoria_config* memoria_config_create(char* memoriaConfigPath, t_log* memoriaLogger)
+
+
+void memoria_config_destroy(t_memoria_config* self) 
 {
-    t_memoria_config* this = malloc(sizeof(*this));
-    config_init(this, memoriaConfigPath, memoriaLogger, memoria_config_initializer);
-    return this;
+    free(self->IP_ESCUCHA);
+    free(self->PUERTO_ESCUCHA);
+    free(self);
 }
 
-void memoria_config_destroy(t_memoria_config* this) 
+char* memoria_config_get_ip_escucha(t_memoria_config* self)
 {
-    free(this->IP_ESCUCHA);
-    free(this->PUERTO_ESCUCHA);
-    free(this);
+    return self->IP_ESCUCHA;
 }
 
-char* memoria_config_get_ip_escucha(t_memoria_config* this)
+char* memoria_config_get_puerto_escucha(t_memoria_config* self) 
 {
-    return this->IP_ESCUCHA;
+    return self->PUERTO_ESCUCHA;
 }
 
-char* memoria_config_get_puerto_escucha(t_memoria_config* this) 
+uint32_t memoria_config_get_tamanio_memoria(t_memoria_config* self) 
 {
-    return this->PUERTO_ESCUCHA;
+    return self->TAM_MEMORIA;
 }
 
-uint32_t memoria_config_get_tamanio_memoria(t_memoria_config* this) 
+uint32_t memoria_config_get_tamanio_segmento_0(t_memoria_config* self) 
 {
-    return this->TAM_MEMORIA;
+    return self->TAM_SEGMENTO_0;
 }
 
-uint32_t memoria_config_get_tamanio_segmento(t_memoria_config* this) 
+uint32_t memoria_config_get_cant_de_segmentos(t_memoria_config* self) 
 {
-    return this->TAM_SEGMENTO;
+    return self->CANT_SEGMENTOS;
 }
 
-uint32_t memoria_config_get_cant_de_segmentos(t_memoria_config* this) 
+uint32_t memoria_config_get_retardo_compactacion(t_memoria_config* self) 
 {
-    return this->CANT_SEGMENTOS;
+    return self->RETARDO_COMPACTACION;
 }
 
-uint32_t memoria_config_get_retardo_compactacion(t_memoria_config* this) 
+uint32_t memoria_config_get_retardo_memoria(t_memoria_config* self) 
 {
-    return this->RETARDO_COMPACTACION;
+    return self->RETARDO_MEMORIA;
 }
 
-uint32_t memoria_config_get_retardo_memoria(t_memoria_config* this) 
+uint32_t memoria_config_get_procesos_totales(t_memoria_config* self) 
 {
-    return this->RETARDO_MEMORIA;
-}
-
-uint32_t memoria_config_get_procesos_totales(t_memoria_config* this) 
-{
-    //return this->TAM_MEMORIA / (this->TAM_PAGINA * this->MARCOS_POR_PROCESO);
+    //return self->TAM_MEMORIA / (self->TAM_PAGINA * self->MARCOS_POR_PROCESO);
     return 0;
 }

@@ -13,7 +13,7 @@
 
 //////////////// INCLUDE UTILS ////////////////
 #include "serializacion.h"
-
+#include "conexiones.h"
 typedef enum {
     NEW,
     READY,
@@ -100,4 +100,15 @@ typedef struct{
 
 t_list* lista_de_instrucciones_buffer(t_buffer* bufferConInstrucciones, t_log * logger);
 t_registros_cpu* registros_cpu_create();
+char* instruccion_to_string(t_instruccion* self);
+void destroy_instructions_list(t_list* instructionsList);
+t_tipo_instruccion instruccion_get_tipo_instruccion(t_instruccion* self) ;
+uint32_t instruccion_get_operando1(t_instruccion* self);
+uint32_t instruccion_get_operando2(t_instruccion* self);
+char* instruccion_get_dispositivo(t_instruccion* self);
+t_registro instruccion_get_registro1(t_instruccion* self);
+t_registro instruccion_get_registro2(t_instruccion* self);
+
+
+
 #endif

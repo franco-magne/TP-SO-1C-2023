@@ -8,58 +8,83 @@
 #include <sys/socket.h>
 #include <../../utils/src/utils/conexiones.h>
 #include <commons/log.h>
+#include <commons/collections/list.h>
 #include <commons/config.h>
 #include <pthread.h>
+#include <../../utils/src/utils/commons-nuestras.h>
 
 #include <stdio.h>
+#include "memoria-config.h"
 
-#define MEMORIA_CONFIG_UBICACION "config/memoria.config"
-#define MEMORIA_LOG_UBICACION "logs/memoria.log"
-#define MEMORIA_PROCESS_NAME "Memoria"
+typedef struct {
+    int segmento_id; 
+    uint32_t* limite; //tamanio
+    uint32_t* base;
+    int pid; 
+    int validez;
+    char* contenido;
+} Segmento;
 
 
 typedef struct {
-    void* espacio_usuario; // Espacio de usuario
-    int tamanio;
-} t_memoria;
+    t_list* tablaDeSegmentos;
+    int pid;
+} Procesos;
 
-typedef struct {
-    //int segmento_id; no necesito idSeg xq me lo indica el indice en que se encuentra en la tabla
-    int limite; //tamanio
-    int base;
-} t_segmento;
+#include "memoria.h"
 
-typedef struct {
-    t_segmento segmentos; 
-    int validez;   //0 o 1
-} t_entrada_por_tabla;
+int segmento_get_id(Segmento*);
+void segmento_set_id(Segmento* , int );
+uint32_t* segmento_get_limite(Segmento* );
+void segmento_set_limite(Segmento* , uint32_t* );
+uint32_t* segmento_get_base(Segmento* );
+void segmento_set_base(Segmento* , uint32_t* );
+int segmento_get_pid(Segmento* );
+void segmento_set_pid(Segmento* , int );
+int segmento_get_bit_validez(Segmento* );
+void segmento_set_bit_validez(Segmento* , int );
 
-typedef struct {
-    t_entrada_por_tabla* entradas;
-} t_tabla_segmentos;
+void inicializar_memoria();
+Segmento* crear_segmento(int );
+void inicializar_estructuras();
+void eliminar_segmento(Segmento* );
+void sumar_memoriaRecuperada_a_tamMemoriaActual(uint32_t tamMemorRecuperada);
+void liberar_tabla_segmentos(int pid);
 
-typedef struct {
-    int base;
-    int tamanio;
-} t_espacio_libre;
-t_list espaciosVacios;
+//////////////////////// PROCESOS ////////////////////////
 
-typedef struct {
-    t_espacio_libre* espacios_libres;
-} t_lista_espacios_libres;
+/**
+ * @brief Crea un nuevo proceso con el ID especificado.
+ * @param pid El ID del proceso a crear.
+ * @return Un puntero al proceso creado.
+ */ 
+Procesos* crear_proceso(int pid);
 
-typedef struct  {
+/**
+ * @brief Obtiene un proceso por su ID.
+ * @param pid_victima El ID del proceso a buscar.
+ * @return Un puntero al proceso encontrado o NULL si no se encontró.
+ */
+Procesos* obtener_proceso_por_pid(int pid_victima);
 
-    char* IP_ESCUCHA;   //seria IP_MEMORIA
-    char* PUERTO_ESCUCHA;   //seria PUERTO_MEMORIA
-    uint32_t TAM_MEMORIA;
-    uint32_t TAM_SEGMENTO;
-    uint32_t CANT_SEGMENTOS;
-    uint32_t RETARDO_MEMORIA;
-    uint32_t RETARDO_COMPACTACION;
-    char* ALGORITMO_ASIGNACION;
 
-} t_memoria_config;
+//////////////////////// SEGMENTO ////////////////////////
+
+/**
+ * @brief Obtiene un segmento de un proceso por su ID.
+ * @param proceso El proceso del cual se desea obtener el segmento.
+ * @param id_victima El ID del segmento a buscar.
+ * @return Un puntero al segmento encontrado o NULL si no se encontró.
+ */
+Segmento* obtener_segmento_por_id(Procesos* proceso, int id_victima);
+
+/**
+ * @brief Desencola y retorna un segmento de un proceso por su ID.
+ * @param proceso El proceso del cual se desea desencolar el segmento.
+ * @param id_segmento El ID del segmento a desencolar.
+ * @return Un puntero al segmento desencolado o NULL si no se encontró.
+ */
+Segmento* desencolar_segmento_por_id(Procesos* proceso, int id_segmento);
 
 
 #endif

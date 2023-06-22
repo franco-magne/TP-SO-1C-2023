@@ -2,54 +2,32 @@
 
 
 t_log *memoriaLogger;
-pthread_mutex_t mutexMemoriaData;
-
-t_memoria_config *memoriaConfig;
-t_memoria *memoriaPrincipal;
-t_segmento *segmento;
-
+static t_config *memoriaConfigInicial;
+t_memoria_config* memoriaConfig;
+Segmento* segCompartido;
+t_estado* tabla_segmentos; //antigua tabla_de_segmentos
+t_list* listaDeProcesos;
 
 static bool cpuSinAtender;
 static bool kernelSinAtender;
-//static bool fileSystemSinAtender;
+static bool fileSystemSinAtender;
+static pthread_t threadAntencionCpu;
+static pthread_t threadAntencionKernel;
+
+void aceptar_conexiones_memoria(const int );
 
 int main() {
 
-    memoriaLogger = log_create(MEMORIA_LOG_UBICACION,MEMORIA_PROCESS_NAME,true,LOG_LEVEL_INFO);
-    t_config *memoriaConfigPath = config_create(MEMORIA_CONFIG_UBICACION);
+   memoriaLogger = log_create(MEMORIA_LOG_UBICACION,MEMORIA_PROCESS_NAME,true,LOG_LEVEL_INFO);
+   memoriaConfigInicial = config_create(MEMORIA_CONFIG_UBICACION);
+   memoriaConfig = memoria_config_initializer(memoriaConfigInicial);
+   //tabla_segmentos = estado_create();
 
-    memoriaConfig = memoria_config_initializer(memoriaConfigPath);
+   int serverMemoria = iniciar_servidor(memoria_config_get_ip_escucha(memoriaConfig), memoria_config_get_puerto_escucha(memoriaConfig) );
+   log_info(memoriaLogger,"Servidor memoria listo para recibir al modulo\n");
+   inicializar_memoria();
+   aceptar_conexiones_memoria(serverMemoria);
 
-    //char *memoriaIP = config_get_string_value(memoriaConfig, "IP");
-    //char *memoriaPort = config_get_string_value(memoriaConfig,"PUERTO_MEMORIA");
-
-    int serverMemoria = iniciar_servidor(memoria_config_get_ip_escucha(memoriaConfig), memoria_config_get_puerto_escucha(memoriaConfig));
-    log_info(memoriaLogger,"Servidor memoria listo para recibir al modulo\n");
-    aceptar_conexiones_memoria(serverMemoria);
-
-    int tamanioMemoria = memoria_config_get_tamanio_memoria(memoriaConfig);
-
-    memoriaPrincipal->tamanio = malloc(tamanioMemoria);
-    memset(memoriaPrincipal, 0, tamanioMemoria);
-
-
-    //Esto se utilizaba solo en paginacion o puede usarse para lo de BEST FIT??
-    if (memoria_config_es_algoritmo_sustitucion_clock(memoriaConfig)) {
-        //memoriaData->seleccionar_victima = seleccionar_victima_clock;
-    } else if (memoria_config_es_algoritmo_sustitucion_clock_modificado(memoriaConfig)) {
-        //memoriaData->seleccionar_victima = seleccionar_victima_clock_modificado;
-    } else {
-        log_error(memoriaLogger, "No se reconocio el algoritmo de sustitucion");
-        exit(-1);
-    }   
-   
-    pthread_mutex_init(&mutexMemoriaData, NULL);
-    cpuSinAtender = true;
-    kernelSinAtender = true;
-
-    aceptar_conexiones_memoria(serverMemoria);
-
-    return 0;
 }  
 
 void aceptar_conexiones_memoria(const int socketEscucha) 
@@ -63,10 +41,10 @@ void aceptar_conexiones_memoria(const int socketEscucha)
         
         const int clienteAceptado = accept(socketEscucha, &cliente, &len);
         
-        if (clienteAceptado > -1) {
-            
-            log_info(memoriaLogger, "Se conecto un modulo");        
-         } 
+        if (clienteAceptado > -1) {    
+            log_info(memoriaLogger, "Cliente aceptado en el puerto");
+            recibir_conexion(clienteAceptado);
+        } 
         else {
 
             log_error(memoriaLogger, "Error al aceptar conexión: %s", strerror(errno));
@@ -74,33 +52,35 @@ void aceptar_conexiones_memoria(const int socketEscucha)
     }
 }
 
-void recibir_conexion(int socketEscucha, int* socketCliente, pthread_t* threadSuscripcion) {
-    struct sockaddr cliente = {0};
-    socklen_t len = sizeof(cliente);
-    *socketCliente = accept(socketEscucha, &cliente, &len);
-    if (*socketCliente == -1) {
-        log_error(memoriaLogger, "Error al aceptar conexion de cliente: %s", strerror(errno));
-        exit(-1);
-    }
-    uint8_t handshake = stream_recv_header(*socketCliente);
-    stream_recv_empty_buffer(*socketCliente);
+void recibir_conexion(int socketCliente) {
+    
+    uint8_t handshake = stream_recv_header(socketCliente);
+    //stream_recv_empty_buffer(*socketCliente);
+    log_info("Handshake recibido %d", handshake);
+    
+    //deberia restar tamActualMemoria con los mutex
 
-    if (handshake == HANDSHAKE_cpu && cpuSinAtender) {  //solic tabla de segmentos
-        log_info(memoriaLogger, "\e[1;92mSe acepta conexión de CPU en socket [%d]\e[0m", *socketCliente);
-        t_buffer* buffer = buffer_create();
-        uint32_t tamanioSegmento = memoria_config_get_tamanio_segmento(memoriaConfig);
-        buffer_pack(buffer, &tamanioSegmento, sizeof(tamanioSegmento));
-        stream_send_buffer(*socketCliente, HANDSHAKE_ok_continue, buffer);
-        buffer_destroy(buffer);
-        atender_peticiones_cpu();
+    if (handshake == HANDSHAKE_cpu) {  //solic tabla de segmentos   
+        log_info(memoriaLogger, "\e[1;92mSe acepta conexión de CPU en socket [%d]\e[0m", socketCliente);
+        pthread_create(&threadAntencionCpu, NULL, atender_peticiones_cpu(), socketCliente);
+        pthread_detach(threadAntencionCpu);
         cpuSinAtender = false;
     } 
-    else if (handshake == HANDSHAKE_kernel && kernelSinAtender) {
-        log_info(memoriaLogger, "\e[1;92mSe acepta conexión de Kernel en socket [%d]\e[0m", *socketCliente);
-        stream_send_empty_buffer(*socketCliente, HANDSHAKE_ok_continue);
-        atender_peticiones_kernel(socketCliente); //es void* pero nomas la llamo
+
+    else if (handshake == HANDSHAKE_kernel) {
+        log_info(memoriaLogger, "\e[1;92mSe acepta conexión de Kernel en socket [%d]\e[0m", socketCliente);
+        stream_send_empty_buffer(socketCliente, HANDSHAKE_ok_continue);
+        pthread_create(&threadAntencionCpu, NULL, atender_peticiones_kernel, socketCliente);
+        pthread_detach(threadAntencionCpu);
         kernelSinAtender = false;
     } 
+    /*else if (handshake == HANDSHAKE_fileSystem && fileSystemSinAtender) {
+        log_info(memoriaLogger, "\e[1;92mSe acepta conexión de fileSystem en socket [%d]\e[0m", *socketCliente);
+        stream_send_empty_buffer(*socketCliente, HANDSHAKE_ok_continue);
+        //pthread_create(&threadAntencionCpu, NULL, atender_peticiones_fileSystem(), socketCliente);
+        //pthread_detach(threadAntencionCpu);
+        kernelSinAtender = false;
+    }*/
     else {
         log_error(memoriaLogger, "Error al recibir handshake de cliente: %s", strerror(errno));
         exit(-1);
