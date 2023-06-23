@@ -62,18 +62,18 @@ typedef enum{
 
 typedef struct{
 
-    uint32_t registroAx;
-    uint32_t registroBx;
-    uint32_t registroCx;
-    uint32_t registroDx;
-    uint32_t registroEAx;
-    uint32_t registroEBx;
-    uint32_t registroECx;
-    uint32_t registroEDx;
-    uint32_t registroRAx;
-    uint32_t registroRBx;
-    uint32_t registroRCx;
-    uint32_t registroRDx;
+    char* registroAx;
+    char*  registroBx;
+    char*  registroCx;
+    char*  registroDx;
+    char*  registroEAx;
+    char*  registroEBx;
+    char*  registroECx;
+    char*  registroEDx;
+    char*  registroRAx;
+    char*  registroRBx;
+    char*  registroRCx;
+    char*  registroRDx;
 
 }t_registros_cpu;
 

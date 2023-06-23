@@ -19,5 +19,7 @@
 
 
 int conectar_a_servidor_cpu_dispatch( t_kernel_config* kernelConfig, t_log* kernelLogger);
+int conectar_con_servidor_file_system(t_kernel_config* kernelConfig, t_log* kernelLogger);
+int conectar_con_servidor_memoria(t_kernel_config* kernelConfig, t_log* kernelLogger);
 
 #endif

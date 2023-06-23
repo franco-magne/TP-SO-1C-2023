@@ -278,3 +278,51 @@ bool instruccion_f_open(t_pcb* pcb){
 
 
 }
+
+
+///////////////////////////// F_CLOSE /////////////////////////////////
+
+void instruccion_f_close(t_pcb* pcb){
+
+    t_pcb_archivo* archivoAbrir = list_find(pcb_get_lista_de_archivos_abiertos(pcb), es_el_archivo_victima);
+    char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoAbrir);
+
+    log_info(kernelLogger,"PID: <%i> - Cerrar Archivo: <%s>", pcb_get_pid(pcb), nombreArchivo);
+
+    eliminar_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
+
+    t_pcb* pcbBloqueado = atender_f_close(nombreArchivo);
+
+    if(pcbBloqueado == NULL){
+    
+    }
+    else{
+
+    pcbBloqueado = estado_remover_pcb_de_cola_atomic(estadoBlocked,pcbBloqueado);
+    proceso_pasa_a_ready(pcbBloqueado, "BLOCK");
+
+    }
+
+
+}
+
+/////////////////////////////// F_TRUNCATE ////////////////////////////////////
+
+void instruccion_f_truncate(t_pcb* pcb){
+
+file_system_adapter_send_f_truncate(pcb, kernelConfig, kernelLogger);
+proceso_pasa_a_bloqueado(pcb, "ARCHIVO");
+file_system_adapter_recv_f_truncate(kernelConfig, kernelLogger);
+pcb = estado_remover_pcb_de_cola_atomic(estadoBlocked,pcb);
+proceso_pasa_a_ready(pcb, "BLOCK");
+
+
+}
+
+/////////////////////// F_SEEK ///////////////////////
+
+void instruccion_f_seek(t_pcb* pcb){
+
+    atender_f_seek(pcb,kernelConfig, kernelLogger);
+
+}

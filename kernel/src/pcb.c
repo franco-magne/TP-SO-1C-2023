@@ -69,13 +69,8 @@ bool es_el_segmento_victimaok(t_segmento* element) {
     return false;
 }
 
-
-uint32_t index_posicion_del_segmento_victima(t_pcb* this){
-    t_segmento* aux1 = segmento_create(-1, -1);
-    segmento_set_victima(aux1, false);
-    uint32_t index = list_get_index(pcb_get_lista_de_segmentos(this), es_el_segmento_victima, aux1);
-    //segmento_destroy(aux1);
-    return index;
+bool es_el_segmento_por_id(t_segmento* unSegmento, t_segmento* otroSegmento){
+    return unSegmento->id_de_segmento == otroSegmento->id_de_segmento;
 }
 
 
@@ -85,20 +80,24 @@ t_segmento* segmento_victima(t_pcb* this) {
 }
 
 t_segmento* remover_segmento_victima_lista(t_pcb* this) {
-    uint32_t index = index_posicion_del_segmento_victima(this);
-    t_segmento* aux2 = list_remove(pcb_get_lista_de_segmentos,index);
-    
+    t_segmento* aux1 = segmento_create(-1, -1);
+    segmento_set_victima(aux1, true);
+    uint32_t index =  list_get_index(pcb_get_lista_de_segmentos(this),es_el_segmento_victimaok, aux1);
+    t_segmento* aux2 = list_remove(pcb_get_lista_de_segmentos(this),index);
+    free(aux1);
     return aux2;
 }
 
 
-
-bool es_el_segmento_victima_id(t_segmento* element, t_segmento* target) {
-   return element->id_de_segmento == target ->id_de_segmento;
+uint32_t index_posicion_del_segmento_victima(t_pcb* this, uint32_t id){
+    t_segmento* aux1 = segmento_create(id, -1);
+    uint32_t index = list_get_index(pcb_get_lista_de_segmentos(this),es_el_segmento_por_id, aux1);
+    segmento_destroy(aux1);
+    return index;
 }
 
 void modificar_victima_lista_segmento(t_pcb* this, uint32_t id_victima, bool cambiovictima){
-    uint32_t index = index_posicion_del_segmento_victima(this);
+    uint32_t index = index_posicion_del_segmento_victima(this,id_victima);
     if (index != -1) {
         t_segmento* aux2 = list_get(pcb_get_lista_de_segmentos(this), index);
         segmento_set_victima(aux2, cambiovictima);
@@ -195,22 +194,22 @@ void pcb_set_estado_anterior(t_pcb* this, uint32_t estadoAnterior)
    this->estadoAnterior = estadoAnterior;
 }
 
-void pcb_set_registro_ax_cpu(t_pcb* this, uint32_t registro)
+void pcb_set_registro_ax_cpu(t_pcb* this, char* registro)
 {
     this->registros->registroAx = registro;
 }
 
-void pcb_set_registro_bx_cpu(t_pcb* this, uint32_t registro)
+void pcb_set_registro_bx_cpu(t_pcb* this, char* registro)
 {
     this->registros->registroBx = registro;
 }
 
-void pcb_set_registro_cx_cpu(t_pcb* this, uint32_t registro)
+void pcb_set_registro_cx_cpu(t_pcb* this, char* registro)
 {
     this->registros->registroCx = registro;
 }
 
-void pcb_set_registro_dx_cpu(t_pcb* this, uint32_t registro)
+void pcb_set_registro_dx_cpu(t_pcb* this, char* registro)
 {
     this->registros->registroDx = registro;
 }
