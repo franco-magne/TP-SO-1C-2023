@@ -7,9 +7,7 @@ extern Segmento* segCompartido;
 
 void atender_peticiones_cpu(int socketCpu) {
     uint8_t header;
-    for(;;){
-        header = stream_recv_header(socketCpu);
-        pthread_mutex_lock(&mutexMemoriaData);
+     while ((header = stream_recv_header(socketCpu)) != -1) {
         t_buffer* buffer = buffer_create();
         stream_recv_buffer(socketCpu, buffer);
         switch (header){
@@ -33,11 +31,11 @@ void atender_peticiones_cpu(int socketCpu) {
 
             
             
-            uint32_t marco = 0;//obtener_marco(pid, id_segmento); //base y limite no +
+            uint32_t marco = segmento_get_id(segementoSolic);//obtener_marco(pid, id_segmento); //base y limite no +
             
             t_buffer* buffer_rta = buffer_create();
             buffer_pack(buffer_rta, &marco, sizeof(marco));
-            stream_send_buffer(socket, HEADER_marco, buffer_rta);
+            stream_send_buffer(socketCpu, HEADER_marco, buffer_rta);
             buffer_destroy(buffer_rta);
             log_info(memoriaLogger, "Se enviá la dirección física [%d]", marco);
             
@@ -53,10 +51,10 @@ void atender_peticiones_cpu(int socketCpu) {
             buffer_unpack(buffer, &pid, sizeof(pid));
             //buffer_unpack(buffer, &desplazamiento_segmento, sizeof(pid));
 
-            Segmento* unSegmento = obtener_segmento_por_id(pid, id_segmento);
+            //Segmento* unSegmento = obtener_segmento_por_id(pid, id_segmento);
     
-            char* contenidoAenviar = segmento_get_contenido(unSegmento);
-
+            char* contenidoAenviar = malloc(strlen("HOLA") + 1);  // Reservas memoria suficiente para la cadena "HOLA" y el carácter nulo
+            strcpy(contenidoAenviar, "HOLA");
             t_buffer* bufferContenido = buffer_create();        
         
             buffer_pack_string(bufferContenido, contenidoAenviar);
@@ -91,7 +89,6 @@ void atender_peticiones_cpu(int socketCpu) {
         break;
         default:
         break;
-        pthread_mutex_unlock(&mutexMemoriaData);
     }
     }
 }

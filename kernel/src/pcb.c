@@ -21,6 +21,7 @@ t_pcb* pcb_create(uint32_t pid)
    this->rafaga_actual = -1;
    this->rafaga_anterior = -1;
    this->listaDeSegmento = list_create();
+   this->listaArchivosAbiertos = list_create();
    return this;
 }
 
@@ -54,50 +55,55 @@ void segmento_set_victima(t_segmento* this, bool cambioEstado){
     this->victima = cambioEstado;
 }
 
+///////////////////////////// FUNCIONES UTILITARIAS DEL SEGMENTO POSIBLE MIGRACION A KERNEL-ESTRUCTURA-SEGMENTO //////////////////
+
 bool es_el_segmento_victima(t_segmento* element, t_segmento* target) {
     if(element->victima)
     return true;
     return false;
 }
 
-t_segmento* enviar_segmento_a_memoria(t_pcb* this, uint8_t header) {
-    t_segmento* aux1 = segmento_create(-1, -1);
-    segmento_set_victima(aux1, false);
-    uint32_t index = list_get_index(pcb_get_lista_de_segmentos(this), es_el_segmento_victima, aux1);
-    t_segmento* aux2 = NULL;
-    
-    if (index != -1) {
-        if(header == HEADER_create_segment){
-        aux2 = list_get(pcb_get_lista_de_segmentos(this), index); // Aca no lo queremos quitar, lo leemos y le seteamos el valor asi deja de ser victima
-        segmento_set_victima(aux2, false);
-        list_replace(pcb_get_lista_de_segmentos(this), index, aux2);
-        }
-        else if(header == HEADER_delete_segment){
-        aux2 = list_remove(pcb_get_lista_de_segmentos(this), index); // Aca si porque lo removemos a ese segmento
-        } 
+bool es_el_segmento_victimaok(t_segmento* element) {
+    if(element->victima)
+    return true;
+    return false;
+}
 
-    }
+bool es_el_segmento_por_id(t_segmento* unSegmento, t_segmento* otroSegmento){
+    return unSegmento->id_de_segmento == otroSegmento->id_de_segmento;
+}
 
-    segmento_destroy(aux1);
-    
+
+t_segmento* segmento_victima(t_pcb* this) {
+    t_segmento* aux2 = list_find(pcb_get_lista_de_segmentos(this), es_el_segmento_victimaok);
     return aux2;
 }
 
-bool es_el_segmento_victima_id(t_segmento* element, t_segmento* target) {
-   return element->id_de_segmento == target ->id_de_segmento;
+t_segmento* remover_segmento_victima_lista(t_pcb* this) {
+    t_segmento* aux1 = segmento_create(-1, -1);
+    segmento_set_victima(aux1, true);
+    uint32_t index =  list_get_index(pcb_get_lista_de_segmentos(this),es_el_segmento_victimaok, aux1);
+    t_segmento* aux2 = list_remove(pcb_get_lista_de_segmentos(this),index);
+    free(aux1);
+    return aux2;
 }
 
-void modificar_victima_lista_segmento(t_pcb* this, uint32_t id_victima){
-    t_segmento* aux1 = segmento_create(id_victima, -1);
-    uint32_t index = list_get_index(pcb_get_lista_de_segmentos(this), es_el_segmento_victima_id, aux1);
+
+uint32_t index_posicion_del_segmento_victima(t_pcb* this, uint32_t id){
+    t_segmento* aux1 = segmento_create(id, -1);
+    uint32_t index = list_get_index(pcb_get_lista_de_segmentos(this),es_el_segmento_por_id, aux1);
+    segmento_destroy(aux1);
+    return index;
+}
+
+void modificar_victima_lista_segmento(t_pcb* this, uint32_t id_victima, bool cambiovictima){
+    uint32_t index = index_posicion_del_segmento_victima(this,id_victima);
     if (index != -1) {
         t_segmento* aux2 = list_get(pcb_get_lista_de_segmentos(this), index);
-        segmento_set_victima(aux2, true);
+        segmento_set_victima(aux2, cambiovictima);
         list_replace(pcb_get_lista_de_segmentos(this), index, aux2);
-        segmento_destroy(aux1); // Liberar segmento anteriormente creado
-    } else {
-        segmento_destroy(aux1); // Liberar segmento si no se encontró en la lista
-    }
+        
+    } 
 }
 //////////////////////////////////////////////////////////////////////////////////////
 
@@ -156,6 +162,11 @@ double pcb_get_rafaga_actual(t_pcb* this){
 t_list* pcb_get_lista_de_segmentos(t_pcb* this){
     return this->listaDeSegmento;
 }
+
+t_list* pcb_get_lista_de_archivos_abiertos(t_pcb* this){
+    return this->listaArchivosAbiertos;
+}
+
 /////////////////////// SETTER ////////////////////////
 
 void pcb_set_program_counter(t_pcb* this, uint32_t programCounter) 
@@ -183,22 +194,22 @@ void pcb_set_estado_anterior(t_pcb* this, uint32_t estadoAnterior)
    this->estadoAnterior = estadoAnterior;
 }
 
-void pcb_set_registro_ax_cpu(t_pcb* this, uint32_t registro)
+void pcb_set_registro_ax_cpu(t_pcb* this, char* registro)
 {
     this->registros->registroAx = registro;
 }
 
-void pcb_set_registro_bx_cpu(t_pcb* this, uint32_t registro)
+void pcb_set_registro_bx_cpu(t_pcb* this, char* registro)
 {
     this->registros->registroBx = registro;
 }
 
-void pcb_set_registro_cx_cpu(t_pcb* this, uint32_t registro)
+void pcb_set_registro_cx_cpu(t_pcb* this, char* registro)
 {
     this->registros->registroCx = registro;
 }
 
-void pcb_set_registro_dx_cpu(t_pcb* this, uint32_t registro)
+void pcb_set_registro_dx_cpu(t_pcb* this, char* registro)
 {
     this->registros->registroDx = registro;
 }
@@ -235,3 +246,6 @@ void pcb_set_lista_de_segmentos(t_pcb* this, t_segmento* unSegmento){
    list_add(this->listaDeSegmento,unSegmento);
 }
 
+void pcb_add_lista_de_archivos(t_pcb* this,t_pcb_archivo* unArchivo ){
+    list_add(this->listaArchivosAbiertos,unArchivo);
+}

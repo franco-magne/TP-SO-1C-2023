@@ -35,13 +35,11 @@ void atender_peticiones_kernel(int socketKernel) {
                 if(!puedo_crear_proceso_o_segmento(memoria_config_get_tamanio_segmento_0(memoriaConfig))){ //+sizeof(*tabla_de_segmentos)
                     log_error(memoriaLogger, "No se pudo crear el proceso, no hay espacio en memoria");
                 }
-                Segmento* segmentoCero = obtener_segmento_por_id(pid, 0);
-                uint32_t id_segmento = (uint32_t) segmento_get_id(segmentoCero);
-                uint32_t tam_segmento = segmento_get_tamanio(segmentoCero);
-
+                inicializar_estructuras();
+                //aca dentro deberia restar el tamActualMemoria
+                
                 t_buffer* buffer_rta = buffer_create();
-                buffer_pack(buffer_rta, &id_segmento, sizeof(id_segmento));
-                buffer_pack(buffer_rta, &tam_segmento, sizeof(tam_segmento));
+                buffer_pack(buffer_rta, tabla_segmentos_solicitada, sizeof(tabla_segmentos_solicitada));
                 stream_send_buffer(socketKernel, HEADER_tabla_segmentos, buffer_rta);
                 //list_destroy(tabla_segmentos_solicitada);
                 buffer_destroy(buffer_rta);
@@ -86,34 +84,35 @@ void atender_peticiones_kernel(int socketKernel) {
                 
                 t_list* tablaDeSegmentoSolic = obtener_tabla_de_segmentos_por_pid(pid);
 
-                mostrar_tabla(tablaDeSegmentoSolic);
+                mostrar_lista_segmentos(listaDeSegmentos);
                 break;
             }
             case HEADER_delete_segment:{
                 //en caso de que tenga huecos libres aledaños, los deberá CONSOLIDAR actualizando sus estructuras administrativas.
                 uint32_t id_de_segmento;
-
                 int pid;
                 buffer_unpack(buffer, &id_de_segmento, sizeof(id_de_segmento));
                 buffer_unpack(buffer, &pid, sizeof(pid));
 
-                listaDeSegmentos = obtener_tabla_de_segmentos_por_pid(pid);
+                t_list* tabla_segmentos_solic = obtener_tabla_de_segmentos_por_pid(pid);
                 log_info(memoriaLogger,"Tabla de Segmentos con PID<%d> ", pid);
-                mostrar_tabla(listaDeSegmentos);
+                mostrar_tabla(tabla_segmentos_solic);
 
                 log_info(memoriaLogger,"Segmento a eliminar <%i> ", id_de_segmento);
 
                 Segmento* segABorrar = crear_segmento(-1);
-                segmento_set_id(segABorrar, (int) id_de_segmento);
+                segmento_set_id(segABorrar, id_de_segmento);
                 segmento_set_pid(segABorrar, pid);
                 //sumar_memoriaRecuperada_a_tamMemoriaActual(segABorrar->tamanio); 
                 eliminar_segmento_memoria(segABorrar);
                 log_info(memoriaLogger, "Borramos el segmento <%i> del proceos <%i>", id_de_segmento, pid);
 
-                log_info(memoriaLogger,"Tabla de Segmentos actualizada ");
-                mostrar_tabla(listaDeSegmentos);
+                t_list* tabla_segmentos_solic_actualizada = obtener_tabla_de_segmentos_por_pid(pid);
+                log_info(memoriaLogger,"Tabla de Segmentos con PID <%d> actualizada ", pid);
+                mostrar_lista_segmentos(listaDeSegmentos);
 
-                stream_send_empty_buffer(socketKernel, HEADER_tabla_segmentos);
+
+                stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
 
                 break;
             }

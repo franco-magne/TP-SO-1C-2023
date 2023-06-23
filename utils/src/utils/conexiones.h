@@ -20,24 +20,30 @@ typedef enum {
     HEADER_lista_instrucciones,
     HEADER_interrumpir_ejecucion,
     HEADER_marco,
-    HEADER_move_in,
-    HEADER_move_out,
     HEADER_memoria_insuficiente,
     HEADER_pcb_a_ejecutar,
-    HEADER_iniciar_proceso,
     HEADER_proceso_bloqueado,
     HEADER_proceso_desalojado,
     HEADER_proceso_terminado,
-    HEADER_solicitud_tabla_segmentos,
-    HEADER_tabla_segmentos,
+    HEADER_solicitud_tabla_paginas_segmentos,
     HEADER_proceso_pedir_recurso,
     HEADER_proceso_devolver_recurso,
     HEADER_create_segment,
     HEADER_delete_segment,
     HEADER_f_open,
+    HEADER_f_create,
     HEADER_f_close,
     HEADER_f_seek,
-    HEADER_f_truncate
+    HEADER_f_truncate,
+    HEADER_f_read,
+    HEADER_f_write,
+    HEADER_move_in,
+    HEADER_move_out,
+    HEADER_iniciar_proceso,
+    HEADER_tabla_segmentos
+
+
+
 } t_header;
 
 typedef enum {

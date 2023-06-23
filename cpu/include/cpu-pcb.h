@@ -37,6 +37,9 @@ uint32_t cpu_pcb_get_tiempoIO(t_cpu_pcb* self);
 char* cpu_pcb_get_recurso_utilizar(t_cpu_pcb* self);
 uint32_t cpu_pcb_get_tamanio_de_segmento(t_cpu_pcb* self);
 uint32_t cpu_pcb_get_id_de_segmento(t_cpu_pcb* self);
+char* cpu_pcb_get_nombre_archivo(t_cpu_pcb* this);
+uint32_t cpu_pcb_get_tamanio_archivo(t_cpu_pcb* this);
+uint32_t cpu_pcb_get_puntero_archivo(t_cpu_pcb* this);
 
 ////// FIRMAS DE SETTERS /////////////
 void cpu_pcb_set_tiempoIO(t_cpu_pcb* self, uint32_t tiempoIO);
@@ -46,6 +49,9 @@ void cpu_pcb_set_instrucciones(t_cpu_pcb* self, t_list* instrucciones);
 void cpu_pcb_set_recurso_utilizar(t_cpu_pcb* self, char* recurso);
 void cpu_pcb_set_tamanio_de_segmento(t_cpu_pcb* self, uint32_t tamanio);
 void cpu_pcb_set_id_de_segmento(t_cpu_pcb* self, uint32_t id);
+void cpu_pcb_set_nombre_archivo(t_cpu_pcb* this, char* nombreArchivo);
+void cpu_pcb_set_tamanio_archivo(t_cpu_pcb* this, uint32_t tamanioArchivo);
+void cpu_pcb_set_puntero_archivo(t_cpu_pcb* this, uint32_t punteroArchivo);
 
 
 void cpu_pcb_set_registros(t_cpu_pcb* self, t_registros_cpu* registrosCpu);

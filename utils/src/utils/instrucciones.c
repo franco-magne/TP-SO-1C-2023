@@ -181,11 +181,10 @@ t_list* lista_de_instrucciones_buffer(t_buffer* bufferConInstrucciones, t_log * 
     log_info(logger, "Se desempaquetan %d instrucciones", list_size(instrucciones));
     return instrucciones;
 }
-
 t_registros_cpu* registros_cpu_create()
 {
     t_registros_cpu* tempRegistrosCpu = malloc(sizeof(*tempRegistrosCpu));
-    memset((void*) tempRegistrosCpu, '\0', sizeof(*tempRegistrosCpu));
+memset(tempRegistrosCpu, NULL, sizeof(*tempRegistrosCpu));
 
     return tempRegistrosCpu;
 }

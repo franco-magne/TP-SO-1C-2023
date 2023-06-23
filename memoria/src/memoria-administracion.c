@@ -3,6 +3,31 @@
 extern t_list* listaDeSegmentos;
 extern t_log *memoriaLogger;
 
+void mostrar_lista_segmentos(t_list* lista) {
+    int cantidad_segmentos = list_size(lista);
+    char* log_string = malloc(sizeof(char) * (cantidad_segmentos * 100));  // Suponemos un tamaño máximo de 100 caracteres para cada segmento en el log
+    char* temp_string = malloc(sizeof(char) * 100);  // Variable temporal para construir cada segmento del log
+    strcpy(log_string, "[");
+
+    for (int i = 0; i < cantidad_segmentos; i++) {
+        Segmento* segmento = list_get(lista, i);
+        sprintf(temp_string, "base segmento <%i> - limite <%i> - libre <%i>", segmento->base, segmento->limite, segmento->validez);
+        strcat(log_string, temp_string);
+
+        if (i != cantidad_segmentos - 1) {
+            strcat(log_string, ", ");
+        }
+    }
+
+    strcat(log_string, "]");
+    log_info(memoriaLogger, log_string);
+
+    free(log_string);
+    free(temp_string);
+}
+
+
+
 
 t_list* list_filter_ok(t_list* lista, bool (*condition)(void*, void*), void* argumento) {
     t_list* resultado = list_create();
@@ -164,20 +189,21 @@ Segmento* consolidar_segmentos(Segmento* unSegmento, Segmento* segSiguiente){
 
 void eliminar_segmento_memoria(Segmento* segmentoAEliminar){
     
-    int index = list_get_index(listaDeSegmentos,es_el_mismo_segmento_pid_id, segmentoAEliminar );   
-    segmento_set_bit_validez(segmentoAEliminar, 0);
-    if(es_el_ultimo_elemento(listaDeSegmentos,segmentoAEliminar)){ // ES EL ULTIMO SEGMENTO DE LA MEMORIA
+    int index = list_get_index(listaDeSegmentos,es_el_mismo_segmento_pid_id, segmentoAEliminar ); 
+    Segmento* segmentoRealAModificar = list_get(listaDeSegmentos,index);
+    segmento_set_bit_validez(segmentoRealAModificar, 0);
+    if(es_el_ultimo_elemento(listaDeSegmentos,segmentoRealAModificar)){ // ES EL ULTIMO SEGMENTO DE LA MEMORIA
 
         if(segmento_anterior_esta_libre(index) == 0){
 
             Segmento* segmentoAnterior =list_get(listaDeSegmentos, index - 1);    
-            Segmento* segmentoConsolidado  = consolidar_segmentos(segmentoAnterior, segmentoAEliminar);
+            Segmento* segmentoConsolidado  = consolidar_segmentos(segmentoAnterior, segmentoRealAModificar);
             list_replace(listaDeSegmentos,index - 1,segmentoConsolidado);
             list_remove(listaDeSegmentos, index);
             
         } else {//caso donde el anterior es el segmento 0
         
-            //list_replace(listaDeSegmentos,index,segmentoAEliminar); no cumple ninguna funcion xq reemplaza al segmentoAELiminar por el segmentoAELiminar
+            list_replace(listaDeSegmentos,index,segmentoRealAModificar); //no cumple ninguna funcion xq reemplaza al segmentoAELiminar por el segmentoAELiminar
 
         }
 
@@ -186,17 +212,19 @@ void eliminar_segmento_memoria(Segmento* segmentoAEliminar){
         if(segmento_anterior_esta_libre(index) == 0){ 
 
             Segmento* segmentoAnterior = list_get(listaDeSegmentos, index - 1);    
-            Segmento* segmentoConsolidado  = consolidar_segmentos(segmentoAnterior, segmentoAEliminar);
+            Segmento* segmentoConsolidado  = consolidar_segmentos(segmentoAnterior, segmentoRealAModificar);
             list_replace(listaDeSegmentos,index - 1,segmentoConsolidado);
             list_remove(listaDeSegmentos, index);
        
-        } else if(segmento_siguiente_esta_libre(index) == 0){
+        } 
+        if(segmento_siguiente_esta_libre(index) == 0){
             Segmento* segmentoSiguiente = list_get(listaDeSegmentos, index+1);    
-            Segmento* segmentoConsolidado  = consolidar_segmentos(segmentoAEliminar, segmentoSiguiente);
+            Segmento* segmentoConsolidado  = consolidar_segmentos(segmentoRealAModificar, segmentoSiguiente);
             list_replace(listaDeSegmentos,index,segmentoConsolidado);
             list_remove(listaDeSegmentos, index + 1);
         } else {
-            list_replace(listaDeSegmentos,index,segmentoAEliminar);
+        
+            list_replace(listaDeSegmentos,index,segmentoRealAModificar);
         }
 
 
