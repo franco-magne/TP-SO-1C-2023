@@ -31,6 +31,7 @@ static uint32_t cpu_obtener_marco(int toSocket, uint32_t direccionLogica, uint32
     int tamanioMaximoSegmento = cpu_config_get_tamanio_maximo_segmento(cpuConfig);
 
     uint32_t num_segmento  = floor(direccionLogica / tamanioMaximoSegmento);
+    printf("Numero de segmento <%i> - Tamaño maximo <%i> - DireccionLogica <%i>", num_segmento, tamanioMaximoSegmento,direccionLogica);
     uint32_t desplazamiento_segmento = direccionLogica % tamanioMaximoSegmento;
     
 

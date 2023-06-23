@@ -31,7 +31,7 @@ void atender_peticiones_cpu(int socketCpu) {
 
             
             
-            uint32_t marco = 0;//obtener_marco(pid, id_segmento); //base y limite no +
+            uint32_t marco = segmento_get_id(segementoSolic);//obtener_marco(pid, id_segmento); //base y limite no +
             
             t_buffer* buffer_rta = buffer_create();
             buffer_pack(buffer_rta, &marco, sizeof(marco));

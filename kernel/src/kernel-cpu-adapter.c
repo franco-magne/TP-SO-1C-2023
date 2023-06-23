@@ -54,7 +54,6 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
     registroCxActualizado = buffer_unpack_string(bufferPcb);
     registroDxActualizado = buffer_unpack_string(bufferPcb);
 
-    log_info(kernelLogger, "Registro <%s> ", registroAxActualizado );
 
     switch(cpuResponse){
         case HEADER_proceso_bloqueado : 
@@ -76,7 +75,6 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
         buffer_unpack(bufferPcb, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
 
-        log_info(kernelLogger, "ID <%i> :",id_de_segmento );
         t_segmento* unSegmento = segmento_create(id_de_segmento, tamanio_de_segmento);
     
         pcb_set_lista_de_segmentos(pcbAActualizar,unSegmento);
@@ -89,6 +87,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         case HEADER_delete_segment:
         
         buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
+        log_info(kernelLogger, "ID <%i> Segmento eliminar ", id_de_segmento);
         modificar_victima_lista_segmento(pcbAActualizar,id_de_segmento, true);
 
 

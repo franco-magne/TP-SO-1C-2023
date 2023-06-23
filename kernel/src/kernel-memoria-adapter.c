@@ -10,7 +10,6 @@ void memoria_adapter_enviar_create_segment(t_pcb* pcbAIniciar, t_kernel_config* 
     uint32_t id_de_segmento = segmento_get_id_de_segmento(unSegmentoAEnviar);
     uint32_t tamanio_de_segmento = segmento_get_tamanio_de_segmento(unSegmentoAEnviar);
     uint32_t pid = pcb_get_pid(pcbAIniciar);
-    printf("ID <%i>", id_de_segmento);
     t_buffer* bufferNuevoSegmento = buffer_create();
 
     buffer_pack(bufferNuevoSegmento, &id_de_segmento, sizeof(id_de_segmento));
@@ -54,10 +53,13 @@ void memoria_adapter_enviar_delete_segment(t_pcb* pcbAIniciar, t_kernel_config* 
     t_segmento* unSegmentoAEnviar = segmento_victima(pcbAIniciar);
 
     uint32_t id_de_segmento = segmento_get_id_de_segmento(unSegmentoAEnviar);
+    uint32_t pid = pcb_get_pid(pcbAIniciar);
 
     t_buffer* bufferNuevoSegmento = buffer_create();
 
     buffer_pack(bufferNuevoSegmento, &id_de_segmento, sizeof(id_de_segmento));
+    buffer_pack(bufferNuevoSegmento, &pid, sizeof(pid));
+
 
     stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig), HEADER_delete_segment ,bufferNuevoSegmento);
 
@@ -68,9 +70,10 @@ void memoria_adapter_enviar_delete_segment(t_pcb* pcbAIniciar, t_kernel_config* 
 void memoria_adapter_recibir_delete_segment(t_pcb* pcbAActualizar, t_kernel_config* kernelConfig, t_log* kernelLogger){
 
 
-    stream_recv_empty_buffer(kernel_config_get_socket_memoria(kernelConfig));
 
     uint8_t headerMemoria = stream_recv_header(kernel_config_get_socket_memoria(kernelConfig));
+
+    stream_recv_empty_buffer(kernel_config_get_socket_memoria(kernelConfig));
 
      if (headerMemoria == HANDSHAKE_ok_continue) {
         t_segmento* unSegmento = remover_segmento_victima_lista(pcbAActualizar);
@@ -78,7 +81,7 @@ void memoria_adapter_recibir_delete_segment(t_pcb* pcbAActualizar, t_kernel_conf
 
 
     } else if (headerMemoria == HEADER_error) {
-        log_info(kernelLogger, "PID: <%i> No pudo crear el segmento",  pcb_get_pid(pcbAActualizar));
+        log_info(kernelLogger, "PID: <%i> No pudo eliminar el segmento",  pcb_get_pid(pcbAActualizar));
         return -1;
     } else {
         log_error(kernelLogger, "Error al recibir buffer de la creacion");

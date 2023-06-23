@@ -84,7 +84,7 @@ void atender_peticiones_kernel(int socketKernel) {
                 
                 t_list* tablaDeSegmentoSolic = obtener_tabla_de_segmentos_por_pid(pid);
 
-                mostrar_tabla(tablaDeSegmentoSolic);
+                mostrar_lista_segmentos(listaDeSegmentos);
                 break;
             }
             case HEADER_delete_segment:{
@@ -109,13 +109,11 @@ void atender_peticiones_kernel(int socketKernel) {
 
                 t_list* tabla_segmentos_solic_actualizada = obtener_tabla_de_segmentos_por_pid(pid);
                 log_info(memoriaLogger,"Tabla de Segmentos con PID <%d> actualizada ", pid);
-                mostrar_tabla(tabla_segmentos_solic_actualizada);
+                mostrar_lista_segmentos(listaDeSegmentos);
 
-                t_buffer* buffer_rta = buffer_create();
-                buffer_pack(buffer_rta, tabla_segmentos_solic_actualizada, sizeof(tabla_segmentos_solic_actualizada)); //tablaDeSegmentos Actualizada
-                stream_send_buffer(socketKernel, HEADER_tabla_segmentos, buffer_rta);
 
-                buffer_destroy(buffer_rta);
+                stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
+
                 break;
             }
             /*case HEADER_proceso_terminado: {
