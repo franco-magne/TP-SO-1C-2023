@@ -96,7 +96,7 @@ void atender_peticiones_kernel(int socketKernel) {
 
                 t_list* tabla_segmentos_solic = obtener_tabla_de_segmentos_por_pid(pid);
                 log_info(memoriaLogger,"Tabla de Segmentos con PID<%d> ", pid);
-                mostrar_tabla(tabla_segmentos_solic);
+                
 
                 log_info(memoriaLogger,"Segmento a eliminar <%i> ", id_de_segmento);
 
