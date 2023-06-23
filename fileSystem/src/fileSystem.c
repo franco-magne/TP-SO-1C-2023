@@ -38,7 +38,7 @@ int main() {
 
    ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////
 
-   int serverFS = iniciar_servidor(fs->puerto_memoria, fs->puerto_escucha);
+   int serverFS = iniciar_servidor(fs->ip_memoria, fs->puerto_escucha);
    log_info(fs->logger, "Servidor FILESYSTEM listo para recibir a KERNEL");
    //log_info(fs->logger, "Socket servidor: %d", serverFS);
    

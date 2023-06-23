@@ -18,13 +18,15 @@ void atender_kernel(t_filesystem* fs) {
     //operacion_OK = abrir_archivo("RecuperatorioSO", fs);
     
     while (fs->socket_kernel != -1) {
-
+        
         log_info(fs->logger, "Esperando peticion de KERNEL...");
-        uint8_t header = stream_recv_header(fs->socket_kernel); // RECIBO LA OPERACION QUE KERNEL QUIERA SOLICITAR
+        uint8_t header = stream_recv_header(fs->socket_kernel); // RECIBO LA OPERACION QUE KERNEL QUIERA SOLICITAR        
 
         switch(header) {
 
             case HEADER_f_open:
+
+                log_info(fs->logger, "Recibo operacion F_OPEN de KERNEL.");
                                         
                 char* nombre_archivo_open;
                 t_buffer* buffer_nombre_archivo_open = buffer_create();
@@ -46,8 +48,8 @@ void atender_kernel(t_filesystem* fs) {
                         stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO EXISTE Y LO AGREGUE A SU TABLA GLOBAL
                     } else {
                         // CASO: NO EXISTE EL FCB DE ESE ARCHIVO. TIENE QUE SOLICITAR CREARLO
-                        stream_send_empty_buffer(fs->socket_kernel, HEADER_error);
-                        // ESTOY USANDO EL HEADER_ERROR PARA INDICAR QUE NO SE PUDO ABRIR EL ARCHIVO. A CONFIRMAR SI ESTO ESTA OK
+                        log_info(fs->logger, "Entro a solicitar una creacion");
+                        stream_send_empty_buffer(fs->socket_kernel, HEADER_f_create);
                     }                                                                            
                 }
 
@@ -57,6 +59,8 @@ void atender_kernel(t_filesystem* fs) {
             break;
 
             case HEADER_f_create:
+
+                log_info(fs->logger, "Recibo operacion F_CREATE de KERNEL.");
 
                 char* nombre_archivo_create;
                 t_buffer* buffer_nombre_archivo_create = buffer_create();
@@ -80,16 +84,15 @@ void atender_kernel(t_filesystem* fs) {
 
             case HEADER_f_truncate:
 
+                log_info(fs->logger, "Recibo operacion F_TRUNCATE de KERNEL.");
+
                 char* nombre_archivo_truncate;
-                t_buffer* buffer_nombre_archivo_truncate = buffer_create();
-
                 uint32_t tamanio_archivo_truncate;
-                t_buffer* buffer_tamanio_archivo_truncate = buffer_create();
+                t_buffer* bufferTruncate = buffer_create();                
 
-                stream_recv_buffer(fs->socket_kernel, buffer_nombre_archivo_truncate); // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
-                nombre_archivo_truncate = buffer_unpack_string(buffer_nombre_archivo_truncate); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
-                stream_recv_buffer(fs->socket_kernel, buffer_tamanio_archivo_truncate); // RECIBO EL BUFFER TAMANIO DE ARCHIVO DE KERNEL
-                buffer_unpack(buffer_tamanio_archivo_truncate, &tamanio_archivo_truncate, sizeof(tamanio_archivo_truncate));
+                stream_recv_buffer(fs->socket_kernel, bufferTruncate); // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
+                nombre_archivo_truncate = buffer_unpack_string(bufferTruncate); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
+                buffer_unpack(bufferTruncate, &tamanio_archivo_truncate, sizeof(tamanio_archivo_truncate)); // DESERIALIZO EL TAMANIO DE ARCHIVO
 
                 operacion_OK = truncar_archivo(nombre_archivo_truncate, tamanio_archivo_truncate, fs);
 
@@ -98,16 +101,16 @@ void atender_kernel(t_filesystem* fs) {
                     stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO SE TRUNCO
                 } else {
                     stream_send_empty_buffer(fs->socket_kernel, HEADER_error); // FALLO EN EL TRUNCATE
-                    // ESTOY USANDO EL HEADER_ERROR PARA INDICAR QUE NO SE PUDO ABRIR EL ARCHIVO. A CONFIRMAR SI ESTO ESTA OK
                 }  
 
                 free(nombre_archivo_truncate);
-                buffer_destroy(buffer_nombre_archivo_truncate);
-                buffer_destroy(buffer_tamanio_archivo_truncate);
+                buffer_destroy(bufferTruncate);
 
             break;
 
             case HEADER_f_read:
+
+                log_info(fs->logger, "Recibo operacion F_READ de KERNEL.");
 
 
 
@@ -115,12 +118,13 @@ void atender_kernel(t_filesystem* fs) {
 
             case HEADER_f_write:
 
-                
+                log_info(fs->logger, "Recibo operacion F_WRITE de KERNEL.");
 
             break;
 
             default:
                 log_error(fs->logger, "Peticion incorrecta.");
+                exit(1);
             break;
         }
 

@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
    /////////////////////////////// CONEXION CON CPU /////////////////////////////
     conectar_a_servidor_cpu_dispatch(kernelConfig,kernelLogger);
     /////////////////////////////// CONEXION CON FILE_SYSTEM /////////////////////////////
-   // conectar_con_servidor_file_system(kernelConfig,kernelLogger);
+   conectar_con_servidor_file_system(kernelConfig,kernelLogger);
    /////////////////////////////// CONEXION CON MEMORIA /////////////////////////////
     conectar_con_servidor_memoria(kernelConfig,kernelLogger);
    ////////////////////////////// CONEXION CON CONSOLA //////////////////////////////

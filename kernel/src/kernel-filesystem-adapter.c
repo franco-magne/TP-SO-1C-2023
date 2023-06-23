@@ -17,8 +17,8 @@ bool file_system_adapter_chequear_si_ya_existe(t_pcb* pcb, t_kernel_config* kern
   
   t_kernel_archivo* unArchivo = archivo_create_kernel(-1,nombreArchivo );
 
-
   index = list_get_index(tablaGlobalDeArchivosAbiertos,el_archivo_ya_existe,unArchivo);
+
 
   if( index != -1 ){
 
@@ -52,18 +52,23 @@ void file_system_adapter_recv_f_open(t_pcb* pcb, t_kernel_config* kernelConfig){
   char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoAbrir);
   modificar_victima_archivo(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo, false);
 
-
-  uint8_t fileSystemResponse = stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
+  int8_t fileSystemResponse = stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
   stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
+  if(fileSystemResponse == HEADER_f_create){
+  t_buffer* bufferCreate = buffer_create();
+  buffer_pack_string(bufferCreate,nombreArchivo);
+  stream_send_buffer(kernel_config_get_socket_file_system(kernelConfig), HEADER_f_create,bufferCreate);
+  buffer_destroy(bufferCreate);
+  fileSystemResponse = stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
+  stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
+  }
 
+ 
   if(fileSystemResponse == HANDSHAKE_ok_continue){
     t_kernel_archivo* nuevoArchivo = archivo_create_kernel(pcb_get_pid(pcb),nombreArchivo);
     pthread_mutex_lock(&mutexTablaGlobal);
     list_add(tablaGlobalDeArchivosAbiertos,nuevoArchivo);
     pthread_mutex_unlock(&mutexTablaGlobal);
-
-    t_pcb_archivo* unArchivoNuevo = archivo_create_pcb(nombreArchivo);
-    pcb_add_lista_de_archivos(pcb,unArchivoNuevo);
 
   }
 
