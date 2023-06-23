@@ -91,7 +91,7 @@ void atender_kernel(t_filesystem* fs) {
                 stream_recv_buffer(fs->socket_kernel, buffer_tamanio_archivo_truncate); // RECIBO EL BUFFER TAMANIO DE ARCHIVO DE KERNEL
                 buffer_unpack(buffer_tamanio_archivo_truncate, &tamanio_archivo_truncate, sizeof(tamanio_archivo_truncate));
 
-                operacion_OK = truncar_archivo(nombre_archivo_truncate, tamanio_archivo_truncate);
+                operacion_OK = truncar_archivo(nombre_archivo_truncate, tamanio_archivo_truncate, fs);
 
                 if (operacion_OK) {
                     log_info(fs->logger, "Truncar Archivo: <%s> - Tamaño: <%d>", nombre_archivo_truncate, tamanio_archivo_truncate);
@@ -131,7 +131,7 @@ void atender_kernel(t_filesystem* fs) {
     return;
 }
 
-int truncar_archivo(char* nombre_archivo, uint32_t nuevo_tamanio_archivo) {
+int truncar_archivo(char* nombre_archivo, uint32_t nuevo_tamanio_archivo, t_filesystem* fs) {
 
     int truncado_ok;
     int pos_archivo_a_truncar = -1;
@@ -153,6 +153,7 @@ int truncar_archivo(char* nombre_archivo, uint32_t nuevo_tamanio_archivo) {
         t_fcb* fcb_a_truncar = list_get(lista_fcbs, pos_archivo_a_truncar);
 
         int fcb_a_truncar_tamanio = atoi(fcb_a_truncar->tamanio_archivo);
+        int cant_bloques_necesarios = nuevo_tamanio_archivo / fs->block_size;
 
         if (fcb_a_truncar_tamanio > nuevo_tamanio_archivo) {
             // CASO REDUCIR EL TAMANIO DEL ARCHIVO: TIENE QUE LIBERAR BLOQUES
@@ -223,7 +224,7 @@ int buscar_archivo(char* nombre_archivo) {
 int fs_escuchando_en(int server_fs, t_filesystem* fs) {
 
     pthread_t hilo;
-    log_info(fs->logger, "Entra");
+    log_info(fs->logger, "Esperando a KERNEL...");
     int socket_kernel = esperar_cliente(server_fs);
     
     fs->socket_kernel = socket_kernel;

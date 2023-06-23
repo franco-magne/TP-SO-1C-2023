@@ -26,6 +26,6 @@ int fs_escuchando_en(int, t_filesystem*);
 int buscar_archivo(char*);
 int crear_archivo(char*, t_filesystem*);
 int abrir_archivo(char*, t_filesystem*);
-int truncar_archivo(char*, uint32_t);
+int truncar_archivo(char*, uint32_t, t_filesystem*);
 
 #endif
