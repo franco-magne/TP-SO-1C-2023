@@ -309,6 +309,11 @@ void* atender_pcb(void* args)
                 sem_post(&dispatchPermitido);
                 instruccion_f_truncate(pcb);
                 break;
+            case HEADER_f_read:
+                instruccion_f_read(pcb);
+                break;
+            case HEADER_f_write:
+                instruccion_f_write(pcb);
 
             default:
 
@@ -326,6 +331,8 @@ void* atender_pcb(void* args)
         || (cpuResponse == HEADER_f_open) && !procesoFueBloqueado
         || (cpuResponse == HEADER_f_close)
         || (cpuResponse == HEADER_f_seek)
+        || (cpuResponse == HEADER_f_read)
+        || (cpuResponse == HEADER_f_write)
          // Agrega otro mas
         )
         {

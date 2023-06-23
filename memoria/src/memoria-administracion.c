@@ -27,56 +27,16 @@ void mostrar_lista_segmentos(t_list* lista) {
     free(temp_string);
 }
 
-bool segmento_mas_grande(Segmento* unSegmento, Segmento* otroSegmento){
+bool hueco_mas_grande(Segmento* unSegmento, Segmento* otroSegmento){
     return unSegmento->tamanio > otroSegmento->tamanio;
 }
 
 
-bool segmento_mas_pequenio(Segmento* unSegmento, Segmento* otroSegmento){
+bool hueco_mas_pequenio(Segmento* unSegmento, Segmento* otroSegmento){
     return unSegmento->tamanio < otroSegmento->tamanio;
 }
 
-/*int algoritmo_best(t_list* unaLista){
-    Segmento* aux = crear_segmento(1);
-    int index = list_get_index(unaLista, segmento_mas_pequenio, aux);
-    free(aux);
-    return index;
-}
-*/
-int algoritmo_worst(t_list* unaLista){
-    Segmento* menorSegmento = NULL;
-    int menorIndex = -1;
 
-    for (int i = 0; i < list_size(unaLista); i++) {
-        Segmento* segmento = list_get(unaLista, i);
-
-        if (menorSegmento == NULL || segmento->tamanio > menorSegmento->tamanio) {
-            menorSegmento = segmento;
-            menorIndex = i;
-        }
-    }
-
-    return menorIndex;
-}
-
-int algoritmo_best(t_list* unaLista, uint32_t tamSegmento) {
-    int mejorIndex = -1;
-    uint32_t mejorDiferencia = 4294967295;   //tamanio max de un int
-
-    for (int i = 0; i < list_size(unaLista); i++) {
-        Segmento* segmento = list_get(unaLista, i);
-
-        if (!segmento->validez   && segmento->tamanio >= tamSegmento) {
-            int diferencia = segmento->tamanio - tamSegmento;
-            if (diferencia < mejorDiferencia) {
-                mejorIndex = i;
-                mejorDiferencia = diferencia;
-            }
-        }
-    }
-
-    return mejorIndex;
-}
 
 
 
@@ -139,13 +99,13 @@ void administrar_primer_hueco_libre(t_list* huecosLibres, Segmento* nuevoSegment
         libre = list_get(huecosLibres, 0); //primer hueco libre
     } 
     else if(strcmp(algoritmoAsignacion,"BEST") == 0 ){
-        index = algoritmo_best(huecosLibres,segmento_get_tamanio(nuevoSegmento));
-        libre = list_get(huecosLibres,index);//hueco libre mas pequenio
+        huecosLibres= list_sorted(huecosLibres,hueco_mas_pequenio);
+        libre = list_get(huecosLibres,0);//hueco libre mas pequenio
         // FUNCION 2
     } 
     else{             //WORST
-        index = algoritmo_worst(huecosLibres);
-        libre = list_get(huecosLibres, index); //hueco libre mas grande
+        huecosLibres= list_sorted(huecosLibres,hueco_mas_grande);
+        libre = list_get(huecosLibres, 0); //hueco libre mas grande
         // FUNCION 3
     }
     //Semaforo

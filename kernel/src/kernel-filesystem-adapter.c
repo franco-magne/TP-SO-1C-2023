@@ -62,9 +62,6 @@ void file_system_adapter_recv_f_open(t_pcb* pcb, t_kernel_config* kernelConfig){
     list_add(tablaGlobalDeArchivosAbiertos,nuevoArchivo);
     pthread_mutex_unlock(&mutexTablaGlobal);
 
-    t_pcb_archivo* unArchivoNuevo = archivo_create_pcb(nombreArchivo);
-    pcb_add_lista_de_archivos(pcb,unArchivoNuevo);
-
   }
 
 }
