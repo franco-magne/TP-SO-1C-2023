@@ -1,5 +1,6 @@
 #include "../include/fs-structures.h"
 
+int fd_bitmap;
 int fd_bloques;
 void* map_bloques;
 void* map ;
@@ -28,7 +29,7 @@ void levantar_bitmap(t_filesystem* fs) {
     if (bitmap_file == NULL) {
         crear_bitmap(fs);
     } else {
-        log_info(fs->logger, "Levantamos el bitmap ya creado.");        
+        log_info(fs->logger, "Levantamos el bitmap ya creado.");  
         fclose(bitmap_file);
     }
 
@@ -38,7 +39,7 @@ void levantar_bitmap(t_filesystem* fs) {
 
 void crear_bitmap(t_filesystem* fs) {
 
-    int fd_bitmap = open(fs->bitmap_path, O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+    fd_bitmap = open(fs->bitmap_path, O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
     if (fd_bitmap == -1) {
         log_error(fs->logger, "Error al abrir el archivo de bitmap. %s", strerror(errno));
         exit(1);
@@ -51,7 +52,7 @@ void crear_bitmap(t_filesystem* fs) {
         exit(1);
     }
 
-    map = mmap(NULL, size_bitarray, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bitmap, 0); // iba fs.block_count en el segundo parametro
+    map = mmap(NULL, size_bitarray, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bitmap, 0);
     if (map == MAP_FAILED) {
         log_error(fs->logger, "Fallo en el mmap. %s", strerror(errno));
         exit(1);
@@ -72,22 +73,6 @@ void crear_bitmap(t_filesystem* fs) {
         bitarray_clean_bit(bitmap, i); // LLENO EL BITARRAY CON CEROS
     }
 
-    close(fd_bitmap);
-}
-
-void sincronizar_bitmap_dat(t_filesystem* fs) {
-
-    int fd_bitmap = open(fs->bitmap_path, O_RDWR);
-    if (fd_bitmap == -1) {
-        log_error(fs->logger, "Error al abrir el archivo de bitmap. %s", strerror(errno));
-        exit(1);
-    }
-
-    size_t size = fs->block_count / 8;
-    memcpy(bitmap, bitmap->bitarray, size);
-    msync(map, size, MS_SYNC);
-
-    close(fd_bitmap);
 }
 
 /*------------------------------------------------------------------------- ARCHIVO DE BLOQUES ----------------------------------------------------------------------------- */
@@ -123,45 +108,41 @@ void crear_archivo_de_bloques(t_filesystem* fs) {
         exit(1);
     }
 
-    map_bloques = mmap(NULL, size, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bloques, 0); // map_bloques REEMPLAZA AL ARRAY DE BLOQUES
+    map_bloques = mmap(NULL, size, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bloques, 0);
     if (map_bloques == MAP_FAILED) {
         log_error(fs->logger, "Fallo en el mmap. %s", strerror(errno));
         exit(1);
     } else {
         log_info(fs->logger, "Tenemos archivo de bloques ok.");
     }
-    /*
-    for (int i = 0; i < fs->block_count; i++) {
-        // Calcula el desplazamiento dentro del archivo para el bloque actual
-        off_t offset = i * fs->block_size;
-
-        // Obtiene el puntero al bloque actual
-        char* bloque_actual = map_bloques + offset;
-
-        // Ejemplo: establecer todos los bytes del bloque en cero
-        memset(bloque_actual, 0, fs->block_size);
-    }
-
-    // Después de trabajar con los bloques, asegúrate de sincronizar los cambios en el archivo
-    if (msync(map_bloques, size, MS_SYNC) == -1) {
-        log_info(fs->logger, "Error al sincronizar cambios en el archivo de bloques. %s", strerror(errno));
-        exit(1);
-    }*/
 
 }
 
-uint32_t asignar_puntero_directo_inicial(t_filesystem* fs) {
+uint32_t* buscar_bloque_libre(t_filesystem* fs, uint32_t* bloque_filesystem) {
 
-    uint32_t bloque_libre;
+    uint32_t* bloque_libre;
     int cant_bloques = fs->block_count / 8;
 
-    for (uint32_t i = 0; i < cant_bloques; i++) {
-        if (bitarray_test_bit(bitmap, i) != 1) {
-            bloque_libre = i;
+    for (uint32_t i = 0; i < cant_bloques; i++) {        
+        if (bitarray_test_bit(bitmap, i) != 1) { 
+            log_info(fs->logger, "Acceso a Bitmap - Bloque: <%d> - Estado: <%d>", i, bitarray_test_bit(bitmap, i));    
+            bloque_libre = &i;
+            bloque_filesystem = &i;
             bitarray_set_bit(bitmap, i);
+            log_info(fs->logger, "Acceso a Bitmap - Bloque: <%d> - Estado: <%d>", i, bitarray_test_bit(bitmap, i));
+
             break;
         }
     }
+
+    return bloque_libre;
+}
+
+void liberar_bloque(t_filesystem* fs, uint32_t* bloque_a_liberar) {
+
+    log_info(fs->logger, "Acceso a Bitmap - Bloque: <%ld> - Estado: <%d>", (off_t)(*bloque_a_liberar), bitarray_test_bit(bitmap, (off_t)(*bloque_a_liberar)));
+    bitarray_clean_bit(bitmap, (off_t)(*bloque_a_liberar));
+    log_info(fs->logger, "Acceso a Bitmap - Bloque: <%ld> - Estado: <%d>", (off_t)(*bloque_a_liberar), bitarray_test_bit(bitmap, (off_t)(*bloque_a_liberar)));
 
 }
 
@@ -322,6 +303,7 @@ void cargar_t_filesystem(t_config* config, t_config* sb_config, t_filesystem* fs
 
 void cerrar_archivos() {
     close(fd_bloques);
+    close(fd_bitmap);
 }
 
 char* concatenar(char* str1, char* str2, t_filesystem* fs) {

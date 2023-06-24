@@ -9,14 +9,15 @@ void atender_kernel(t_filesystem* fs) {
     
     // PARA HACER PRUEBAS RAPIDAS
     /*
-    operacion_OK = crear_archivo("ejemplo", fs);    
+    abrir_archivo("Notas1erParcialK9999", fs);    
+    operacion_OK = truncar_archivo("Notas1erParcialK9999", 256, fs);
     if (operacion_OK) {
-        log_info(fs->logger, "Creacion ok");
+        log_info(fs->logger, "Truncado ok");
     } else {
-        log_error(fs->logger, "error al crear");
-    }*/
+        log_error(fs->logger, "Algo feo paso");
+    }
     //operacion_OK = abrir_archivo("RecuperatorioSO", fs);
-    
+    */
     while (fs->socket_kernel != -1) {
         
         log_info(fs->logger, "Esperando peticion de KERNEL...");
@@ -166,43 +167,55 @@ int truncar_archivo(char* nombre_archivo, uint32_t nuevo_tamanio_archivo, t_file
             // CASO REDUCIR EL TAMANIO DEL ARCHIVO: TIENE QUE LIBERAR BLOQUES
 
             int ultima_posicion_lista_bloques;
-            //t_list* lista_bloques_actualizada = list_create();
             uint32_t cant_bloques_a_liberar = (fcb_a_truncar_tamanio - nuevo_tamanio_archivo) / fs->block_size;
 
             for (uint32_t i = 0; i < cant_bloques_a_liberar; i++) {
-                ultima_posicion_lista_bloques = list_size(fcb_a_truncar->bloques);
+                ultima_posicion_lista_bloques = list_size(fcb_a_truncar->bloques) - 1;
                 uint32_t* bloque_a_liberar = (uint32_t*)list_get(fcb_a_truncar->bloques, ultima_posicion_lista_bloques);
-                // aca hacer una funcion que pasada una posicion de bloque lo marque como liberado
+
+                liberar_bloque(fs, bloque_a_liberar);
                 list_remove(fcb_a_truncar->bloques, ultima_posicion_lista_bloques);
+
+                log_info(fs->logger, "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>", nombre_archivo, ultima_posicion_lista_bloques, (int)(*bloque_a_liberar));
             }
-            /*
-            lista_bloques_actualizada = list_take_and_remove(fcb_a_truncar->bloques, cant_bloques_a_liberar); // QUITO LA CANT BLOQUES A LIBERAR DE LA DEL FCB Y LO GUARDO EN UNA NUEVA LISTA
-            list_clean(fcb_a_truncar->bloques); // VACIO LA LISTA DE BLOQUES DEL FCB
-            list_add_all(fcb_a_truncar->bloques, lista_bloques_actualizada); // COPIO LA NUEVA LISTA CON LOS BLOQUES LIBERADOS A LA PROPIA DEL FCB
-            */
+
             fcb_a_truncar->tamanio_archivo = string_itoa(nuevo_tamanio_archivo);
             config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", string_itoa(nuevo_tamanio_archivo));
+
             config_save(fcb_a_truncar->fcb_config);
 
         } else {
 
             // CASO AMPLIAR EL TAMANIO DEL ARCHIVO: TIENE QUE ASIGNAR BLOQUES
 
+            uint32_t bloque_filesystem;
             uint32_t cant_bloques_necesarios = (fcb_a_truncar_tamanio - nuevo_tamanio_archivo) / fs->block_size;
 
             if (list_size(fcb_a_truncar->bloques) == 0) {
-                // funcion para asignar el primer puntero directo
+                uint32_t* puntero_directo_inicial = buscar_bloque_libre(fs, &bloque_filesystem);
+                list_add(fcb_a_truncar->bloques, puntero_directo_inicial);
+                fcb_a_truncar->puntero_directo = (*puntero_directo_inicial);
+                config_set_value(fcb_a_truncar->fcb_config, "PUNTERO_DIRECTO", string_itoa((int)(*puntero_directo_inicial)));
+                cant_bloques_necesarios--;
+
+                log_info(fs->logger, "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <1> - Bloque File System <%d>", nombre_archivo, bloque_filesystem);
             }
 
             for (uint32_t i = 0; i < cant_bloques_necesarios; i++) {
-                uint32_t bloque_nuevo = 0; // hacer funcion obtener_bloque()
-                list_add(fcb_a_truncar->bloques, &bloque_nuevo);
+                uint32_t* bloque_nuevo = buscar_bloque_libre(fs, &bloque_filesystem);
+                list_add(fcb_a_truncar->bloques, bloque_nuevo);
+
+                log_info(fs->logger, "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>", nombre_archivo, list_size(fcb_a_truncar->bloques), bloque_filesystem);
             }
+
+            uint32_t* primer_puntero_indirecto = list_get(fcb_a_truncar->bloques, 1); // EL PUNTERO INDIRECTO ES PRIMER PUNTERO EN LA POSICION 2
+            fcb_a_truncar->puntero_indirecto = (*primer_puntero_indirecto);
+            config_set_value(fcb_a_truncar->fcb_config, "PUNTERO_INDIRECTO", string_itoa((int)(*primer_puntero_indirecto)));
 
             fcb_a_truncar->tamanio_archivo = string_itoa(nuevo_tamanio_archivo);
             config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", string_itoa(nuevo_tamanio_archivo));
-            config_save(fcb_a_truncar->fcb_config);
 
+            config_save(fcb_a_truncar->fcb_config);
         }
 
         truncado_ok = 1;
@@ -281,3 +294,9 @@ int fs_escuchando_en(int server_fs, t_filesystem* fs) {
 
     return 0;
 }
+
+    /*
+    lista_bloques_actualizada = list_take_and_remove(fcb_a_truncar->bloques, cant_bloques_a_liberar); // QUITO LA CANT BLOQUES A LIBERAR DE LA DEL FCB Y LO GUARDO EN UNA NUEVA LISTA
+    list_clean(fcb_a_truncar->bloques); // VACIO LA LISTA DE BLOQUES DEL FCB
+    list_add_all(fcb_a_truncar->bloques, lista_bloques_actualizada); // COPIO LA NUEVA LISTA CON LOS BLOQUES LIBERADOS A LA PROPIA DEL FCB
+    */

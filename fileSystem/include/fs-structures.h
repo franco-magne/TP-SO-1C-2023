@@ -67,6 +67,9 @@ void crear_archivo_de_bloques(t_filesystem*);
 t_fcb* crear_fcb(char*, t_filesystem*);
 t_fcb* crear_fcb_inexistente(char*, t_filesystem*);
 
+uint32_t* buscar_bloque_libre(t_filesystem*, uint32_t*);
+void liberar_bloque(t_filesystem*, uint32_t*);
+
 void crear_fcb_config_en_el_path(t_config*, t_filesystem*, char*);
 char* concatenar(char*, char*, t_filesystem*);
 
