@@ -43,6 +43,7 @@ typedef struct  {
     char* nombreArchivo;
     uint32_t tamanioArchivo;
     uint32_t punteroArchivo;
+    uint32_t direccionFisicaArchivo;
 } t_cpu_pcb;
 
 typedef struct{

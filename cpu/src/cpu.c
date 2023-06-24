@@ -12,7 +12,8 @@ int main() {
     
     t_config* configIncial = config_create(CPU_CONFIG_UBICACION);
     cpuConfig = cpu_config_initializer(configIncial);
-  
+    inicio_cpu();
+
   
 
     ///////////////////////////////// CONECTARSE A MEMORIA //////////////////////////////

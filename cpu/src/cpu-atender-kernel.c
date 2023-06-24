@@ -79,9 +79,11 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
         //PARTE DE MEMORIA
         uint32_t id_de_segmento = cpu_pcb_get_id_de_segmento(pcb);
         uint32_t tamanio_de_segmento = cpu_pcb_get_tamanio_de_segmento(pcb);
+        //PARTE DE FILE_SYSTEM
         char* nombreArchivo = cpu_pcb_get_nombre_archivo(pcb);
         uint32_t tamanioArchivo = cpu_pcb_get_tamanio_archivo(pcb);
         uint32_t punteroArchivo = cpu_pcb_get_puntero_archivo(pcb);
+        uint32_t direccionFisicaArchivo = cpu_pcb_get_direccion_fisica_archivo(pcb);
         t_buffer* buffer = buffer_create();
 
          //Empaqueto pid
@@ -118,6 +120,13 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
             buffer_pack(buffer,&punteroArchivo, sizeof(punteroArchivo));
             break;
 
+            case HEADER_f_write:
+            case HEADER_f_read:
+            buffer_pack_string(buffer,nombreArchivo);
+            buffer_pack(buffer,&punteroArchivo, sizeof(punteroArchivo));
+            buffer_pack(buffer,&direccionFisicaArchivo, sizeof(direccionFisicaArchivo));
+            break;
+            
             default: 
             break;
         }   
@@ -416,26 +425,48 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         
         char* nombreArchivo = string_duplicate((char*) operando1);
         uint32_t puntero = *((uint32_t*) operando2);
-        uint32_t direccionMemoria = *((uint32_t*) operando3);
+        uint32_t direccionLogica = *((uint32_t*) operando3);
+
+        uint32_t direccionFisica = cpu_obtener_marco(cpu_config_get_socket_memoria(cpuConfig),direccionLogica,cpu_pcb_get_pid(pcb));
+
 
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_READ> - <%s> - <%i> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo, puntero, direccionMemoria);
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_READ> - <%s> - <%i> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo, puntero, direccionLogica);
 
         intervalo_de_pausa(retardoInstruccion);
+        
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+        cpu_pcb_set_nombre_archivo(pcb, nombreArchivo);
+        cpu_pcb_set_puntero_archivo(pcb,puntero);
+        cpu_pcb_set_direccion_fisica_archivo(pcb, direccionFisica);
+
+        
+        empaquetar_instruccion(pcb, HEADER_f_read);
+        shouldStopExec = true;
 
     } else if (tipoInstruccion == INSTRUCCION_F_WRITE ) {
         
 
         char* nombreArchivo = string_duplicate((char*) operando1);
         uint32_t puntero = *((uint32_t*) operando2);
-        uint32_t direccionMemoria = *((uint32_t*) operando3);
+        uint32_t direccionLogica = *((uint32_t*) operando3);
 
+        uint32_t direccionFisica = cpu_obtener_marco(cpu_config_get_socket_memoria(cpuConfig),direccionLogica,cpu_pcb_get_pid(pcb));
+        
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_WRITE> - <%s> - <%i> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo, puntero, direccionMemoria);
+        log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_WRITE> - <%s> - <%i> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo, puntero, direccionLogica);
+
 
         intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+        cpu_pcb_set_nombre_archivo(pcb, nombreArchivo);
+        cpu_pcb_set_puntero_archivo(pcb,puntero);
+        cpu_pcb_set_direccion_fisica_archivo(pcb, direccionFisica);
+
+        
+        empaquetar_instruccion(pcb, HEADER_f_write);
+        shouldStopExec = true;
+
 
     } else if (tipoInstruccion == INSTRUCCION_MOV_IN ) {
         

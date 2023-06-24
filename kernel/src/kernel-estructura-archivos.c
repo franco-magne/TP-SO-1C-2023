@@ -15,6 +15,7 @@ t_pcb_archivo* archivo_create_pcb(char* nombreArchivo){
     this->tamanioArchivo = 0;
     this->victimaDelArchivo = true;
     this->punteroArchivo=-1;
+    this->direccionFisicaArchivo = -1;
     return this;
 
 }
@@ -54,6 +55,11 @@ uint32_t archivo_pcb_get_tamanio_archivo(t_pcb_archivo* this)
 uint32_t archivo_pcb_get_puntero_archivo(t_pcb_archivo* this){
     return this->punteroArchivo;
 }
+
+uint32_t archivo_pcb_get_direccion_fisica(t_pcb_archivo* this){
+    return this->direccionFisicaArchivo;
+}
+
 ///////////////////////// SETTER /////////////////////////////
 
 void kernel_archivo_set_pid(t_kernel_archivo* this , uint32_t pid)
@@ -75,6 +81,11 @@ void archivo_pcb_set_tamanio_archivo(t_pcb_archivo* this, uint32_t tamanio)
 void archivo_pcb_set_puntero_archivo(t_pcb_archivo* this, uint32_t punteroArchivo){
     this->punteroArchivo = punteroArchivo;
 }
+
+void archivo_pcb_set_direccion_fisica(t_pcb_archivo* this, uint32_t direccionFisicaArchivo){
+    this->direccionFisicaArchivo = direccionFisicaArchivo;
+}
+
 
 void kernel_archivo_set_cola_procesos_bloqueados(t_kernel_archivo* this , t_queue* cola)
 {

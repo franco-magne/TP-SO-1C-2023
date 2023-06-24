@@ -113,3 +113,130 @@ bool es_el_ultimo_elemento(t_list* lista, t_link_element* elemento) {
     
     return (actual == elemento);
 }
+
+
+
+
+
+
+
+///////////////////////////////////////////// FUNCIONES DECORATIVAS ///////////////////////////////
+
+void inicio_kernel(){
+  printf("\033[1;31m");  // Establece el color de texto a rojo brillante
+    printf("K  K   ");
+    printf("\033[1;32m");  // Establece el color de texto a verde brillante
+    printf("EEEEE  ");
+    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
+    printf("RRRRR   ");
+    printf("\033[1;34m");  // Establece el color de texto a azul brillante
+    printf("N   N  ");
+    printf("\033[1;35m");  // Establece el color de texto a púrpura brillante
+    printf("EEEEE  ");
+    printf("\033[1;36m");  // Establece el color de texto a cian brillante
+    printf("L      \n");
+
+    printf("K K    ");
+    printf("\033[1;32m");  // Establece el color de texto a verde brillante
+    printf("E      ");
+    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
+    printf("R   R   ");
+    printf("\033[1;34m");  // Establece el color de texto a azul brillante
+    printf("NN  N  ");
+    printf("\033[1;35m");  // Establece el color de texto a púrpura brillante
+    printf("E      ");
+    printf("\033[1;36m");  // Establece el color de texto a cian brillante
+    printf("L      \n");
+
+    printf("KK     ");
+    printf("\033[1;32m");  // Establece el color de texto a verde brillante
+    printf("EEE    ");
+    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
+    printf("RRRR    ");
+    printf("\033[1;34m");  // Establece el color de texto a azul brillante
+    printf("N N N  ");
+    printf("\033[1;35m");  // Establece el color de texto a púrpura brillante
+    printf("EEE    ");
+    printf("\033[1;36m");  // Establece el color de texto a cian brillante
+    printf("L      \n");
+
+    printf("K K    ");
+    printf("\033[1;32m");  // Establece el color de texto a verde brillante
+    printf("E      ");
+    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
+    printf("R R     ");
+    printf("\033[1;34m");  // Establece el color de texto a azul brillante
+    printf("N  NN  ");
+    printf("\033[1;35m");  // Establece el color de texto a púrpura brillante
+    printf("E      ");
+    printf("\033[1;36m");  // Establece el color de texto a cian brillante
+    printf("L      \n");
+
+    printf("K   K  ");
+    printf("\033[1;32m");  // Establece el color de texto a verde brillante
+    printf("EEEEE  ");
+    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
+    printf("R  RR   ");
+    printf("\033[1;34m");  // Establece el color de texto a azul brillante
+    printf("N   N  ");
+    printf("\033[1;35m");  // Establece el color de texto a púrpura brillante
+    printf("EEEEE  ");
+    printf("\033[1;36m");  // Establece el color de texto a cian brillante
+    printf("LLLLL  \n");
+
+    printf("\033[0m");  // Restablece los colores a los predeterminados del terminal
+
+
+}
+
+void inicio_cpu(){
+        printf("\033[1;31m");  // Establece el color de texto a rojo brillante
+    printf("  CCCC   ");
+    printf("\033[1;32m");  // Establece el color de texto a verde brillante
+    printf(" PPPPP   ");
+    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
+    printf(" U   U   ");
+    printf("\033[0m");  // Restablece los colores a los predeterminados del terminal
+
+    printf("\n");
+
+    printf("\033[1;31m");  // Establece el color de texto a rojo brillante
+    printf(" C       ");
+    printf("\033[1;32m");  // Establece el color de texto a verde brillante
+    printf(" P   PP  ");
+    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
+    printf(" U   U   ");
+    printf("\033[0m");  // Restablece los colores a los predeterminados del terminal
+
+    printf("\n");
+
+    printf("\033[1;31m");  // Establece el color de texto a rojo brillante
+    printf(" C       ");
+    printf("\033[1;32m");  // Establece el color de texto a verde brillante
+    printf(" PPPPP   ");
+    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
+    printf(" U   U   ");
+    printf("\033[0m");  // Restablece los colores a los predeterminados del terminal
+
+    printf("\n");
+
+    printf("\033[1;31m");  // Establece el color de texto a rojo brillante
+    printf(" C       ");
+    printf("\033[1;32m");  // Establece el color de texto a verde brillante
+    printf(" P       ");
+    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
+    printf(" U   U   ");
+    printf("\033[0m");  // Restablece los colores a los predeterminados del terminal
+
+    printf("\n");
+
+    printf("\033[1;31m");  // Establece el color de texto a rojo brillante
+    printf("  CCCC   ");
+    printf("\033[1;32m");  // Establece el color de texto a verde brillante
+    printf(" P       ");
+    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
+    printf(" UUUUU   ");
+    printf("\033[0m");  // Restablece los colores a los predeterminados del terminal
+
+    printf("\n");
+}
