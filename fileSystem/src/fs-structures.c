@@ -1,9 +1,11 @@
 #include "../include/fs-structures.h"
 
-int fd_bitmap;
 int fd_bloques;
 void* map_bloques;
+void* map ;
 t_bitarray* bitmap;
+
+/*------------------------------------------------------------------------- SUPERBLOQUE ----------------------------------------------------------------------------- */
 
 void crear_superbloque_dat(t_filesystem* fs, t_config* superbloque) {
 
@@ -16,6 +18,8 @@ void crear_superbloque_dat(t_filesystem* fs, t_config* superbloque) {
     }
 
 }
+
+/*------------------------------------------------------------------------- BITMAP/BITARRAY ----------------------------------------------------------------------------- */
 
 void levantar_bitmap(t_filesystem* fs) {
 
@@ -34,7 +38,7 @@ void levantar_bitmap(t_filesystem* fs) {
 
 void crear_bitmap(t_filesystem* fs) {
 
-    fd_bitmap = open(fs->bitmap_path, O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+    int fd_bitmap = open(fs->bitmap_path, O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
     if (fd_bitmap == -1) {
         log_error(fs->logger, "Error al abrir el archivo de bitmap. %s", strerror(errno));
         exit(1);
@@ -47,7 +51,7 @@ void crear_bitmap(t_filesystem* fs) {
         exit(1);
     }
 
-    void* map = mmap(NULL, size_bitarray, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bitmap, 0); // iba fs.block_count en el segundo parametro
+    map = mmap(NULL, size_bitarray, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bitmap, 0); // iba fs.block_count en el segundo parametro
     if (map == MAP_FAILED) {
         log_error(fs->logger, "Fallo en el mmap. %s", strerror(errno));
         exit(1);
@@ -64,7 +68,29 @@ void crear_bitmap(t_filesystem* fs) {
 
     bitmap = bitarray_create(map, size_bitarray);
 
+    for (int i = 0; i < fs->block_count; i++) {
+        bitarray_clean_bit(bitmap, i); // LLENO EL BITARRAY CON CEROS
+    }
+
+    close(fd_bitmap);
 }
+
+void sincronizar_bitmap_dat(t_filesystem* fs) {
+
+    int fd_bitmap = open(fs->bitmap_path, O_RDWR);
+    if (fd_bitmap == -1) {
+        log_error(fs->logger, "Error al abrir el archivo de bitmap. %s", strerror(errno));
+        exit(1);
+    }
+
+    size_t size = fs->block_count / 8;
+    memcpy(bitmap, bitmap->bitarray, size);
+    msync(map, size, MS_SYNC);
+
+    close(fd_bitmap);
+}
+
+/*------------------------------------------------------------------------- ARCHIVO DE BLOQUES ----------------------------------------------------------------------------- */
 
 void levantar_archivo_de_bloques(t_filesystem* fs) {
 
@@ -104,8 +130,42 @@ void crear_archivo_de_bloques(t_filesystem* fs) {
     } else {
         log_info(fs->logger, "Tenemos archivo de bloques ok.");
     }
+    /*
+    for (int i = 0; i < fs->block_count; i++) {
+        // Calcula el desplazamiento dentro del archivo para el bloque actual
+        off_t offset = i * fs->block_size;
+
+        // Obtiene el puntero al bloque actual
+        char* bloque_actual = map_bloques + offset;
+
+        // Ejemplo: establecer todos los bytes del bloque en cero
+        memset(bloque_actual, 0, fs->block_size);
+    }
+
+    // Después de trabajar con los bloques, asegúrate de sincronizar los cambios en el archivo
+    if (msync(map_bloques, size, MS_SYNC) == -1) {
+        log_info(fs->logger, "Error al sincronizar cambios en el archivo de bloques. %s", strerror(errno));
+        exit(1);
+    }*/
 
 }
+
+uint32_t asignar_puntero_directo_inicial(t_filesystem* fs) {
+
+    uint32_t bloque_libre;
+    int cant_bloques = fs->block_count / 8;
+
+    for (uint32_t i = 0; i < cant_bloques; i++) {
+        if (bitarray_test_bit(bitmap, i) != 1) {
+            bloque_libre = i;
+            bitarray_set_bit(bitmap, i);
+            break;
+        }
+    }
+
+}
+
+/*------------------------------------------------------------------------- FCBS ----------------------------------------------------------------------------- */
 
 t_fcb* crear_fcb(char* nombre_archivo, t_filesystem* fs) {
 
@@ -208,6 +268,8 @@ t_fcb* crear_fcb_inexistente(char* nombre_archivo, t_filesystem* fs) {
     return fcb_nuevo;
 }
 
+/*------------------------------------------------------------------------- CONFIG DEL FCB ----------------------------------------------------------------------------- */
+
 void crear_fcb_config_en_el_path(t_config* config_fcb, t_filesystem* fs, char* nombre_archivo) {
 
     char* final_path = string_new();
@@ -227,6 +289,21 @@ void crear_fcb_config_en_el_path(t_config* config_fcb, t_filesystem* fs, char* n
     free(final_path);
 }
 
+void crear_directorios(t_filesystem* fs) {
+
+    int resultado;
+
+    resultado = mkdir("/home/utnso/fs", 0777);
+    resultado = mkdir(fs->fcb_path, 0777);
+
+    if (!resultado) {
+        log_info(fs->logger, "Se crearon los directorios necesarios.");
+    }
+
+}
+
+/*------------------------------------------------------------------------- OTRAS ----------------------------------------------------------------------------- */
+
 void cargar_t_filesystem(t_config* config, t_config* sb_config, t_filesystem* fs) {
 
     fs->ip_memoria = config_get_string_value(config, "IP_MEMORIA");
@@ -243,21 +320,7 @@ void cargar_t_filesystem(t_config* config, t_config* sb_config, t_filesystem* fs
 
 }
 
-void crear_directorios(t_filesystem* fs) {
-
-    int resultado;
-
-    resultado = mkdir("/home/utnso/fs", 0777);
-    resultado = mkdir(fs->fcb_path, 0777);
-
-    if (!resultado) {
-        log_info(fs->logger, "Se crearon los directorios necesarios.");
-    }
-
-}
-
 void cerrar_archivos() {
-    close(fd_bitmap);
     close(fd_bloques);
 }
 

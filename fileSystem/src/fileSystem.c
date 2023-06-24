@@ -34,12 +34,12 @@ int main() {
    levantar_bitmap(fs);
    crear_superbloque_dat(fs, superbloque_config);
    levantar_archivo_de_bloques(fs);
-
+   
 
    ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////
 
    int serverFS = iniciar_servidor(fs->ip_memoria, fs->puerto_escucha);
-   log_info(fs->logger, "Servidor FILESYSTEM listo para recibir a KERNEL");
+   log_info(fs->logger, "Servidor FILESYSTEM listo para recibir a KERNEL...");
    //log_info(fs->logger, "Socket servidor: %d", serverFS);
    
    while (fs_escuchando_en(serverFS, fs)); // Escucho a Kernel

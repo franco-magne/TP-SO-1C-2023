@@ -135,6 +135,8 @@ void atender_kernel(t_filesystem* fs) {
     return;
 }
 
+/*------------------------------------------------------------------------- F_TRUNCATE ----------------------------------------------------------------------------- */
+
 int truncar_archivo(char* nombre_archivo, uint32_t nuevo_tamanio_archivo, t_filesystem* fs) {
 
     int truncado_ok;
@@ -156,21 +158,51 @@ int truncar_archivo(char* nombre_archivo, uint32_t nuevo_tamanio_archivo, t_file
 
         t_fcb* fcb_a_truncar = list_get(lista_fcbs, pos_archivo_a_truncar);
 
-        int fcb_a_truncar_tamanio = atoi(fcb_a_truncar->tamanio_archivo);
-        int cant_bloques_necesarios = nuevo_tamanio_archivo / fs->block_size;
+        uint32_t fcb_a_truncar_tamanio = atoi(fcb_a_truncar->tamanio_archivo);
+        //int cant_bloques_actuales = fcb_a_truncar_tamanio / fs->block_size;
 
         if (fcb_a_truncar_tamanio > nuevo_tamanio_archivo) {
+
             // CASO REDUCIR EL TAMANIO DEL ARCHIVO: TIENE QUE LIBERAR BLOQUES
 
+            int ultima_posicion_lista_bloques;
+            //t_list* lista_bloques_actualizada = list_create();
+            uint32_t cant_bloques_a_liberar = (fcb_a_truncar_tamanio - nuevo_tamanio_archivo) / fs->block_size;
+
+            for (uint32_t i = 0; i < cant_bloques_a_liberar; i++) {
+                ultima_posicion_lista_bloques = list_size(fcb_a_truncar->bloques);
+                uint32_t* bloque_a_liberar = (uint32_t*)list_get(fcb_a_truncar->bloques, ultima_posicion_lista_bloques);
+                // aca hacer una funcion que pasada una posicion de bloque lo marque como liberado
+                list_remove(fcb_a_truncar->bloques, ultima_posicion_lista_bloques);
+            }
+            /*
+            lista_bloques_actualizada = list_take_and_remove(fcb_a_truncar->bloques, cant_bloques_a_liberar); // QUITO LA CANT BLOQUES A LIBERAR DE LA DEL FCB Y LO GUARDO EN UNA NUEVA LISTA
+            list_clean(fcb_a_truncar->bloques); // VACIO LA LISTA DE BLOQUES DEL FCB
+            list_add_all(fcb_a_truncar->bloques, lista_bloques_actualizada); // COPIO LA NUEVA LISTA CON LOS BLOQUES LIBERADOS A LA PROPIA DEL FCB
+            */
             fcb_a_truncar->tamanio_archivo = string_itoa(nuevo_tamanio_archivo);
             config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", string_itoa(nuevo_tamanio_archivo));
             config_save(fcb_a_truncar->fcb_config);
+
         } else {
+
             // CASO AMPLIAR EL TAMANIO DEL ARCHIVO: TIENE QUE ASIGNAR BLOQUES
+
+            uint32_t cant_bloques_necesarios = (fcb_a_truncar_tamanio - nuevo_tamanio_archivo) / fs->block_size;
+
+            if (list_size(fcb_a_truncar->bloques) == 0) {
+                // funcion para asignar el primer puntero directo
+            }
+
+            for (uint32_t i = 0; i < cant_bloques_necesarios; i++) {
+                uint32_t bloque_nuevo = 0; // hacer funcion obtener_bloque()
+                list_add(fcb_a_truncar->bloques, &bloque_nuevo);
+            }
 
             fcb_a_truncar->tamanio_archivo = string_itoa(nuevo_tamanio_archivo);
             config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", string_itoa(nuevo_tamanio_archivo));
             config_save(fcb_a_truncar->fcb_config);
+
         }
 
         truncado_ok = 1;
@@ -178,6 +210,8 @@ int truncar_archivo(char* nombre_archivo, uint32_t nuevo_tamanio_archivo, t_file
 
     return truncado_ok;
 }
+
+/*------------------------------------------------------------------------- F_CREATE ----------------------------------------------------------------------------- */
 
 int crear_archivo(char* nombre_archivo, t_filesystem* fs) {
 
@@ -192,6 +226,8 @@ int crear_archivo(char* nombre_archivo, t_filesystem* fs) {
 
     return resultado;
 }
+
+/*------------------------------------------------------------------------- F_OPEN ----------------------------------------------------------------------------- */
 
 int abrir_archivo(char* nombre_archivo, t_filesystem* fs) {
     
@@ -225,10 +261,11 @@ int buscar_archivo(char* nombre_archivo) {
     return encontrado;
 }
 
+/*------------------------------------------------------------------------- ESPERAR KERNEL ----------------------------------------------------------------------------- */
+
 int fs_escuchando_en(int server_fs, t_filesystem* fs) {
 
     pthread_t hilo;
-    log_info(fs->logger, "Esperando a KERNEL...");
     int socket_kernel = esperar_cliente(server_fs);
     
     fs->socket_kernel = socket_kernel;
