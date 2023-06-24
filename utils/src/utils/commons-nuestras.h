@@ -23,4 +23,8 @@ void set_timespec(struct timespec* timespec);
 double obtener_diferencial_de_tiempo_en_milisegundos(struct timespec end, struct timespec start);
 bool es_el_ultimo_elemento(t_list* lista, t_link_element* elemento);
 
+void inicio_kernel();
+void inicio_cpu();
+
+
 #endif

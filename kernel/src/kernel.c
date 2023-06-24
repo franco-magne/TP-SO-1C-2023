@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
     tablaGlobalDeArchivosAbiertos = list_create();
     nextPid++;
     pthread_mutex_init(&nextPidMutex, NULL);
-
+   inicio_kernel();
    kernelConfig = kernel_config_initializer(kernelConfigPath);
    cantidad_de_recursos = size_recurso_list(kernel_config_get_recurso(kernelConfig));
    recursoConfig = iniciar_estructuras_de_recursos(cantidad_de_recursos, kernel_config_get_instancias(kernelConfig), kernel_config_get_recurso(kernelConfig));

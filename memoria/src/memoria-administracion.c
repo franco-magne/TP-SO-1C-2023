@@ -165,7 +165,10 @@ void administrar_nuevo_segmento(Segmento* nuevoSegmento){
 
     if( list_is_empty(listaDeHuecosLibres) ){
         // Hay que hacer compactacion
-        
+
+        iniciar_compactacion();
+        log_info(memoriaLogger, "SE INICIA LA COMPACTACION DE LA MEMORIA, EL SEGMENTO NO SE AÑADE EN ESTE CASO");
+
     } else {
         
         administrar_primer_hueco_libre(listaDeHuecosLibres, nuevoSegmento);
@@ -266,4 +269,45 @@ void liberar_tabla_segmentos(int pid){
     list_destroy(tablaDeSegmentoAELiminar);
 }
 
+bool el_limite_del_segmento_anterior_es_igual_base_segmento_actual(Segmento* segmentoActual,Segmento* segmentoAnterior ){
 
+return segmentoAnterior->limite == segmentoActual->base;
+}
+
+bool es_el_ultimo_segmento_lista(int index){
+    return index+1 >= list_size(listaDeSegmentos);
+}
+
+void iniciar_compactacion(){
+    Segmento* segmentoActual;
+    Segmento* segmentoAnterior;
+    for(int i = 1; i< list_size(listaDeSegmentos); i++){
+        segmentoActual = list_get(listaDeSegmentos,i);
+
+        segmentoAnterior = list_get(listaDeSegmentos, i - 1);
+            
+        log_info(memoriaLogger, "<%i>", i);
+        if( es_el_ultimo_segmento_lista(i) ){
+            segmento_set_tamanio(segmentoActual, segmento_get_tamanio(segmentoActual) + ( segmento_get_base(segmentoActual) - segmento_get_limite(segmentoAnterior) ) );
+            segmento_set_base(segmentoActual,segmento_get_limite(segmentoAnterior) );
+            list_replace(listaDeSegmentos,i,segmentoActual);
+            log_info(memoriaLogger,"Entre UCA");
+        } else {
+            if(segmento_anterior_esta_libre(i) == 0){
+                segmento_set_base(segmentoActual, segmento_get_base(segmentoAnterior));
+                segmento_set_limite(segmentoActual,segmento_get_limite(segmentoActual) - segmento_get_tamanio(segmentoAnterior) );
+                list_replace(listaDeSegmentos,i-1,segmentoActual);
+                list_remove(listaDeSegmentos,i);
+                log_info(memoriaLogger,"Entre OCA");
+                i=i-1;
+            } else if(!el_limite_del_segmento_anterior_es_igual_base_segmento_actual(segmentoActual,segmentoAnterior )){
+                segmento_set_limite(segmentoActual, segmento_get_limite(segmentoActual) - (segmento_get_base(segmentoActual) - segmento_get_limite(segmentoAnterior) ) );
+                segmento_set_base(segmentoActual, segmento_get_limite(segmentoAnterior));
+                list_replace(listaDeSegmentos,i,segmentoActual);
+                log_info(memoriaLogger,"Entre ACA");
+            }
+
+        } 
+    }
+
+}
