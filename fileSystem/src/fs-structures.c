@@ -15,7 +15,7 @@ void crear_superbloque_dat(t_filesystem* fs, t_config* superbloque) {
     if (creado == -1) {
         log_error(fs->logger, "Error al crear el superbloque.dat");
     } else {
-        log_info(fs->logger, "Tenemos superbloque.dat ok.");
+        log_info(fs->logger, "Superbloque creado correctamente");
     }
 
 }
@@ -28,8 +28,8 @@ void levantar_bitmap(t_filesystem* fs) {
 
     if (bitmap_file == NULL) {
         crear_bitmap(fs);
-    } else {
-        log_info(fs->logger, "Levantamos el bitmap ya creado.");  
+    } else {        
+        abrir_bitmap(fs);
         fclose(bitmap_file);
     }
 
@@ -45,7 +45,7 @@ void crear_bitmap(t_filesystem* fs) {
         exit(1);
     }
 
-    uint32_t size_bitarray = ceil(fs->block_count / 8); // Redondea hacia arriba
+    uint32_t size_bitarray = ceil(fs->block_count / 8);
 
     if (ftruncate(fd_bitmap, size_bitarray) == -1) {
         log_info(fs->logger, "Error al setear el tamaño del bitmap. %s", strerror(errno));
@@ -54,10 +54,10 @@ void crear_bitmap(t_filesystem* fs) {
 
     map = mmap(NULL, size_bitarray, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bitmap, 0);
     if (map == MAP_FAILED) {
-        log_error(fs->logger, "Fallo en el mmap. %s", strerror(errno));
+        log_error(fs->logger, "Fallo en el mmap del bitmap %s", strerror(errno));
         exit(1);
     } else {
-        log_info(fs->logger, "Tenemos bitmap ok.");
+        log_info(fs->logger, "Bitmap creado correctamente");
     }
 
     memset(map, 0, size_bitarray); // Seteo en cero a todo el map
@@ -75,6 +75,28 @@ void crear_bitmap(t_filesystem* fs) {
 
 }
 
+void abrir_bitmap(t_filesystem* fs) {
+
+    fd_bitmap = open(fs->bitmap_path, O_RDWR, S_IRWXU | S_IRWXG | S_IRWXO);
+    if (fd_bitmap == -1) {
+        log_error(fs->logger, "Error al abrir el archivo de bitmap. %s", strerror(errno));
+        exit(1);
+    }
+
+    uint32_t size_bitarray = ceil(fs->block_count / 8);
+
+    map = mmap(NULL, size_bitarray, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bitmap, 0);
+    if (map == MAP_FAILED) {
+        log_error(fs->logger, "Fallo en el mmap bitmap %s", strerror(errno));
+        exit(1);
+    } else {
+        log_info(fs->logger, "Abrimos el bitmap ya creado");
+    }
+
+    bitmap = bitarray_create(map, size_bitarray);
+
+}
+
 /*------------------------------------------------------------------------- ARCHIVO DE BLOQUES ----------------------------------------------------------------------------- */
 
 void levantar_archivo_de_bloques(t_filesystem* fs) {
@@ -84,16 +106,13 @@ void levantar_archivo_de_bloques(t_filesystem* fs) {
     if (bloques_file == NULL) {
         crear_archivo_de_bloques(fs);
     } else {
-        log_info(fs->logger, "Levantamos el archivo de bloques ya creado.");
+        abrir_archivo_de_bloques(fs);
         fclose(bloques_file);
     }
 
 }
 
 void crear_archivo_de_bloques(t_filesystem* fs) {
-
-    // MAS DATA: EL BITMAP SE CORRESPONDE CON EL ARCHIVO DE BLOQUES Y ES UN SOLO BITMAP PARA TODO EL FYLESYSTEM.
-    // LOS ARCHIVOS QUE ENTREN A FYLESYSTEM ENTRAN COMO .CONFIG
 
     fd_bloques = open(fs->bloques_path, O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO); 
     if (fd_bloques == -1) {
@@ -110,29 +129,51 @@ void crear_archivo_de_bloques(t_filesystem* fs) {
 
     map_bloques = mmap(NULL, size, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bloques, 0);
     if (map_bloques == MAP_FAILED) {
-        log_error(fs->logger, "Fallo en el mmap. %s", strerror(errno));
+        log_error(fs->logger, "Fallo en el mmap del archivo de bloques %s", strerror(errno));
         exit(1);
     } else {
-        log_info(fs->logger, "Tenemos archivo de bloques ok.");
+        log_info(fs->logger, "Archivo de bloques creado correctamente");
     }
 
 }
 
-uint32_t* buscar_bloque_libre(t_filesystem* fs, uint32_t* bloque_filesystem) {
+void abrir_archivo_de_bloques(t_filesystem* fs) {
 
-    uint32_t* bloque_libre;
-    int cant_bloques = fs->block_count / 8;
+    fd_bloques = open(fs->bloques_path, O_RDWR, S_IRWXU | S_IRWXG | S_IRWXO);
+    if (fd_bloques == -1) {
+        log_error(fs->logger, "Error al abrir el archivo de bloques. %s", strerror(errno));
+        exit(1);
+    }
 
-    for (uint32_t i = 0; i < cant_bloques; i++) {        
-        if (bitarray_test_bit(bitmap, i) != 1) { 
-            log_info(fs->logger, "Acceso a Bitmap - Bloque: <%d> - Estado: <%d>", i, bitarray_test_bit(bitmap, i));    
-            bloque_libre = &i;
-            bloque_filesystem = &i;
+    uint32_t size = fs->block_count * fs->block_size;
+
+    map_bloques = mmap(NULL, size, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bloques, 0);
+    if (map_bloques == MAP_FAILED) {
+        log_error(fs->logger, "Fallo en el mmap del archivo de bloques. %s", strerror(errno));
+        exit(1);
+    } else {
+        log_info(fs->logger, "Abrimos el archivo de bloques ya creado");
+    }
+
+}
+
+uint32_t buscar_bloque_libre(t_filesystem* fs, uint32_t* bloque_filesystem) {
+
+    uint32_t bloque_libre;
+    uint32_t cant_bloques = fs->block_count / 8;
+
+    for (uint32_t i = 0; i < cant_bloques; i++) {
+
+        if (bitarray_test_bit(bitmap, i) != 1) { // O SEA SI ES CERO, SI EL BLOQUE ESTA LIBRE
+            log_info(fs->logger, "\e[1;92mAcceso a Bitmap - Bloque: <%d> - Estado: <%d>\e[0m", i, bitarray_test_bit(bitmap, i));
+            bloque_libre = i;
+            *bloque_filesystem = i;
             bitarray_set_bit(bitmap, i);
-            log_info(fs->logger, "Acceso a Bitmap - Bloque: <%d> - Estado: <%d>", i, bitarray_test_bit(bitmap, i));
+            log_info(fs->logger, "\e[1;92mAcceso a Bitmap - Bloque: <%d> - Estado: <%d>\e[0m", i, bitarray_test_bit(bitmap, i));
 
             break;
         }
+
     }
 
     return bloque_libre;
@@ -140,9 +181,9 @@ uint32_t* buscar_bloque_libre(t_filesystem* fs, uint32_t* bloque_filesystem) {
 
 void liberar_bloque(t_filesystem* fs, uint32_t* bloque_a_liberar) {
 
-    log_info(fs->logger, "Acceso a Bitmap - Bloque: <%ld> - Estado: <%d>", (off_t)(*bloque_a_liberar), bitarray_test_bit(bitmap, (off_t)(*bloque_a_liberar)));
+    log_info( fs->logger, "\e[1;92mAcceso a Bitmap - Bloque: <%ld> - Estado: <%d>\e[0m", (off_t)(*bloque_a_liberar), bitarray_test_bit( bitmap, (off_t)(*bloque_a_liberar) ) );
     bitarray_clean_bit(bitmap, (off_t)(*bloque_a_liberar));
-    log_info(fs->logger, "Acceso a Bitmap - Bloque: <%ld> - Estado: <%d>", (off_t)(*bloque_a_liberar), bitarray_test_bit(bitmap, (off_t)(*bloque_a_liberar)));
+    log_info( fs->logger, "\e[1;92mAcceso a Bitmap - Bloque: <%ld> - Estado: <%d>\e[0m", (off_t)(*bloque_a_liberar), bitarray_test_bit( bitmap, (off_t)(*bloque_a_liberar) ) );
 
 }
 
@@ -159,34 +200,30 @@ t_fcb* crear_fcb(char* nombre_archivo, t_filesystem* fs) {
 
     fcbs_path = opendir("./fcbs");
     if (fcbs_path == NULL) {
-        log_error(fs->logger, "Error al abrir el path de fcbs. %s", strerror(errno));
+        log_error(fs->logger, "Error al abrir el path propio de fcbs. %s", strerror(errno));
         exit(1);
-    } else {
-        log_info(fs->logger, "FILESYSTEM accedio al directorio propio de FCBs.");
     }
 
     // BUSCO EL CONFIG QUE TENGA EL NOMBRE DE ARCHIVO SOLICITADO Y CREO UN FCB CON SUS DATOS
 
     while( (directorio = readdir(fcbs_path)) ) {
 
-        char* nombre_temporal = string_new();
         char *path_fcbs_config = string_new();
 	    string_append(&path_fcbs_config, "./fcbs/");
-	    string_append(&path_fcbs_config, directorio->d_name);
+	    string_append(&path_fcbs_config, directorio->d_name); // ------------------------------------------------------------------- VALGRIND MARCA ALGO EN ESTA LINEA                
 
-        t_config* config_aux = config_create(path_fcbs_config);
-
+        t_config* config_aux = config_create(path_fcbs_config); // ------------------------------------------------------------------- VALGRIND MARCA ALGO EN ESTA LINEA                
         if (config_aux == NULL) {
-            log_info(fs->logger, "NO existe esa ruta");
+            log_info(fs->logger, "Esta fallando la creacion del config");
         }
 
-        nombre_temporal = config_get_string_value(config_aux, "NOMBRE_ARCHIVO");
+        char* nombre_temporal = config_get_string_value(config_aux, "NOMBRE_ARCHIVO");
 
         if (strcmp(directorio->d_name, ".") == 0 || strcmp(directorio->d_name, "..") == 0) {
             continue;
         } else if (strcmp(nombre_temporal, nombre_archivo) == 0) {
-            fcb_nuevo->nombre_archivo = config_get_string_value(config_aux, "NOMBRE_ARCHIVO");
-            fcb_nuevo->tamanio_archivo = config_get_string_value(config_aux, "TAMANIO_ARCHIVO");
+            strcpy(fcb_nuevo->nombre_archivo, config_get_string_value(config_aux, "NOMBRE_ARCHIVO"));
+            strcpy(fcb_nuevo->tamanio_archivo, config_get_string_value(config_aux, "TAMANIO_ARCHIVO"));
             fcb_nuevo->puntero_directo = config_get_int_value(config_aux, "PUNTERO_DIRECTO");
             fcb_nuevo->puntero_indirecto = config_get_int_value(config_aux, "PUNTERO_INDIRECTO");
             fcb_nuevo->bloques = list_create();
@@ -199,8 +236,7 @@ t_fcb* crear_fcb(char* nombre_archivo, t_filesystem* fs) {
         } else {
             config_destroy(config_aux);
         }
-
-        free(nombre_temporal);
+        
         free(path_fcbs_config);
     }
 
@@ -223,8 +259,6 @@ t_fcb* crear_fcb_inexistente(char* nombre_archivo, t_filesystem* fs) {
     FILE * fd = fopen(nuevo_path, "w+");
     if (fd == NULL) {
         log_info(fs->logger, "El path del nuevo config esta mal. %s", strerror(errno));
-    } else {
-        log_info(fs->logger, "Un nuevo .config se creo en nuestro directorio.");
     }
 
     fprintf(fd, "NOMBRE_ARCHIVO=%s\n", nombre_archivo);
@@ -232,9 +266,14 @@ t_fcb* crear_fcb_inexistente(char* nombre_archivo, t_filesystem* fs) {
     fprintf(fd, "PUNTERO_DIRECTO=%u\n", 0);
     fprintf(fd, "PUNTERO_INDIRECTO=%u\n", 0);
 
+    size_t longitud_nombre_archivo = strlen(nombre_archivo);
+    size_t longitud_tamanio_archivo = strlen("0 ");
     t_fcb* fcb_nuevo = malloc(sizeof(t_fcb));
-    fcb_nuevo->nombre_archivo = nombre_archivo;
-    fcb_nuevo->tamanio_archivo = "0";
+
+    fcb_nuevo->nombre_archivo = malloc( (longitud_nombre_archivo + 1) * sizeof(char) );
+    strcpy(fcb_nuevo->nombre_archivo, nombre_archivo);
+    fcb_nuevo->tamanio_archivo = malloc( (longitud_tamanio_archivo + 1) * sizeof(char) );
+    strcpy(fcb_nuevo->tamanio_archivo, "0");
     fcb_nuevo->puntero_directo = 0;
     fcb_nuevo->puntero_indirecto = 0;    
 

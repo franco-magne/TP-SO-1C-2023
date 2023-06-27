@@ -40,11 +40,9 @@ int main() {
 
    int serverFS = iniciar_servidor(fs->ip_memoria, fs->puerto_escucha);
    log_info(fs->logger, "Servidor FILESYSTEM listo para recibir a KERNEL...");
-   //log_info(fs->logger, "Socket servidor: %d", serverFS);
    
-   while (fs_escuchando_en(serverFS, fs)); // Escucho a Kernel
+   while (fs_escuchando_en(serverFS, fs));
 
-   // ./bin/kernel.out kernel-config-inicial.config 
 
    config_destroy(fs_config);
    config_destroy(superbloque_config);
