@@ -21,6 +21,7 @@
 #include <commons/string.h>
 #include <commons/collections/list.h>
 
+
 /////////////////////// ESTRUCTURA PARA FILESYSTEM ////////////////////////
 
 typedef struct {
@@ -58,24 +59,46 @@ typedef struct {
 
 ////////////////////////// DEFINICION DE LAS FUNCIONES ////////////////
 
-void crear_superbloque_dat(t_filesystem*, t_config*);
-void cargar_t_filesystem(t_config*, t_config*, t_filesystem*);
-void levantar_bitmap(t_filesystem*);
-void crear_bitmap(t_filesystem*);
-void abrir_bitmap(t_filesystem*);
-void levantar_archivo_de_bloques(t_filesystem*);
-void crear_archivo_de_bloques(t_filesystem*);
-void abrir_archivo_de_bloques(t_filesystem*);
-t_fcb* crear_fcb(char*, t_filesystem*);
-t_fcb* crear_fcb_inexistente(char*, t_filesystem*);
 
-uint32_t buscar_bloque_libre(t_filesystem*, uint32_t*);
-void liberar_bloque(t_filesystem*, uint32_t*);
+////////////////////////// SUPERBLOQUE ////////////////
 
-void crear_fcb_config_en_el_path(t_config*, t_filesystem*, char*);
-char* concatenar(char*, char*, t_filesystem*);
+    void crear_superbloque_dat(t_filesystem*, t_config*);
 
-void crear_directorios(t_filesystem*);
-void cerrar_archivos();
+
+////////////////////////// BITMAP ////////////////
+
+    void levantar_bitmap(t_filesystem*);
+    void crear_bitmap(t_filesystem*);
+    void abrir_bitmap(t_filesystem*);
+
+
+////////////////////////// ARCHIVO DE BLOQUES ////////////////
+
+    void levantar_archivo_de_bloques(t_filesystem*);
+    void crear_archivo_de_bloques(t_filesystem*);
+    void abrir_archivo_de_bloques(t_filesystem*);
+    uint32_t buscar_bloque_libre(t_filesystem*, uint32_t*);
+    void liberar_bloque(t_filesystem*, uint32_t*);
+
+
+////////////////////////// FCB ////////////////
+
+    t_fcb* crear_fcb_inexistente(char*, t_filesystem*);
+
+
+////////////////////////// DIRECTORIO DEL FCB  ////////////////
+
+    void levantar_fcbs_del_directorio(t_filesystem*, t_list*);
+    int el_directorio_fcb_esta_vacio(t_filesystem*);
+    void crear_fcbs_del_directorio(t_filesystem*, t_list*);
+    void crear_directorios(t_filesystem*);
+
+
+////////////////////////// OTRAS ////////////////
+
+    void cargar_t_filesystem(t_config*, t_config*, t_filesystem*);
+    char* devolver_fcb_path_config(char*, char*);
+    void cerrar_archivos();
+
 
 #endif

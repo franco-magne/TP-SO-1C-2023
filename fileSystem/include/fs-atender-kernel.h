@@ -21,11 +21,30 @@
 
 ////////////////////////// DEFINICION DE LAS FUNCIONES ////////////////
 
-void atender_kernel(t_filesystem*);
-int fs_escuchando_en(int, t_filesystem*); 
-int buscar_archivo(char*);
-int crear_archivo(char*, t_filesystem*);
-int abrir_archivo(char*, t_filesystem*);
-int truncar_archivo(char*, uint32_t, t_filesystem*);
+
+////////////////////////// ATENDER KERNEL ////////////////
+
+    void atender_kernel(t_filesystem*);
+
+
+////////////////////////// F_OPEN ////////////////
+
+    int abrir_archivo(char*, t_filesystem*);
+
+
+////////////////////////// F_CREATE ////////////////
+
+    int crear_archivo(char*, t_filesystem*);
+
+
+////////////////////////// F_TRUNCATE ////////////////
+
+    int truncar_archivo(char*, uint32_t, t_filesystem*);
+
+
+////////////////////////// ESPERAR KERNEL ////////////////
+
+    int fs_escuchando_en(int, t_filesystem*);
+
 
 #endif

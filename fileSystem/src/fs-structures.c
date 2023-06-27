@@ -187,78 +187,16 @@ void liberar_bloque(t_filesystem* fs, uint32_t* bloque_a_liberar) {
 
 }
 
-/*------------------------------------------------------------------------- FCBS ----------------------------------------------------------------------------- */
-
-t_fcb* crear_fcb(char* nombre_archivo, t_filesystem* fs) {
-
-    DIR* fcbs_path;
-    int creado = 0;
-    struct dirent* directorio;
-    t_fcb* fcb_nuevo = malloc(sizeof(t_fcb));
-
-    // ABRO NUESTRA CARPETA QUE CONTIENE LOS FCBS.CONFIG
-
-    fcbs_path = opendir("./fcbs");
-    if (fcbs_path == NULL) {
-        log_error(fs->logger, "Error al abrir el path propio de fcbs. %s", strerror(errno));
-        exit(1);
-    }
-
-    // BUSCO EL CONFIG QUE TENGA EL NOMBRE DE ARCHIVO SOLICITADO Y CREO UN FCB CON SUS DATOS
-
-    while( (directorio = readdir(fcbs_path)) ) {
-
-        char *path_fcbs_config = string_new();
-	    string_append(&path_fcbs_config, "./fcbs/");
-	    string_append(&path_fcbs_config, directorio->d_name); // ------------------------------------------------------------------- VALGRIND MARCA ALGO EN ESTA LINEA                
-
-        t_config* config_aux = config_create(path_fcbs_config); // ------------------------------------------------------------------- VALGRIND MARCA ALGO EN ESTA LINEA                
-        if (config_aux == NULL) {
-            log_info(fs->logger, "Esta fallando la creacion del config");
-        }
-
-        char* nombre_temporal = config_get_string_value(config_aux, "NOMBRE_ARCHIVO");
-
-        if (strcmp(directorio->d_name, ".") == 0 || strcmp(directorio->d_name, "..") == 0) {
-            continue;
-        } else if (strcmp(nombre_temporal, nombre_archivo) == 0) {
-            strcpy(fcb_nuevo->nombre_archivo, config_get_string_value(config_aux, "NOMBRE_ARCHIVO"));
-            strcpy(fcb_nuevo->tamanio_archivo, config_get_string_value(config_aux, "TAMANIO_ARCHIVO"));
-            fcb_nuevo->puntero_directo = config_get_int_value(config_aux, "PUNTERO_DIRECTO");
-            fcb_nuevo->puntero_indirecto = config_get_int_value(config_aux, "PUNTERO_INDIRECTO");
-            fcb_nuevo->bloques = list_create();
-            fcb_nuevo->fcb_config = config_aux;
-
-            crear_fcb_config_en_el_path(config_aux, fs, nombre_archivo);
-            creado = 1;
-
-            log_info(fs->logger, "Fue creado un FCB con nombre %s", fcb_nuevo->nombre_archivo);
-        } else {
-            config_destroy(config_aux);
-        }
-        
-        free(path_fcbs_config);
-    }
-
-    if (!creado) {
-        fcb_nuevo = NULL;
-    }
-    
-    closedir(fcbs_path);    
-
-    return fcb_nuevo;
-}
+/*------------------------------------------------------------------------- FCB ----------------------------------------------------------------------------- */
 
 t_fcb* crear_fcb_inexistente(char* nombre_archivo, t_filesystem* fs) {
 
-    char* nuevo_path = string_new();
-	string_append(&nuevo_path, "./fcbs/");
-    string_append(&nuevo_path, nombre_archivo);
+    char* nuevo_path = devolver_fcb_path_config(fs->fcb_path, nombre_archivo);
     string_append(&nuevo_path, ".config");
 
     FILE * fd = fopen(nuevo_path, "w+");
     if (fd == NULL) {
-        log_info(fs->logger, "El path del nuevo config esta mal. %s", strerror(errno));
+        log_info(fs->logger, "Error en el path del directorio FCBs. %s", strerror(errno));
     }
 
     fprintf(fd, "NOMBRE_ARCHIVO=%s\n", nombre_archivo);
@@ -275,38 +213,120 @@ t_fcb* crear_fcb_inexistente(char* nombre_archivo, t_filesystem* fs) {
     fcb_nuevo->tamanio_archivo = malloc( (longitud_tamanio_archivo + 1) * sizeof(char) );
     strcpy(fcb_nuevo->tamanio_archivo, "0");
     fcb_nuevo->puntero_directo = 0;
-    fcb_nuevo->puntero_indirecto = 0;    
-
-    fclose(fd);
+    fcb_nuevo->puntero_indirecto = 0;        
 
     t_config* config_nuevo_file = config_create(nuevo_path);
     fcb_nuevo->fcb_config = config_nuevo_file;
     fcb_nuevo->bloques = list_create();
 
-    crear_fcb_config_en_el_path(config_nuevo_file, fs, nombre_archivo);
+    free(nuevo_path);
+    fclose(fd);
 
     return fcb_nuevo;
 }
 
-/*------------------------------------------------------------------------- CONFIG DEL FCB ----------------------------------------------------------------------------- */
+/*------------------------------------------------------------------------- DIRECTORIO DEL FCB ----------------------------------------------------------------------------- */
 
-void crear_fcb_config_en_el_path(t_config* config_fcb, t_filesystem* fs, char* nombre_archivo) {
+void levantar_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs) {
 
-    char* final_path = string_new();
-	string_append(&final_path, fs->fcb_path);
-	string_append(&final_path, "/");
-    string_append(&final_path, nombre_archivo);
-    string_append(&final_path, ".config");
-
-    int creado = config_save_in_file(config_fcb, final_path);
-
-    if (creado == -1) {
-        log_error(fs->logger, "Error al crear el config");
+    if (el_directorio_fcb_esta_vacio(fs)) {
+        log_info(fs->logger, "El directorio de FCBs esta vacio. No hay FCBs para levantar.");
     } else {
-        log_info(fs->logger, "Se creo el config en %s", final_path);
+        log_info(fs->logger, "Procedemos a levantar los FCBs del directorio");
+        crear_fcbs_del_directorio(fs, lista_fcbs);
+        log_info(fs->logger, "Creados los FCBs de los archivos cargados en el FileSystem");
     }
 
-    free(final_path);
+}
+
+int el_directorio_fcb_esta_vacio(t_filesystem* fs) {
+
+    DIR* dir = opendir(fs->fcb_path);
+    if (dir == NULL) {
+        log_info(fs->logger, "No se pudo abrir el directorio. %s", strerror(errno));
+        exit(1);
+    }
+
+    int contador = 0;
+    struct dirent* entrada;
+    
+    while ( (entrada = readdir(dir)) != NULL ) {
+        // IGNORO LAS ENTRADAS "." Y ".."
+        if (strcmp(entrada->d_name, ".") == 0 || strcmp(entrada->d_name, "..") == 0) {
+            continue;
+        }
+        contador++;
+    }
+
+    closedir(dir);
+
+    if (contador == 0) {
+        return 1;
+    } else {
+        return 0;
+    }
+
+}
+
+void crear_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs) {
+
+    DIR* directorio_fcbs;
+    struct dirent* entrada;
+    
+    // ABRO EL DIRECTORIO DE FCBs
+
+    directorio_fcbs = opendir(fs->fcb_path);
+    if (directorio_fcbs == NULL) {
+        log_error(fs->logger, "Error al abrir el directorio de FCBs. %s", strerror(errno));
+        exit(1);
+    }
+
+    // LEO LOS ARCHIVOS DEL DIRECTORIO Y CREO LOS FCBs A MEMORIA
+
+    while( (entrada = readdir(directorio_fcbs)) ) {
+
+        t_fcb* fcb_existente = malloc(sizeof(t_fcb));          
+
+        if (strcmp(entrada->d_name, ".") == 0 || strcmp(entrada->d_name, "..") == 0) {
+            continue;
+        } else {
+
+            char* path_fcb_config = devolver_fcb_path_config(fs->fcb_path, entrada->d_name);  
+
+            t_config* config_aux = config_create(path_fcb_config);
+            if (config_aux == NULL) {
+                log_info(fs->logger, "Esta fallando la creacion del config. %s", strerror(errno));
+            }
+
+            size_t longitud_nombre_archivo = strlen( config_get_string_value(config_aux, "NOMBRE_ARCHIVO") );
+            size_t longitud_tamanio_archivo = strlen( config_get_string_value(config_aux, "TAMANIO_ARCHIVO") );
+
+            fcb_existente->nombre_archivo = malloc( (longitud_nombre_archivo + 1) * sizeof(char) );
+            strcpy( fcb_existente->nombre_archivo, config_get_string_value(config_aux, "NOMBRE_ARCHIVO") );
+            fcb_existente->tamanio_archivo = malloc( (longitud_tamanio_archivo + 1) * sizeof(char) );
+            strcpy( fcb_existente->tamanio_archivo, config_get_string_value(config_aux, "TAMANIO_ARCHIVO") );
+            fcb_existente->puntero_directo = config_get_int_value(config_aux, "PUNTERO_DIRECTO");
+            fcb_existente->puntero_indirecto = config_get_int_value(config_aux, "PUNTERO_INDIRECTO");
+
+            // HACER FUNCION QUE RECUPERA EL BLOQUE DE PUNTEROS
+
+            fcb_existente->fcb_config = config_aux;
+
+            log_info(fs->logger, "FCB levantado del directorio");
+            log_info(fs->logger, " ---> Nombre: %s", fcb_existente->nombre_archivo);
+            log_info(fs->logger, " ---> Tamanio: %s", fcb_existente->tamanio_archivo);
+            log_info(fs->logger, " ---> Puntero directo: %d", fcb_existente->puntero_directo);
+            log_info(fs->logger, " ---> Puntero indirecto: %d", fcb_existente->puntero_indirecto);
+
+            free(path_fcb_config);
+        }
+
+        list_add(lista_fcbs, fcb_existente);        
+    }
+
+    log_info(fs->logger, "Cantidad de FCBs levantados del directorio: %d", list_size(lista_fcbs));
+
+    closedir(directorio_fcbs);
 }
 
 void crear_directorios(t_filesystem* fs) {
@@ -340,20 +360,17 @@ void cargar_t_filesystem(t_config* config, t_config* sb_config, t_filesystem* fs
 
 }
 
+char* devolver_fcb_path_config(char* path_fcbs, char* nombre_archivo) {
+	
+    char *path_fcbs_config = string_new();
+    string_append(&path_fcbs_config, path_fcbs);
+    string_append(&path_fcbs_config, "/");
+    string_append(&path_fcbs_config, nombre_archivo);
+
+	return path_fcbs_config;
+}
+
 void cerrar_archivos() {
     close(fd_bloques);
     close(fd_bitmap);
-}
-
-char* concatenar(char* str1, char* str2, t_filesystem* fs) {
-	char* new_str;
-	if ((new_str = malloc(strlen(str1) + strlen(str2) + 1)) != NULL) {
-		new_str[0] = '\0';
-		strcat(new_str, str1);
-		strcat(new_str, str2);
-	} else {
-		log_error(fs->logger, "Error al concatenar");
-	}
-
-	return new_str;
 }

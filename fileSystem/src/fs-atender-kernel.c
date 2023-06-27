@@ -9,20 +9,22 @@ void atender_kernel(t_filesystem* fs) {
     int operacion_OK = 0;
     lista_fcbs = list_create();
     
-    
-    
-    crear_archivo("Testeando", fs);
-    //abrir_archivo("RecuperatorioSO", fs);
+    // PARA PRUEBAS RAPIDAS
+    /* 
+        truncar_archivo("Testeando", 256, fs);
+        operacion_OK = truncar_archivo("Testeando", 192, fs);
+        if (operacion_OK) {
+            log_info(fs->logger, "Truncado ok");
+        } else {
+            log_error(fs->logger, "Algo feo paso");
+        }
 
-    
-    operacion_OK = truncar_archivo("Testeando", 256, fs);
-    if (operacion_OK) {
-        log_info(fs->logger, "Truncado ok");
-    } else {
-        log_error(fs->logger, "Algo feo paso");
-    }
-    
-    
+        crear_archivo("otroEjemplo", fs);
+        crear_archivo("probando", fs);
+        abrir_archivo("otroEjemplo", fs);
+    */
+
+    levantar_fcbs_del_directorio(fs, lista_fcbs);
 
     while (fs->socket_kernel != -1) {
         
@@ -41,26 +43,12 @@ void atender_kernel(t_filesystem* fs) {
 
                 log_info(fs->logger, "Recibo operacion F_OPEN <%s> de KERNEL", nombre_archivo_open);
 
-                if (buscar_archivo(nombre_archivo_open)) {
-                    // CASO: EL ARCHIVO YA EXISTE, TIENE SU FCB CREADO
-
-                    log_info(fs->logger, "El FCB ya habia sido creado.");
-                    log_info(fs->logger, "\e[1;92mAbrir archivo: <%s>\e[0m", nombre_archivo_open);
+                operacion_OK = abrir_archivo(nombre_archivo_open, fs);
+                if (operacion_OK) {
                     stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO EXISTE Y LO AGREGUE A SU TABLA GLOBAL
-
                 } else {
-
-                    operacion_OK = abrir_archivo(nombre_archivo_open, fs);
-                    if (operacion_OK) {
-                        // CASO: EL ARCHIVO NO EXISTE EN NUESTRO DIRECTORIO Y HAY QUE CREARLO PARA ABRIRLO
-
-                        log_info(fs->logger, "\e[1;92mAbrir archivo: <%s>\e[0m", nombre_archivo_open);
-                        stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO EXISTE Y LO AGREGUE A SU TABLA GLOBAL
-                    } else {
-                        // CASO: NO EXISTE ESE ARCHIVO. TIENE QUE SOLICITAR CREARLO PARA AGREGARLO A NUESTRO DIRECTORIO
-
-                        stream_send_empty_buffer(fs->socket_kernel, HEADER_f_create);
-                    }
+                    log_info(fs->logger, "El archivo no existe. Solicite crearlo."); // NO EXISTE ESE ARCHIVO. TIENE QUE SOLICITAR CREARLO PARA AGREGARLO AL DIRECTORIO DE FCBs
+                    stream_send_empty_buffer(fs->socket_kernel, HEADER_f_create);                
                 }
 
                 free(nombre_archivo_open);
@@ -80,15 +68,10 @@ void atender_kernel(t_filesystem* fs) {
 
                 operacion_OK = crear_archivo(nombre_archivo_create, fs);
                 if (operacion_OK) {
-
-                    log_info(fs->logger, "\e[1;92mCrear archivo: <%s>\e[0m", nombre_archivo_create);
                     stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue);
-
                 } else {
-
                     log_info(fs->logger, "Error al crear el nuevo archivo.");
                     stream_send_empty_buffer(fs->socket_kernel, HEADER_error);
-
                 }
 
                 free(nombre_archivo_create);
@@ -151,6 +134,56 @@ void atender_kernel(t_filesystem* fs) {
     
     printf("Hubo una desconexion");
     return;
+}
+
+/*------------------------------------------------------------------------- F_OPEN ----------------------------------------------------------------------------- */
+
+int abrir_archivo(char* nombre_archivo_open, t_filesystem* fs) {
+
+    int encontrado = 0;
+    int size_lista_fcbs = list_size(lista_fcbs);
+    
+    for (int i = 0; i < size_lista_fcbs; i++) {
+
+        t_fcb* fcb_aux = list_get(lista_fcbs, i);
+
+        if (strcmp(fcb_aux->nombre_archivo, nombre_archivo_open) == 0) {
+
+            log_info(fs->logger, "\e[1;92mAbrir archivo: <%s>\e[0m", nombre_archivo_open);
+            log_info(fs->logger, "Datos del FCB:");
+            log_info(fs->logger, " ---> Nombre: %s", fcb_aux->nombre_archivo);
+            log_info(fs->logger, " ---> Tamanio: %s", fcb_aux->tamanio_archivo);
+            log_info(fs->logger, " ---> Puntero directo: %d", fcb_aux->puntero_directo);
+            log_info(fs->logger, " ---> Puntero indirecto: %d", fcb_aux->puntero_indirecto);
+
+            encontrado = 1;
+        }
+    }
+
+    return encontrado;
+}
+
+/*------------------------------------------------------------------------- F_CREATE ----------------------------------------------------------------------------- */
+
+int crear_archivo(char* nombre_archivo_create, t_filesystem* fs) {
+
+    int resultado = 0;
+    t_fcb* fcb_nuevo = crear_fcb_inexistente(nombre_archivo_create, fs);
+
+    if (fcb_nuevo != NULL) {
+    
+        log_info(fs->logger, "\e[1;92mCrear archivo: <%s>\e[0m", nombre_archivo_create);
+        log_info(fs->logger, "Datos del FCB:");
+        log_info(fs->logger, " ---> Nombre: %s", fcb_nuevo->nombre_archivo);
+        log_info(fs->logger, " ---> Tamanio: %s", fcb_nuevo->tamanio_archivo);
+        log_info(fs->logger, " ---> Puntero directo: %d", fcb_nuevo->puntero_directo);
+        log_info(fs->logger, " ---> Puntero indirecto: %d", fcb_nuevo->puntero_indirecto);
+
+        list_add(lista_fcbs, fcb_nuevo);
+        resultado = 1;        
+    }
+
+    return resultado;
 }
 
 /*------------------------------------------------------------------------- F_TRUNCATE ----------------------------------------------------------------------------- */
@@ -216,10 +249,7 @@ int truncar_archivo(char* nombre_archivo, uint32_t nuevo_tamanio_archivo, t_file
             uint32_t cant_bloques_necesarios = (nuevo_tamanio_archivo - fcb_a_truncar_tamanio) / fs->block_size;
 
             if (list_size(fcb_a_truncar->bloques) == 0) {
-                uint32_t puntero_directo_inicial = buscar_bloque_libre(fs, &bloque_filesystem);
-
-                log_info(fs->logger, "Puntero directo es %d", puntero_directo_inicial );
-                
+                uint32_t puntero_directo_inicial = buscar_bloque_libre(fs, &bloque_filesystem);        
                 list_add(fcb_a_truncar->bloques, &puntero_directo_inicial);                
                 fcb_a_truncar->puntero_directo = puntero_directo_inicial; // ------------------------------------------------------------------- VALGRIND MARCA ALGO EN ESTA LINEA                
                 config_set_value( fcb_a_truncar->fcb_config, "PUNTERO_DIRECTO", string_itoa( fcb_a_truncar->puntero_directo )) ; // ------------------------------------------------------------------- VALGRIND MARCA ALGO EN ESTA LINEA
@@ -261,61 +291,6 @@ int truncar_archivo(char* nombre_archivo, uint32_t nuevo_tamanio_archivo, t_file
     return truncado_ok;
 }
 
-/*------------------------------------------------------------------------- F_CREATE ----------------------------------------------------------------------------- */
-
-int crear_archivo(char* nombre_archivo, t_filesystem* fs) {
-
-    int resultado = 0;
-    t_fcb* fcb_nuevo = crear_fcb_inexistente(nombre_archivo, fs);
-
-    if (fcb_nuevo != NULL) {
-        resultado = 1;
-        list_add(lista_fcbs, fcb_nuevo);
-    }     
-
-    return resultado;
-}
-
-/*------------------------------------------------------------------------- F_OPEN ----------------------------------------------------------------------------- */
-
-int abrir_archivo(char* nombre_archivo, t_filesystem* fs) {
-    
-    int resultado = 0;
-    t_fcb* fcb_nuevo = crear_fcb(nombre_archivo, fs);
-
-    if (fcb_nuevo != NULL) {
-        resultado = 1;
-        list_add(lista_fcbs, fcb_nuevo);
-
-        //log_info(fs->logger, "Nombre: %s", fcb_nuevo->nombre_archivo);
-        //log_info(fs->logger, "Tamanio: %s", fcb_nuevo->tamanio_archivo);
-        //log_info(fs->logger, "Puntero directo: %d", fcb_nuevo->puntero_directo);
-        //log_info(fs->logger, "Puntero inderecto: %d", fcb_nuevo->puntero_indirecto);
-
-        //log_info(fs->logger, "Cantidad fcbs en lista: %d", list_size(lista_fcbs));
-    }     
-
-    return resultado;
-}
-
-int buscar_archivo(char* nombre_archivo) {
-
-    int encontrado = 0;
-    int size_lista_fcbs = list_size(lista_fcbs);
-    
-    for (int i = 0; i < size_lista_fcbs; i++) {
-
-        t_fcb* fcb_aux;
-        fcb_aux = list_get(lista_fcbs, i);
-
-        if (strcmp(fcb_aux->nombre_archivo, nombre_archivo) == 0) {
-            encontrado = 1;
-        }
-    }
-
-    return encontrado;
-}
-
 /*------------------------------------------------------------------------- ESPERAR KERNEL ----------------------------------------------------------------------------- */
 
 int fs_escuchando_en(int server_fs, t_filesystem* fs) {
@@ -336,9 +311,3 @@ int fs_escuchando_en(int server_fs, t_filesystem* fs) {
 
     return 0;
 }
-
-    /*
-    lista_bloques_actualizada = list_take_and_remove(fcb_a_truncar->bloques, cant_bloques_a_liberar); // QUITO LA CANT BLOQUES A LIBERAR DE LA DEL FCB Y LO GUARDO EN UNA NUEVA LISTA
-    list_clean(fcb_a_truncar->bloques); // VACIO LA LISTA DE BLOQUES DEL FCB
-    list_add_all(fcb_a_truncar->bloques, lista_bloques_actualizada); // COPIO LA NUEVA LISTA CON LOS BLOQUES LIBERADOS A LA PROPIA DEL FCB
-    */
