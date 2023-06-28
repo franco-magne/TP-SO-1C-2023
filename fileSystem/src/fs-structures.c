@@ -13,7 +13,7 @@ void crear_superbloque_dat(t_filesystem* fs, t_config* superbloque) {
     int creado = config_save_in_file(superbloque, fs->superbloque_path);
 
     if (creado == -1) {
-        log_error(fs->logger, "Error al crear el superbloque.dat");
+        log_error(fs->logger, "Error al crear el superbloque.dat. %s", strerror(errno));
     } else {
         log_info(fs->logger, "Superbloque creado correctamente");
     }
@@ -87,7 +87,7 @@ void abrir_bitmap(t_filesystem* fs) {
 
     map = mmap(NULL, size_bitarray, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bitmap, 0);
     if (map == MAP_FAILED) {
-        log_error(fs->logger, "Fallo en el mmap bitmap %s", strerror(errno));
+        log_error(fs->logger, "Fallo en el mmap bitmap. %s", strerror(errno));
         exit(1);
     } else {
         log_info(fs->logger, "Abrimos el bitmap ya creado");
@@ -157,17 +157,15 @@ void abrir_archivo_de_bloques(t_filesystem* fs) {
 
 }
 
-uint32_t buscar_bloque_libre(t_filesystem* fs, uint32_t* bloque_filesystem) {
+void buscar_bloque_libre(t_filesystem* fs, uint32_t* bloque_libre) {
 
-    uint32_t bloque_libre;
     uint32_t cant_bloques = fs->block_count / 8;
 
     for (uint32_t i = 0; i < cant_bloques; i++) {
 
         if (bitarray_test_bit(bitmap, i) != 1) { // O SEA SI ES CERO, SI EL BLOQUE ESTA LIBRE
             log_info(fs->logger, "\e[1;92mAcceso a Bitmap - Bloque: <%d> - Estado: <%d>\e[0m", i, bitarray_test_bit(bitmap, i));
-            bloque_libre = i;
-            *bloque_filesystem = i;
+            *bloque_libre = i;
             bitarray_set_bit(bitmap, i);
             log_info(fs->logger, "\e[1;92mAcceso a Bitmap - Bloque: <%d> - Estado: <%d>\e[0m", i, bitarray_test_bit(bitmap, i));
 
@@ -176,7 +174,6 @@ uint32_t buscar_bloque_libre(t_filesystem* fs, uint32_t* bloque_filesystem) {
 
     }
 
-    return bloque_libre;
 }
 
 void liberar_bloque(t_filesystem* fs, uint32_t* bloque_a_liberar) {
@@ -225,6 +222,38 @@ t_fcb* crear_fcb_inexistente(char* nombre_archivo, t_filesystem* fs) {
     return fcb_nuevo;
 }
 
+void mostrar_info_fcb(t_fcb* fcb_a_mostrar, t_log* logger) {
+
+    log_info(logger, " ---> Nombre: %s", fcb_a_mostrar->nombre_archivo);
+    log_info(logger, " ---> Tamanio: %s", fcb_a_mostrar->tamanio_archivo);
+    log_info(logger, " ---> Puntero directo: %d", fcb_a_mostrar->puntero_directo);
+    log_info(logger, " ---> Puntero indirecto: %d", fcb_a_mostrar->puntero_indirecto);    
+
+}
+
+void mostrar_bloques_fcb(t_list* bloques, t_log* logger) {
+
+    int size_bloques = list_size(bloques);
+    char* cadena_bloques = string_new();
+
+    if ( size_bloques > 0 ) {
+
+        for (int i = 0; i < size_bloques; i++) {
+            uint32_t* bloque = (uint32_t*)list_get(bloques, i);
+
+            string_append(&cadena_bloques, string_itoa( (int)(*bloque)) );
+            string_append(&cadena_bloques, "  ");
+        }
+
+        log_info(logger, " ---> Cant. bloques: %d", list_size(bloques));
+        log_info(logger, " ---> Bloques: %s", cadena_bloques);
+    } else {
+        log_info(logger, " ---> Cant. bloques: %d", list_size(bloques));
+    }
+
+    free(cadena_bloques);
+}
+
 /*------------------------------------------------------------------------- DIRECTORIO DEL FCB ----------------------------------------------------------------------------- */
 
 void levantar_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs) {
@@ -234,7 +263,6 @@ void levantar_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs) {
     } else {
         log_info(fs->logger, "Procedemos a levantar los FCBs del directorio");
         crear_fcbs_del_directorio(fs, lista_fcbs);
-        log_info(fs->logger, "Creados los FCBs de los archivos cargados en el FileSystem");
     }
 
 }
@@ -270,6 +298,7 @@ int el_directorio_fcb_esta_vacio(t_filesystem* fs) {
 
 void crear_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs) {
 
+    int contador = 1;
     DIR* directorio_fcbs;
     struct dirent* entrada;
     
@@ -285,7 +314,7 @@ void crear_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs) {
 
     while( (entrada = readdir(directorio_fcbs)) ) {
 
-        t_fcb* fcb_existente = malloc(sizeof(t_fcb));          
+        t_fcb* fcb_existente = malloc(sizeof(t_fcb));
 
         if (strcmp(entrada->d_name, ".") == 0 || strcmp(entrada->d_name, "..") == 0) {
             continue;
@@ -307,18 +336,21 @@ void crear_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs) {
             strcpy( fcb_existente->tamanio_archivo, config_get_string_value(config_aux, "TAMANIO_ARCHIVO") );
             fcb_existente->puntero_directo = config_get_int_value(config_aux, "PUNTERO_DIRECTO");
             fcb_existente->puntero_indirecto = config_get_int_value(config_aux, "PUNTERO_INDIRECTO");
-
-            // HACER FUNCION QUE RECUPERA EL BLOQUE DE PUNTEROS
-
+            
+            if ( atoi(fcb_existente->tamanio_archivo) >= fs->block_size ) {
+                // HACER FUNCION QUE RECUPERA EL BLOQUE DE PUNTEROS
+                // fcb_existente->bloques = list_create();
+            }
+            
+            fcb_existente->bloques = list_create();
             fcb_existente->fcb_config = config_aux;
 
-            log_info(fs->logger, "FCB levantado del directorio");
-            log_info(fs->logger, " ---> Nombre: %s", fcb_existente->nombre_archivo);
-            log_info(fs->logger, " ---> Tamanio: %s", fcb_existente->tamanio_archivo);
-            log_info(fs->logger, " ---> Puntero directo: %d", fcb_existente->puntero_directo);
-            log_info(fs->logger, " ---> Puntero indirecto: %d", fcb_existente->puntero_indirecto);
+            log_info(fs->logger, "%d) FCB levantado del directorio", contador);
+            mostrar_info_fcb(fcb_existente, fs->logger);
+            mostrar_bloques_fcb(fcb_existente->bloques, fs->logger);
 
             free(path_fcb_config);
+            contador++;
         }
 
         list_add(lista_fcbs, fcb_existente);        

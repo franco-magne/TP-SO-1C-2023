@@ -77,13 +77,15 @@ typedef struct {
     void levantar_archivo_de_bloques(t_filesystem*);
     void crear_archivo_de_bloques(t_filesystem*);
     void abrir_archivo_de_bloques(t_filesystem*);
-    uint32_t buscar_bloque_libre(t_filesystem*, uint32_t*);
+    void buscar_bloque_libre(t_filesystem*, uint32_t*);
     void liberar_bloque(t_filesystem*, uint32_t*);
 
 
 ////////////////////////// FCB ////////////////
 
     t_fcb* crear_fcb_inexistente(char*, t_filesystem*);
+    void mostrar_info_fcb(t_fcb*, t_log*);
+    void mostrar_bloques_fcb(t_list*, t_log*);
 
 
 ////////////////////////// DIRECTORIO DEL FCB  ////////////////

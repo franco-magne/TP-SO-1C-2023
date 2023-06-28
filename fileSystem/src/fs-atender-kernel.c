@@ -8,23 +8,31 @@ void atender_kernel(t_filesystem* fs) {
 
     int operacion_OK = 0;
     lista_fcbs = list_create();
+    levantar_fcbs_del_directorio(fs, lista_fcbs);
     
     // PARA PRUEBAS RAPIDAS
     /* 
-        truncar_archivo("Testeando", 256, fs);
-        operacion_OK = truncar_archivo("Testeando", 192, fs);
-        if (operacion_OK) {
-            log_info(fs->logger, "Truncado ok");
-        } else {
-            log_error(fs->logger, "Algo feo paso");
-        }
+        // 1) F_CREATE
+        crear_archivo("NotasSO", fs);
+        crear_archivo("NotasDDS", fs);
+        crear_archivo("NotasGDD", fs);
 
-        crear_archivo("otroEjemplo", fs);
-        crear_archivo("probando", fs);
-        abrir_archivo("otroEjemplo", fs);
+        // 2) F_OPEN
+        abrir_archivo("NotasSO", fs);
+        abrir_archivo("NotasDDS", fs);
+        abrir_archivo("NotasGDD", fs);
+
+        // 3) F_TRUNCATE
+        abrir_archivo("NotasSO", fs);
+        sleep(2);
+        truncar_archivo("NotasSO", 512, fs);
+        sleep(3);
+        abrir_archivo("NotasDDS", fs);
+        sleep(2);
+        truncar_archivo("NotasDDS", 384, fs);
+        sleep(3);
+        truncar_archivo("NotasSO", 256, fs);
     */
-
-    levantar_fcbs_del_directorio(fs, lista_fcbs);
 
     while (fs->socket_kernel != -1) {
         
@@ -92,16 +100,11 @@ void atender_kernel(t_filesystem* fs) {
                 log_info(fs->logger, "Recibo operacion F_TRUNCATE <%s, %d> de KERNEL", nombre_archivo_truncate, tamanio_archivo_truncate);
 
                 operacion_OK = truncar_archivo(nombre_archivo_truncate, tamanio_archivo_truncate, fs);
-                if (operacion_OK) {
-
-                    log_info(fs->logger, "\e[1;92mTruncar Archivo: <%s> - Tamaño: <%d>\e[0m", nombre_archivo_truncate, tamanio_archivo_truncate);
+                if (operacion_OK) {                    
                     stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO SE TRUNCO
-
                 } else {
-
                     log_info(fs->logger, "Error al truncar. Algo paso.");
                     stream_send_empty_buffer(fs->socket_kernel, HEADER_error); // FALLO EN EL TRUNCATE
-
                 }  
 
                 free(nombre_archivo_truncate);
@@ -151,10 +154,8 @@ int abrir_archivo(char* nombre_archivo_open, t_filesystem* fs) {
 
             log_info(fs->logger, "\e[1;92mAbrir archivo: <%s>\e[0m", nombre_archivo_open);
             log_info(fs->logger, "Datos del FCB:");
-            log_info(fs->logger, " ---> Nombre: %s", fcb_aux->nombre_archivo);
-            log_info(fs->logger, " ---> Tamanio: %s", fcb_aux->tamanio_archivo);
-            log_info(fs->logger, " ---> Puntero directo: %d", fcb_aux->puntero_directo);
-            log_info(fs->logger, " ---> Puntero indirecto: %d", fcb_aux->puntero_indirecto);
+            mostrar_info_fcb(fcb_aux, fs->logger);
+            mostrar_bloques_fcb(fcb_aux->bloques, fs->logger);
 
             encontrado = 1;
         }
@@ -174,10 +175,8 @@ int crear_archivo(char* nombre_archivo_create, t_filesystem* fs) {
     
         log_info(fs->logger, "\e[1;92mCrear archivo: <%s>\e[0m", nombre_archivo_create);
         log_info(fs->logger, "Datos del FCB:");
-        log_info(fs->logger, " ---> Nombre: %s", fcb_nuevo->nombre_archivo);
-        log_info(fs->logger, " ---> Tamanio: %s", fcb_nuevo->tamanio_archivo);
-        log_info(fs->logger, " ---> Puntero directo: %d", fcb_nuevo->puntero_directo);
-        log_info(fs->logger, " ---> Puntero indirecto: %d", fcb_nuevo->puntero_indirecto);
+        mostrar_info_fcb(fcb_nuevo, fs->logger);
+        mostrar_bloques_fcb(fcb_nuevo->bloques, fs->logger);
 
         list_add(lista_fcbs, fcb_nuevo);
         resultado = 1;        
@@ -188,104 +187,137 @@ int crear_archivo(char* nombre_archivo_create, t_filesystem* fs) {
 
 /*------------------------------------------------------------------------- F_TRUNCATE ----------------------------------------------------------------------------- */
 
-int truncar_archivo(char* nombre_archivo, uint32_t nuevo_tamanio_archivo, t_filesystem* fs) {
+int truncar_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tamanio_archivo, t_filesystem* fs) {
 
     int truncado_ok;
     int pos_archivo_a_truncar = -1;
     int size_lista_fcbs = list_size(lista_fcbs);
     
+    // BUSCO LA POSICION EN LA QUE SE ENCUENTRA EL FCB A TRUNCAR DENTRO DE LA LISTA DE FCBs
+
     for (int i = 0; i < size_lista_fcbs; i++) {
 
         t_fcb* fcb_aux = list_get(lista_fcbs, i);
 
-        if (strcmp(fcb_aux->nombre_archivo, nombre_archivo) == 0) {
+        if (strcmp(fcb_aux->nombre_archivo, nombre_archivo_truncate) == 0) {
             pos_archivo_a_truncar = i;
         }
     }
 
+    // PROCEDO A HACER EL TRUNCATE
+
     if (pos_archivo_a_truncar == -1) {
         truncado_ok = 0; // NO SE ENCONTRO UN ARCHIVO CON ESE NOMBRE
     } else {        
-
+        
         t_fcb* fcb_a_truncar = list_get(lista_fcbs, pos_archivo_a_truncar);
-
         uint32_t fcb_a_truncar_tamanio = atoi(fcb_a_truncar->tamanio_archivo);
-        //int cant_bloques_actuales = fcb_a_truncar_tamanio / fs->block_size;
+        char* nuevo_tamanio_en_char = string_itoa(nuevo_tamanio_archivo);
+        size_t longitud_nueva = strlen( nuevo_tamanio_en_char );
 
         if (fcb_a_truncar_tamanio > nuevo_tamanio_archivo) {
 
             // CASO REDUCIR EL TAMANIO DEL ARCHIVO: TIENE QUE LIBERAR BLOQUES
 
             log_info(fs->logger, "Truncate resulta en REDUCIR. Tamanio actual es mayor al nuevo solicitado");
-            log_info(fs->logger, "BEFORE: Tengo %d bloques y tamanio %d", list_size(fcb_a_truncar->bloques), fcb_a_truncar_tamanio);
+            log_info(fs->logger, "FCB ANTES: ");
+            mostrar_info_fcb(fcb_a_truncar, fs->logger);
+            mostrar_bloques_fcb(fcb_a_truncar->bloques, fs->logger);
+            log_info(fs->logger, "Accedemos al bitmap y al archivo de bloques");
 
             int ultima_posicion_lista_bloques;
             uint32_t cant_bloques_a_liberar = (fcb_a_truncar_tamanio - nuevo_tamanio_archivo) / fs->block_size;
 
             for (uint32_t i = 0; i < cant_bloques_a_liberar; i++) {
+
                 ultima_posicion_lista_bloques = list_size(fcb_a_truncar->bloques) - 1;
                 uint32_t* bloque_a_liberar = (uint32_t*)list_get(fcb_a_truncar->bloques, ultima_posicion_lista_bloques);
 
                 liberar_bloque(fs, bloque_a_liberar);
                 list_remove(fcb_a_truncar->bloques, ultima_posicion_lista_bloques);
 
-                log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo, ultima_posicion_lista_bloques, (int)(*bloque_a_liberar));
+                log_info(fs->logger, "\e[1;92m---> Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo_truncate, ultima_posicion_lista_bloques, (int)(*bloque_a_liberar));
+            
+            }            
+
+            char* retorno_reducir = realloc(fcb_a_truncar->tamanio_archivo, (longitud_nueva + 1) * sizeof(char));      
+            if (retorno_reducir == NULL) {
+                log_error(fs->logger, "Error en el realloc. %s", strerror(errno));
+            } else {
+                fcb_a_truncar->tamanio_archivo = retorno_reducir;
+                strcpy(fcb_a_truncar->tamanio_archivo, nuevo_tamanio_en_char );
             }
 
-            strcpy(fcb_a_truncar->tamanio_archivo, string_itoa(nuevo_tamanio_archivo));
-            config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", fcb_a_truncar->tamanio_archivo);
-
+            config_set_value(fcb_a_truncar->fcb_config, "NOMBRE_ARCHIVO", fcb_a_truncar->nombre_archivo);
+            config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", fcb_a_truncar->tamanio_archivo);            
+            config_set_value(fcb_a_truncar->fcb_config, "PUNTERO_DIRECTO", string_itoa(fcb_a_truncar->puntero_directo) );
+            config_set_value(fcb_a_truncar->fcb_config, "PUNTERO_INDIRECTO", string_itoa(fcb_a_truncar->puntero_indirecto) );
             config_save(fcb_a_truncar->fcb_config);
-            log_info(fs->logger, "AFTER: Tengo %d bloques y tamanio %s", list_size(fcb_a_truncar->bloques), fcb_a_truncar->tamanio_archivo);
 
         } else {
 
             // CASO AMPLIAR EL TAMANIO DEL ARCHIVO: TIENE QUE ASIGNAR BLOQUES
 
             log_info(fs->logger, "Truncate resulta en AMPLIAR. Tamanio actual es menor al nuevo solicitado");
-            log_info(fs->logger, "BEFORE: Tengo %d bloques y tamanio %d", list_size(fcb_a_truncar->bloques), fcb_a_truncar_tamanio);
+            log_info(fs->logger, "FCB ANTES: ");
+            mostrar_info_fcb(fcb_a_truncar, fs->logger);
+            mostrar_bloques_fcb(fcb_a_truncar->bloques, fs->logger);
+            log_info(fs->logger, "Accedemos al bitmap y al archivo de bloques");
 
-            uint32_t bloque_filesystem;
+            uint32_t bloque_libre;
             uint32_t cant_bloques_necesarios = (nuevo_tamanio_archivo - fcb_a_truncar_tamanio) / fs->block_size;
 
             if (list_size(fcb_a_truncar->bloques) == 0) {
-                uint32_t puntero_directo_inicial = buscar_bloque_libre(fs, &bloque_filesystem);        
-                list_add(fcb_a_truncar->bloques, &puntero_directo_inicial);                
-                fcb_a_truncar->puntero_directo = puntero_directo_inicial; // ------------------------------------------------------------------- VALGRIND MARCA ALGO EN ESTA LINEA                
-                config_set_value( fcb_a_truncar->fcb_config, "PUNTERO_DIRECTO", string_itoa( fcb_a_truncar->puntero_directo )) ; // ------------------------------------------------------------------- VALGRIND MARCA ALGO EN ESTA LINEA
+
+                buscar_bloque_libre(fs, &bloque_libre);
+                uint32_t* primer_bloque = malloc(sizeof(uint32_t)); // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO
+                *primer_bloque = bloque_libre; // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO
+                list_add(fcb_a_truncar->bloques, primer_bloque);
+
+                fcb_a_truncar->puntero_directo = bloque_libre;
                 cant_bloques_necesarios--;
 
-                log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <1> - Bloque File System <%d>\e[0m", nombre_archivo, bloque_filesystem);
+                log_info(fs->logger, "\e[1;92m---> Acceso Bloque - Archivo: <%s> - Bloque Archivo: <1> - Bloque File System <%d>\e[0m", nombre_archivo_truncate, bloque_libre);
             }
 
             for (uint32_t i = 0; i < cant_bloques_necesarios; i++) {
                 
-                uint32_t bloque_nuevo = buscar_bloque_libre(fs, &bloque_filesystem);
+                buscar_bloque_libre(fs, &bloque_libre);
                 if (fcb_a_truncar->puntero_indirecto == 0) {
-                    fcb_a_truncar->puntero_indirecto = bloque_nuevo;
+                    fcb_a_truncar->puntero_indirecto = bloque_libre;
                 }
-                list_add(fcb_a_truncar->bloques, &bloque_nuevo);
 
-                log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo, list_size(fcb_a_truncar->bloques), bloque_filesystem);
+                uint32_t* nuevo_bloque = malloc(sizeof(uint32_t)); // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO
+                *nuevo_bloque = bloque_libre; // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO
+                list_add(fcb_a_truncar->bloques, nuevo_bloque);
+
+                log_info(fs->logger, "\e[1;92m---> Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo_truncate, list_size(fcb_a_truncar->bloques), bloque_libre);
             }
 
-            config_set_value(fcb_a_truncar->fcb_config, "PUNTERO_INDIRECTO", string_itoa( fcb_a_truncar->puntero_indirecto )); // ------------------------------------------------------------------- VALGRIND MARCA ALGO EN ESTA LINEA                
-
-            size_t longitud_nueva = strlen( string_itoa(nuevo_tamanio_archivo) );
-            void* retorno = realloc(fcb_a_truncar->tamanio_archivo, (longitud_nueva + 1) * sizeof(char));      
-            if (retorno == NULL) {
+            char* retorno_ampliar = realloc(fcb_a_truncar->tamanio_archivo, (longitud_nueva + 1) * sizeof(char));
+            if (retorno_ampliar == NULL) {
                 log_error(fs->logger, "Error en el realloc. %s", strerror(errno));
+            } else {
+                fcb_a_truncar->tamanio_archivo = retorno_ampliar;
+                strcpy(fcb_a_truncar->tamanio_archivo, nuevo_tamanio_en_char );
             }
-
-            strcpy(fcb_a_truncar->tamanio_archivo, string_itoa(nuevo_tamanio_archivo) ); // ------------------------------------------------------------------- VALGRIND MARCA ALGO EN ESTA LINEA                
-            config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", fcb_a_truncar->tamanio_archivo); // ------------------------------------------------------------------- VALGRIND MARCA ALGO EN ESTA LINEA                
-
+            
+            config_set_value(fcb_a_truncar->fcb_config, "NOMBRE_ARCHIVO", fcb_a_truncar->nombre_archivo);
+            config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", fcb_a_truncar->tamanio_archivo);
+            config_set_value( fcb_a_truncar->fcb_config, "PUNTERO_DIRECTO", string_itoa( (int)fcb_a_truncar->puntero_directo )) ;
+            config_set_value(fcb_a_truncar->fcb_config, "PUNTERO_INDIRECTO", string_itoa( (int)fcb_a_truncar->puntero_indirecto ));
             config_save(fcb_a_truncar->fcb_config);
-            log_info(fs->logger, "AFTER: Tengo %d bloques y tamanio %s", list_size(fcb_a_truncar->bloques), fcb_a_truncar->tamanio_archivo); // ------------------------------------------------------------------- VALGRIND MARCA ALGO EN ESTA LINEA                
 
         }
 
-        truncado_ok = 1;
+        log_info(fs->logger, "Salimos del bitmap y el archivo de bloques");
+        log_info(fs->logger, "\e[1;92mTruncar Archivo: <%s> - Tamaño: <%d>\e[0m", nombre_archivo_truncate, nuevo_tamanio_archivo);
+        log_info(fs->logger, "FCB DESPUES: ");
+        mostrar_info_fcb(fcb_a_truncar, fs->logger);
+        mostrar_bloques_fcb(fcb_a_truncar->bloques, fs->logger);
+
+        free(nuevo_tamanio_en_char);
+        truncado_ok = 1;        
     }
 
     return truncado_ok;

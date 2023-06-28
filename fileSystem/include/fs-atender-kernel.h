@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <pthread.h>
+#include <unistd.h>
 
 //////////////////////// BIBLOTECAS COMMONS /////////////////
 #include <commons/log.h>
