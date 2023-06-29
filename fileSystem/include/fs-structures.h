@@ -79,6 +79,7 @@ typedef struct {
     void abrir_archivo_de_bloques(t_filesystem*);
     void buscar_bloque_libre(t_filesystem*, uint32_t*);
     void liberar_bloque(t_filesystem*, uint32_t*);
+    t_list* recuperar_bloque_de_punteros(uint32_t, int, uint32_t);
 
 
 ////////////////////////// FCB ////////////////

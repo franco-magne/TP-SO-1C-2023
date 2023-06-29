@@ -49,13 +49,13 @@ void atender_kernel(t_filesystem* fs) {
                 stream_recv_buffer(fs->socket_kernel, buffer_nombre_archivo_open); // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
                 nombre_archivo_open = buffer_unpack_string(buffer_nombre_archivo_open); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
 
-                log_info(fs->logger, "Recibo operacion F_OPEN <%s> de KERNEL", nombre_archivo_open);
+                log_info(fs->logger, "\e[1;93mRecibo operacion F_OPEN <%s> de KERNEL\e[0m", nombre_archivo_open);
 
                 operacion_OK = abrir_archivo(nombre_archivo_open, fs);
                 if (operacion_OK) {
                     stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO EXISTE Y LO AGREGUE A SU TABLA GLOBAL
                 } else {
-                    log_info(fs->logger, "El archivo no existe. Solicite crearlo."); // NO EXISTE ESE ARCHIVO. TIENE QUE SOLICITAR CREARLO PARA AGREGARLO AL DIRECTORIO DE FCBs
+                    log_info(fs->logger, "El archivo no existe. Solicite crearlo"); // NO EXISTE ESE ARCHIVO. TIENE QUE SOLICITAR CREARLO PARA AGREGARLO AL DIRECTORIO DE FCBs
                     stream_send_empty_buffer(fs->socket_kernel, HEADER_f_create);                
                 }
 
@@ -72,7 +72,7 @@ void atender_kernel(t_filesystem* fs) {
                 stream_recv_buffer(fs->socket_kernel, buffer_nombre_archivo_create); // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
                 nombre_archivo_create = buffer_unpack_string(buffer_nombre_archivo_create); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
 
-                log_info(fs->logger, "Recibo operacion F_CREATE <%s> de KERNEL", nombre_archivo_create);
+                log_info(fs->logger, "\e[1;93mRecibo operacion F_CREATE <%s> de KERNEL\e[0m", nombre_archivo_create);
 
                 operacion_OK = crear_archivo(nombre_archivo_create, fs);
                 if (operacion_OK) {
@@ -97,7 +97,7 @@ void atender_kernel(t_filesystem* fs) {
                 nombre_archivo_truncate = buffer_unpack_string(bufferTruncate); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
                 buffer_unpack(bufferTruncate, &tamanio_archivo_truncate, sizeof(tamanio_archivo_truncate)); // DESERIALIZO EL TAMANIO DE ARCHIVO
 
-                log_info(fs->logger, "Recibo operacion F_TRUNCATE <%s, %d> de KERNEL", nombre_archivo_truncate, tamanio_archivo_truncate);
+                log_info(fs->logger, "\e[1;93mRecibo operacion F_TRUNCATE <%s, %d> de KERNEL\e[0m", nombre_archivo_truncate, tamanio_archivo_truncate);
 
                 operacion_OK = truncar_archivo(nombre_archivo_truncate, tamanio_archivo_truncate, fs);
                 if (operacion_OK) {                    
@@ -114,7 +114,7 @@ void atender_kernel(t_filesystem* fs) {
 
             case HEADER_f_read:
 
-                log_info(fs->logger, "Recibo operacion F_READ de KERNEL");
+                log_info(fs->logger, "\e[1;93mRecibo operacion F_READ < , , > de KERNEL\e[0m");
 
 
 
@@ -122,7 +122,7 @@ void atender_kernel(t_filesystem* fs) {
 
             case HEADER_f_write:
 
-                log_info(fs->logger, "Recibo operacion F_WRITE de KERNEL");
+                log_info(fs->logger, "\e[1;93mRecibo operacion F_WRITE < , , > de KERNEL\e[0m");
 
             break;
 
@@ -156,6 +156,7 @@ int abrir_archivo(char* nombre_archivo_open, t_filesystem* fs) {
             log_info(fs->logger, "Datos del FCB:");
             mostrar_info_fcb(fcb_aux, fs->logger);
             mostrar_bloques_fcb(fcb_aux->bloques, fs->logger);
+            log_info(fs->logger, "Archivo <%s> abierto correctamente", nombre_archivo_open);
 
             encontrado = 1;
         }
@@ -177,8 +178,9 @@ int crear_archivo(char* nombre_archivo_create, t_filesystem* fs) {
         log_info(fs->logger, "Datos del FCB:");
         mostrar_info_fcb(fcb_nuevo, fs->logger);
         mostrar_bloques_fcb(fcb_nuevo->bloques, fs->logger);
+        log_info(fs->logger, "Archivo <%s> creado correctamente", nombre_archivo_create);
 
-        list_add(lista_fcbs, fcb_nuevo);
+        list_add(lista_fcbs, fcb_nuevo); // Preguntar. Con esta linea estoy asumiendo que despues de crear el archivo tambien se esta abriendo
         resultado = 1;        
     }
 
@@ -270,10 +272,6 @@ int truncar_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tamanio_archiv
             if (list_size(fcb_a_truncar->bloques) == 0) {
 
                 buscar_bloque_libre(fs, &bloque_libre);
-                uint32_t* primer_bloque = malloc(sizeof(uint32_t)); // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO
-                *primer_bloque = bloque_libre; // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO
-                list_add(fcb_a_truncar->bloques, primer_bloque);
-
                 fcb_a_truncar->puntero_directo = bloque_libre;
                 cant_bloques_necesarios--;
 
@@ -315,6 +313,7 @@ int truncar_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tamanio_archiv
         log_info(fs->logger, "FCB DESPUES: ");
         mostrar_info_fcb(fcb_a_truncar, fs->logger);
         mostrar_bloques_fcb(fcb_a_truncar->bloques, fs->logger);
+        log_info(fs->logger, "Archivo <%s> truncado correctamente", nombre_archivo_truncate);
 
         free(nuevo_tamanio_en_char);
         truncado_ok = 1;        

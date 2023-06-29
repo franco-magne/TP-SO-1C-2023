@@ -3,7 +3,7 @@
 int fd_bitmap;
 int fd_bloques;
 void* map_bloques;
-void* map ;
+void* map_bitmap;
 t_bitarray* bitmap;
 
 /*------------------------------------------------------------------------- SUPERBLOQUE ----------------------------------------------------------------------------- */
@@ -52,22 +52,22 @@ void crear_bitmap(t_filesystem* fs) {
         exit(1);
     }
 
-    map = mmap(NULL, size_bitarray, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bitmap, 0);
-    if (map == MAP_FAILED) {
+    map_bitmap = mmap(NULL, size_bitarray, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bitmap, 0);
+    if (map_bitmap == MAP_FAILED) {
         log_error(fs->logger, "Fallo en el mmap del bitmap %s", strerror(errno));
         exit(1);
     } else {
         log_info(fs->logger, "Bitmap creado correctamente");
     }
 
-    memset(map, 0, size_bitarray); // Seteo en cero a todo el map
+    memset(map_bitmap, 0, size_bitarray); // Seteo en cero a todo el map
 
-    if (msync(map, size_bitarray, MS_SYNC) == -1) {
+    if (msync(map_bitmap, size_bitarray, MS_SYNC) == -1) {
         log_info(fs->logger, "Error al sincronizar el bitmap. %s", strerror(errno));
         exit(1);
     }
 
-    bitmap = bitarray_create(map, size_bitarray);
+    bitmap = bitarray_create(map_bitmap, size_bitarray);
 
     for (int i = 0; i < fs->block_count; i++) {
         bitarray_clean_bit(bitmap, i); // LLENO EL BITARRAY CON CEROS
@@ -85,15 +85,15 @@ void abrir_bitmap(t_filesystem* fs) {
 
     uint32_t size_bitarray = ceil(fs->block_count / 8);
 
-    map = mmap(NULL, size_bitarray, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bitmap, 0);
-    if (map == MAP_FAILED) {
+    map_bitmap = mmap(NULL, size_bitarray, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bitmap, 0);
+    if (map_bitmap == MAP_FAILED) {
         log_error(fs->logger, "Fallo en el mmap bitmap. %s", strerror(errno));
         exit(1);
     } else {
         log_info(fs->logger, "Abrimos el bitmap ya creado");
     }
 
-    bitmap = bitarray_create(map, size_bitarray);
+    bitmap = bitarray_create(map_bitmap, size_bitarray);
 
 }
 
@@ -184,6 +184,30 @@ void liberar_bloque(t_filesystem* fs, uint32_t* bloque_a_liberar) {
 
 }
 
+t_list* recuperar_bloque_de_punteros(uint32_t puntero_indirecto, int tamanio_archivo, uint32_t block_size) {
+
+    uint32_t bloque_recuperado;
+    int posicion_a_acceder = 0;
+    t_list* lista_bloques = list_create();
+    int cant_bloques_a_recuperar = (tamanio_archivo / block_size) - 1; // MENOS UNO PORQUE RESTO EL PUNTERO DIRECTO QUE YA TIENE    
+
+    for (int i = 0; i < cant_bloques_a_recuperar; i++) {
+
+        posicion_a_acceder = puntero_indirecto + i;
+        if ( bitarray_test_bit(bitmap, posicion_a_acceder) == 1 ) {
+            
+            bloque_recuperado = posicion_a_acceder;
+            uint32_t* bloque_auxiliar = malloc(sizeof(uint32_t));
+            *bloque_auxiliar = bloque_recuperado;
+            list_add(lista_bloques, bloque_auxiliar);
+
+        }
+
+    }
+
+    return lista_bloques;
+}
+
 /*------------------------------------------------------------------------- FCB ----------------------------------------------------------------------------- */
 
 t_fcb* crear_fcb_inexistente(char* nombre_archivo, t_filesystem* fs) {
@@ -259,7 +283,7 @@ void mostrar_bloques_fcb(t_list* bloques, t_log* logger) {
 void levantar_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs) {
 
     if (el_directorio_fcb_esta_vacio(fs)) {
-        log_info(fs->logger, "El directorio de FCBs esta vacio. No hay FCBs para levantar.");
+        log_info(fs->logger, "El directorio de FCBs esta vacio. No hay FCBs para levantar");
     } else {
         log_info(fs->logger, "Procedemos a levantar los FCBs del directorio");
         crear_fcbs_del_directorio(fs, lista_fcbs);
@@ -336,14 +360,14 @@ void crear_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs) {
             strcpy( fcb_existente->tamanio_archivo, config_get_string_value(config_aux, "TAMANIO_ARCHIVO") );
             fcb_existente->puntero_directo = config_get_int_value(config_aux, "PUNTERO_DIRECTO");
             fcb_existente->puntero_indirecto = config_get_int_value(config_aux, "PUNTERO_INDIRECTO");
+            fcb_existente->fcb_config = config_aux;
             
             if ( atoi(fcb_existente->tamanio_archivo) >= fs->block_size ) {
                 // HACER FUNCION QUE RECUPERA EL BLOQUE DE PUNTEROS
-                // fcb_existente->bloques = list_create();
-            }
-            
-            fcb_existente->bloques = list_create();
-            fcb_existente->fcb_config = config_aux;
+                fcb_existente->bloques = recuperar_bloque_de_punteros(fcb_existente->puntero_indirecto, atoi(fcb_existente->tamanio_archivo), fs->block_size);
+            } else {
+                fcb_existente->bloques = list_create();
+            }                                
 
             log_info(fs->logger, "%d) FCB levantado del directorio", contador);
             mostrar_info_fcb(fcb_existente, fs->logger);
