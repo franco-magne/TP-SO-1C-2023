@@ -178,9 +178,9 @@ int crear_archivo(char* nombre_archivo_create, t_filesystem* fs) {
         log_info(fs->logger, "Datos del FCB:");
         mostrar_info_fcb(fcb_nuevo, fs->logger);
         mostrar_bloques_fcb(fcb_nuevo->bloques, fs->logger);
-        log_info(fs->logger, "Archivo <%s> creado correctamente", nombre_archivo_create);
+        log_info(fs->logger, "Archivo <%s> creado y abierto correctamente", nombre_archivo_create);
 
-        list_add(lista_fcbs, fcb_nuevo); // Preguntar. Con esta linea estoy asumiendo que despues de crear el archivo tambien se esta abriendo
+        list_add(lista_fcbs, fcb_nuevo);
         resultado = 1;        
     }
 
@@ -210,7 +210,7 @@ int truncar_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tamanio_archiv
 
     if (pos_archivo_a_truncar == -1) {
         truncado_ok = 0; // NO SE ENCONTRO UN ARCHIVO CON ESE NOMBRE
-    } else {        
+    } else { 
         
         t_fcb* fcb_a_truncar = list_get(lista_fcbs, pos_archivo_a_truncar);
         uint32_t fcb_a_truncar_tamanio = atoi(fcb_a_truncar->tamanio_archivo);
@@ -252,8 +252,8 @@ int truncar_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tamanio_archiv
 
             config_set_value(fcb_a_truncar->fcb_config, "NOMBRE_ARCHIVO", fcb_a_truncar->nombre_archivo);
             config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", fcb_a_truncar->tamanio_archivo);            
-            config_set_value(fcb_a_truncar->fcb_config, "PUNTERO_DIRECTO", string_itoa(fcb_a_truncar->puntero_directo) );
-            config_set_value(fcb_a_truncar->fcb_config, "PUNTERO_INDIRECTO", string_itoa(fcb_a_truncar->puntero_indirecto) );
+            config_set_value( fcb_a_truncar->fcb_config, "PUNTERO_DIRECTO", string_itoa(fcb_a_truncar->puntero_directo) ); // VALGRIND: 2 BYTES PERDIDOS
+            config_set_value( fcb_a_truncar->fcb_config, "PUNTERO_INDIRECTO", string_itoa(fcb_a_truncar->puntero_indirecto) ); // VALGRIND: 2 BYTES PERDIDOS
             config_save(fcb_a_truncar->fcb_config);
 
         } else {
@@ -269,6 +269,7 @@ int truncar_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tamanio_archiv
             uint32_t bloque_libre;
             uint32_t cant_bloques_necesarios = (nuevo_tamanio_archivo - fcb_a_truncar_tamanio) / fs->block_size;
 
+            // PUNTERO DIRECTO
             if (list_size(fcb_a_truncar->bloques) == 0) {
 
                 buscar_bloque_libre(fs, &bloque_libre);
@@ -278,6 +279,7 @@ int truncar_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tamanio_archiv
                 log_info(fs->logger, "\e[1;92m---> Acceso Bloque - Archivo: <%s> - Bloque Archivo: <1> - Bloque File System <%d>\e[0m", nombre_archivo_truncate, bloque_libre);
             }
 
+            // PUNTERO INDIRECTO Y BLOQUE DE PUNTEROS
             for (uint32_t i = 0; i < cant_bloques_necesarios; i++) {
                 
                 buscar_bloque_libre(fs, &bloque_libre);
@@ -285,9 +287,12 @@ int truncar_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tamanio_archiv
                     fcb_a_truncar->puntero_indirecto = bloque_libre;
                 }
 
-                uint32_t* nuevo_bloque = malloc(sizeof(uint32_t)); // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO
+                uint32_t* nuevo_bloque = malloc(sizeof(uint32_t)); // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO -- VALGRIND: 16 BYTES PERDIDOS
                 *nuevo_bloque = bloque_libre; // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO
                 list_add(fcb_a_truncar->bloques, nuevo_bloque);
+                
+                uint32_t puntero_numero_X = list_size(fcb_a_truncar->bloques) - 1; // RESTO UNO PORQUE NO TENGO QUE COPIAR EL PUNTERO INDIRECTO EN EL ARCHIVO DE BLOQUES
+                escribir_bloque_de_punteros_en_puntero_indirecto(fcb_a_truncar->puntero_indirecto, puntero_numero_X, nuevo_bloque, fs->block_size);
 
                 log_info(fs->logger, "\e[1;92m---> Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo_truncate, list_size(fcb_a_truncar->bloques), bloque_libre);
             }
@@ -302,8 +307,8 @@ int truncar_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tamanio_archiv
             
             config_set_value(fcb_a_truncar->fcb_config, "NOMBRE_ARCHIVO", fcb_a_truncar->nombre_archivo);
             config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", fcb_a_truncar->tamanio_archivo);
-            config_set_value( fcb_a_truncar->fcb_config, "PUNTERO_DIRECTO", string_itoa( (int)fcb_a_truncar->puntero_directo )) ;
-            config_set_value(fcb_a_truncar->fcb_config, "PUNTERO_INDIRECTO", string_itoa( (int)fcb_a_truncar->puntero_indirecto ));
+            config_set_value( fcb_a_truncar->fcb_config, "PUNTERO_DIRECTO", string_itoa(fcb_a_truncar->puntero_directo) ); // VALGRIND: 7 BYTES PERDIDOS
+            config_set_value( fcb_a_truncar->fcb_config, "PUNTERO_INDIRECTO", string_itoa(fcb_a_truncar->puntero_indirecto) ); // VALGRIND: 7 BYTES PERDIDOS
             config_save(fcb_a_truncar->fcb_config);
 
         }
@@ -313,10 +318,10 @@ int truncar_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tamanio_archiv
         log_info(fs->logger, "FCB DESPUES: ");
         mostrar_info_fcb(fcb_a_truncar, fs->logger);
         mostrar_bloques_fcb(fcb_a_truncar->bloques, fs->logger);
-        log_info(fs->logger, "Archivo <%s> truncado correctamente", nombre_archivo_truncate);
+        log_info(fs->logger, "Archivo <%s, %d> truncado correctamente", nombre_archivo_truncate, nuevo_tamanio_archivo);
 
         free(nuevo_tamanio_en_char);
-        truncado_ok = 1;        
+        truncado_ok = 1;
     }
 
     return truncado_ok;

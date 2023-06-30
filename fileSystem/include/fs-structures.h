@@ -32,7 +32,7 @@ typedef struct {
     char* bitmap_path;
     char* bloques_path;
     char* fcb_path;
-    double retardo_accesos;
+    uint32_t retardo_accesos;
     
     int socket_memoria;
     int socket_kernel;
@@ -79,6 +79,7 @@ typedef struct {
     void abrir_archivo_de_bloques(t_filesystem*);
     void buscar_bloque_libre(t_filesystem*, uint32_t*);
     void liberar_bloque(t_filesystem*, uint32_t*);
+    void escribir_bloque_de_punteros_en_puntero_indirecto(uint32_t, uint32_t, uint32_t*, uint32_t);
     t_list* recuperar_bloque_de_punteros(uint32_t, int, uint32_t);
 
 

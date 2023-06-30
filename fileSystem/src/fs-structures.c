@@ -184,25 +184,48 @@ void liberar_bloque(t_filesystem* fs, uint32_t* bloque_a_liberar) {
 
 }
 
+void escribir_bloque_de_punteros_en_puntero_indirecto(uint32_t puntero_indirecto, uint32_t numero_puntero_X, uint32_t* puntero_a_escribir, uint32_t block_size) {    
+
+    if (numero_puntero_X != 0) {
+
+        uint32_t offset = (numero_puntero_X - 1) * sizeof(uint32_t);
+        uint32_t posicion_puntero_indirecto_en_bytes = puntero_indirecto * block_size + offset;
+        void* posicion_byte_a_escribir = map_bloques + posicion_puntero_indirecto_en_bytes;
+
+        memcpy(posicion_byte_a_escribir, puntero_a_escribir, sizeof(uint32_t));
+    }
+    
+}
+
 t_list* recuperar_bloque_de_punteros(uint32_t puntero_indirecto, int tamanio_archivo, uint32_t block_size) {
-
-    uint32_t bloque_recuperado;
-    int posicion_a_acceder = 0;
+    
     t_list* lista_bloques = list_create();
-    int cant_bloques_a_recuperar = (tamanio_archivo / block_size) - 1; // MENOS UNO PORQUE RESTO EL PUNTERO DIRECTO QUE YA TIENE    
+    int cant_bloques_a_recuperar = (tamanio_archivo / block_size) - 2; // MENOS DOS PORQUE RESTO EL PUNTERO DIRECTO E INDIRECTO QUE YA TIENEN
 
+    if ( bitarray_test_bit(bitmap, puntero_indirecto) == 1 ) {
+        
+        uint32_t* bloque_auxiliar = malloc(sizeof(uint32_t));
+        *bloque_auxiliar = puntero_indirecto;
+
+        list_add(lista_bloques, bloque_auxiliar);
+    }
+
+    int posicion_bitmap_a_acceder = puntero_indirecto + 1; // MAS UNO PORQUE QUIERO A PARTIR DEL SIGUIENTE BLOQUE DEL PUNTERO INDIRECTO
     for (int i = 0; i < cant_bloques_a_recuperar; i++) {
 
-        posicion_a_acceder = puntero_indirecto + i;
-        if ( bitarray_test_bit(bitmap, posicion_a_acceder) == 1 ) {
-            
-            bloque_recuperado = posicion_a_acceder;
-            uint32_t* bloque_auxiliar = malloc(sizeof(uint32_t));
-            *bloque_auxiliar = bloque_recuperado;
-            list_add(lista_bloques, bloque_auxiliar);
+        if ( bitarray_test_bit(bitmap, posicion_bitmap_a_acceder) == 1 ) {
 
+            uint32_t offset = i * sizeof(uint32_t);
+            uint32_t posicion_puntero_indirecto_en_bytes = puntero_indirecto * block_size + offset;
+            void* posicion_byte_a_obtener = map_bloques + posicion_puntero_indirecto_en_bytes;
+            uint32_t* bloques_restantes = malloc(sizeof(uint32_t));
+
+            memcpy(bloques_restantes, posicion_byte_a_obtener, sizeof(uint32_t));
+
+            list_add(lista_bloques, bloques_restantes);
+            posicion_bitmap_a_acceder++;
         }
-
+        
     }
 
     return lista_bloques;
@@ -265,7 +288,7 @@ void mostrar_bloques_fcb(t_list* bloques, t_log* logger) {
         for (int i = 0; i < size_bloques; i++) {
             uint32_t* bloque = (uint32_t*)list_get(bloques, i);
 
-            string_append(&cadena_bloques, string_itoa( (int)(*bloque)) );
+            string_append(&cadena_bloques, string_itoa( (int)(*bloque)) ); // VALGRIND: 14 Y 61 BYTES PERDIDOS 
             string_append(&cadena_bloques, "  ");
         }
 
@@ -363,7 +386,6 @@ void crear_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs) {
             fcb_existente->fcb_config = config_aux;
             
             if ( atoi(fcb_existente->tamanio_archivo) >= fs->block_size ) {
-                // HACER FUNCION QUE RECUPERA EL BLOQUE DE PUNTEROS
                 fcb_existente->bloques = recuperar_bloque_de_punteros(fcb_existente->puntero_indirecto, atoi(fcb_existente->tamanio_archivo), fs->block_size);
             } else {
                 fcb_existente->bloques = list_create();
@@ -409,7 +431,7 @@ void cargar_t_filesystem(t_config* config, t_config* sb_config, t_filesystem* fs
     fs->bitmap_path = config_get_string_value(config, "PATH_BITMAP");
     fs->bloques_path = config_get_string_value(config, "PATH_BLOQUES");
     fs->fcb_path = config_get_string_value(config, "PATH_FCB");
-    fs->retardo_accesos = config_get_double_value(config, "RETARDO_ACCESO_BLOQUE");
+    fs->retardo_accesos = (uint32_t) config_get_int_value(config, "RETARDO_ACCESO_BLOQUE");
 
     fs->block_size = config_get_int_value(sb_config, "BLOCK_SIZE"); // DEL SUPERBLOQUE
     fs->block_count = config_get_int_value(sb_config, "BLOCK_COUNT"); // DEL SUPERBLOQUE
@@ -418,7 +440,7 @@ void cargar_t_filesystem(t_config* config, t_config* sb_config, t_filesystem* fs
 
 char* devolver_fcb_path_config(char* path_fcbs, char* nombre_archivo) {
 	
-    char *path_fcbs_config = string_new();
+    char* path_fcbs_config = string_new();
     string_append(&path_fcbs_config, path_fcbs);
     string_append(&path_fcbs_config, "/");
     string_append(&path_fcbs_config, nombre_archivo);
