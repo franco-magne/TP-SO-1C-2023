@@ -259,7 +259,15 @@ t_registro obtener_registro(char* registro)
     if(!strcmp(registro, "AX")) return REGISTRO_ax;
     else if(!strcmp(registro, "BX")) return REGISTRO_bx;
     else if(!strcmp(registro, "CX")) return REGISTRO_cx;
-    else return REGISTRO_dx;
+    else if(!strcmp(registro, "DX")) return REGISTRO_dx;
+    else if(!strcmp(registro, "EAX")) return REGISTRO_eax;
+    else if(!strcmp(registro, "EBX")) return REGISTRO_ebx;
+    else if(!strcmp(registro, "ECX")) return REGISTRO_ecx;
+    else if(!strcmp(registro, "EDX")) return REGISTRO_edx;
+    else if(!strcmp(registro, "RAX")) return REGISTRO_rax;
+    else if(!strcmp(registro, "RBX")) return REGISTRO_rbx;
+    else if(!strcmp(registro, "RCX")) return REGISTRO_rcx;
+    else if(!strcmp(registro, "RDX")) return REGISTRO_rdx;
 }
 
 

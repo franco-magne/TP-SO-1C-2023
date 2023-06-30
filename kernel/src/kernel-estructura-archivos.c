@@ -131,7 +131,7 @@ void eliminar_archivo_pcb(t_list* listaDeArchivosDePcb,char* nombreArchivo){
 int archivo_kernel_index(t_list* listaDeArchivosDePcb,char* nombreArchivo){
 
     t_kernel_archivo* aux = archivo_create_kernel(-1,nombreArchivo);
-    int index = list_get_index(listaDeArchivosDePcb,elArchivoEsVictima,aux);
+    int index = list_get_index(listaDeArchivosDePcb,el_archivo_ya_existe,aux);
     return index;
 }
 

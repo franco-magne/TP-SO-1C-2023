@@ -289,9 +289,9 @@ void instruccion_f_close(t_pcb* pcb){
 
     log_info(kernelLogger,"PID: <%i> - Cerrar Archivo: <%s>", pcb_get_pid(pcb), nombreArchivo);
 
-    eliminar_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
-
     t_pcb* pcbBloqueado = atender_f_close(nombreArchivo);
+
+    eliminar_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
 
     if(pcbBloqueado == NULL){
     

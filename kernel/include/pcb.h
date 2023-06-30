@@ -91,6 +91,14 @@ void pcb_set_registro_ax_cpu(t_pcb* this, char* registro);
 void pcb_set_registro_bx_cpu(t_pcb* this, char* registro);
 void pcb_set_registro_cx_cpu(t_pcb* this, char* registro);
 void pcb_set_registro_dx_cpu(t_pcb* this, char* registro);
+void pcb_set_registro_eax_cpu(t_pcb* this, char* registro);
+void pcb_set_registro_ebx_cpu(t_pcb* this, char* registro);
+void pcb_set_registro_ecx_cpu(t_pcb* this, char* registro);
+void pcb_set_registro_edx_cpu(t_pcb* this, char* registro);
+void pcb_set_registro_rax_cpu(t_pcb* this, char* registro);
+void pcb_set_registro_rbx_cpu(t_pcb* this, char* registro);
+void pcb_set_registro_rcx_cpu(t_pcb* this, char* registro);
+void pcb_set_registro_rdx_cpu(t_pcb* this, char* registro);
 
 
 #endif

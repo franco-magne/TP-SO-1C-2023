@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
    /////////////////////////////// CONEXION CON CPU /////////////////////////////
     conectar_a_servidor_cpu_dispatch(kernelConfig,kernelLogger);
     /////////////////////////////// CONEXION CON FILE_SYSTEM /////////////////////////////
-   // conectar_con_servidor_file_system(kernelConfig,kernelLogger);
+    conectar_con_servidor_file_system(kernelConfig,kernelLogger);
    /////////////////////////////// CONEXION CON MEMORIA /////////////////////////////
     conectar_con_servidor_memoria(kernelConfig,kernelLogger);
    ////////////////////////////// CONEXION CON CONSOLA //////////////////////////////
@@ -200,15 +200,12 @@ void* planificador_largo_plazo(void* args)
         t_segmento* segmentoCero = segmento_create(0,0);
         segmento_set_victima(segmentoCero, false);
         pcb_set_lista_de_segmentos(pcbQuePasaAReady,segmentoCero);
+
+
      //   segmento_destroy(segmentoCero);
-
-        
         //uint32_t* nuevaTablaPaginasSegmentos = mem_adapter_obtener_tabla_pagina(pcbQuePasaAReady, kernelConfig, kernelDevLogger);
-
         //pcb_set_array_tabla_paginas(pcbQuePasaAReady, nuevaTablaPaginasSegmentos);
-
         /*if (nuevaTablaPaginasSegmentos == NULL) {
-                
             responder_memoria_insuficiente(pcbQuePasaAReady);   //podria pasarnos con el segmento
         } 
         else {*/
@@ -314,9 +311,8 @@ void* atender_pcb(void* args)
                 break;
             case HEADER_f_write:
                 instruccion_f_write(pcb);
-
+                break;
             default:
-
                 log_error(kernelLogger, "Error al recibir mensaje de CPU");
                 break;
         }

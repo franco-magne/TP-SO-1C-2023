@@ -214,6 +214,49 @@ void pcb_set_registro_dx_cpu(t_pcb* this, char* registro)
     this->registros->registroDx = registro;
 }
 
+void pcb_set_registro_eax_cpu(t_pcb* this, char* registro)
+{
+    this->registros->registroEAx = registro;
+}
+
+void pcb_set_registro_ebx_cpu(t_pcb* this, char* registro)
+{
+    this->registros->registroEBx = registro;
+}
+
+void pcb_set_registro_ecx_cpu(t_pcb* this, char* registro)
+{
+    this->registros->registroECx = registro;
+}
+
+void pcb_set_registro_edx_cpu(t_pcb* this, char* registro)
+{
+    this->registros->registroEDx = registro;
+}
+
+void pcb_set_registro_rax_cpu(t_pcb* this, char* registro)
+{
+    this->registros->registroRAx = registro;
+}
+
+void pcb_set_registro_rbx_cpu(t_pcb* this, char* registro)
+{
+    this->registros->registroRBx = registro;
+}
+
+void pcb_set_registro_rcx_cpu(t_pcb* this, char* registro)
+{
+    this->registros->registroRCx = registro;
+}
+
+void pcb_set_registro_rdx_cpu(t_pcb* this, char* registro)
+{
+    this->registros->registroRDx = registro;
+}
+
+
+
+
 void pcb_set_tiempoIO(t_pcb* this, uint32_t tiempoIO)
 {
     this->tiempoIO = tiempoIO;
