@@ -197,6 +197,15 @@ void escribir_bloque_de_punteros_en_puntero_indirecto(uint32_t puntero_indirecto
     
 }
 
+void liberar_puntero_del_bloque_de_punteros_en_puntero_indirecto(uint32_t puntero_indirecto, uint32_t posicion_ultimo_puntero, uint32_t block_size) {
+
+    uint32_t offset = (posicion_ultimo_puntero - 1) * sizeof(uint32_t);
+    uint32_t posicion_puntero_a_liberar_en_bytes = puntero_indirecto * block_size + offset;
+    void* posicion_en_bytes_a_liberar = map_bloques + posicion_puntero_a_liberar_en_bytes;
+
+    memset(posicion_en_bytes_a_liberar, 0, sizeof(uint32_t));
+}
+
 t_list* recuperar_bloque_de_punteros(uint32_t puntero_indirecto, int tamanio_archivo, uint32_t block_size) {
     
     t_list* lista_bloques = list_create();
@@ -415,7 +424,7 @@ void crear_directorios(t_filesystem* fs) {
     resultado = mkdir(fs->fcb_path, 0777);
 
     if (!resultado) {
-        log_info(fs->logger, "Se crearon los directorios necesarios.");
+        log_info(fs->logger, "Directorios creados");
     }
 
 }

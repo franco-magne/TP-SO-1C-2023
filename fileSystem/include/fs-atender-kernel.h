@@ -41,6 +41,8 @@
 ////////////////////////// F_TRUNCATE ////////////////
 
     int truncar_archivo(char*, uint32_t, t_filesystem*);
+    t_fcb* ampliar_tamanio_archivo(char*, uint32_t, t_filesystem*, int);
+    t_fcb* reducir_tamanio_archivo(char*, uint32_t, t_filesystem*, int);
 
 
 ////////////////////////// ESPERAR KERNEL ////////////////

@@ -80,6 +80,7 @@ typedef struct {
     void buscar_bloque_libre(t_filesystem*, uint32_t*);
     void liberar_bloque(t_filesystem*, uint32_t*);
     void escribir_bloque_de_punteros_en_puntero_indirecto(uint32_t, uint32_t, uint32_t*, uint32_t);
+    void liberar_puntero_del_bloque_de_punteros_en_puntero_indirecto(uint32_t, uint32_t, uint32_t);
     t_list* recuperar_bloque_de_punteros(uint32_t, int, uint32_t);
 
 
