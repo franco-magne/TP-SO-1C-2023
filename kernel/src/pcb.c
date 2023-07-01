@@ -30,6 +30,7 @@ t_pcb* pcb_create(uint32_t pid)
 t_segmento* segmento_create(uint32_t id_de_segmento, uint32_t tamanio_de_segmento){
     t_segmento* this = malloc(sizeof(*this));
     this->id_de_segmento = id_de_segmento;
+    this->base_del_segmento = -1;
     this->tamanio_de_segmento = tamanio_de_segmento;
     this->victima = true;
     return this;
@@ -45,6 +46,10 @@ uint32_t segmento_get_id_de_segmento(t_segmento* this){
 
 uint32_t segmento_get_tamanio_de_segmento(t_segmento* this){
     return this->tamanio_de_segmento;
+}
+
+uint32_t segmento_get_base_de_segmento(t_segmento* this){
+    return this->base_del_segmento;
 }
 
 bool segmento_get_victima(t_segmento* this){
@@ -107,6 +112,30 @@ void modificar_victima_lista_segmento(t_pcb* this, uint32_t id_victima, bool cam
 }
 //////////////////////////////////////////////////////////////////////////////////////
 
+t_segmento* buffer_unpack_segmento(t_buffer* buffer) {
+    t_segmento* segmento = segmento_create(-1,-1);
+
+    buffer_unpack(buffer, &(segmento->id_de_segmento), sizeof(segmento->id_de_segmento));
+    buffer_unpack(buffer, &(segmento->base_del_segmento), sizeof(segmento->base_del_segmento));
+    buffer_unpack(buffer, &(segmento->tamanio_de_segmento), sizeof(segmento->tamanio_de_segmento));
+    buffer_unpack(buffer, &(segmento->victima), sizeof(bool));
+
+    return segmento;
+}
+
+t_list* buffer_unpack_segmento_list(t_buffer* buffer) {
+    t_list* lista_segmentos = list_create();
+
+    int cantidad_segmentos;
+    buffer_unpack(buffer, &cantidad_segmentos, sizeof(cantidad_segmentos));
+
+    for (int i = 0; i < cantidad_segmentos; i++) {
+        t_segmento* segmento = buffer_unpack_segmento(buffer);
+        list_add(lista_segmentos, segmento);
+    }
+
+    return lista_segmentos;
+}
 
 //////////////////////// GETTERS /////////////////////
 

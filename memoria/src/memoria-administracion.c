@@ -37,22 +37,6 @@ bool hueco_mas_pequenio(Segmento* unSegmento, Segmento* otroSegmento){
 }
 
 
-
-
-
-t_list* list_filter_ok(t_list* lista, bool (*condition)(void*, void*), void* argumento) {
-    t_list* resultado = list_create();
- 
-    for (int i = 0; i < lista->elements_count; i++) {
-        void* elemento = list_get(lista, i);
-        if (condition(elemento, argumento)) {
-            list_add(resultado, elemento);
-        }
-    }
- 
-    return resultado;
-}
- 
  
 bool hay_segmento_libre_de_ese_tamanio(Segmento* unSegmento,Segmento* otroSegmento){
  
@@ -150,14 +134,7 @@ void administrar_primer_hueco_libre(t_list* huecosLibres, Segmento* nuevoSegment
  
 void administrar_nuevo_segmento(Segmento* nuevoSegmento){
     
-
-    
-   // t_list* listaDeHuecosLibres = listaDeSegmentos;
-  
-
-    t_list* listaDeHuecosLibres = listaDeSegmentos; //t_list* listaDeHuecosLibres = list_filter(listaDeSegmentos,segmentos_validez_0);
-    //listaDeHuecosLibres = list_filter(listaDeSegmentos,segmentos_validez_0);
-    //listaDeHuecosLibres = segmento_disponibles_del_tamanio(nuevoSegmento, listaDeHuecosLibres);
+    t_list* listaDeHuecosLibres = listaDeSegmentos; 
  
     listaDeHuecosLibres = list_filter(listaDeHuecosLibres,segmentos_validez_0);
     listaDeHuecosLibres = list_filter_ok(listaDeHuecosLibres,hay_segmento_libre_de_ese_tamanio,nuevoSegmento);
@@ -165,9 +142,16 @@ void administrar_nuevo_segmento(Segmento* nuevoSegmento){
 
     if( list_is_empty(listaDeHuecosLibres) ){
         // Hay que hacer compactacion
+        stream_send_empty_buffer(memoria_config_get_socket_kernel(memoriaConfig),HEADER_Compactacion);
+        
+        uint8_t respuestaDeKernel = stream_recv_header(memoria_config_get_socket_kernel(memoriaConfig));
+                                    stream_recv_empty_buffer(memoria_config_get_socket_kernel(memoriaConfig));
 
+        if(respuestaDeKernel == HANDSHAKE_ok_continue)
         iniciar_compactacion();
-        log_info(memoriaLogger, "SE INICIA LA COMPACTACION DE LA MEMORIA, EL SEGMENTO NO SE AÑADE EN ESTE CASO");
+        log_info(memoriaLogger, "SE INICIA LA COMPACTACION DE LA MEMORIA");
+        
+        stream_send_empty_buffer(memoria_config_get_socket_kernel(memoriaConfig),HEADER_Compactacion_finalizada);
 
     } else {
         

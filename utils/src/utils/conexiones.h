@@ -40,7 +40,9 @@ typedef enum {
     HEADER_move_in,
     HEADER_move_out,
     HEADER_iniciar_proceso,
-    HEADER_tabla_segmentos
+    HEADER_tabla_segmentos,
+    HEADER_Compactacion,
+    HEADER_Compactacion_finalizada
 
 
 

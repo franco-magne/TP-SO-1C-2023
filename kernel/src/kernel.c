@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
    /////////////////////////////// CONEXION CON CPU /////////////////////////////
     conectar_a_servidor_cpu_dispatch(kernelConfig,kernelLogger);
     /////////////////////////////// CONEXION CON FILE_SYSTEM /////////////////////////////
-    conectar_con_servidor_file_system(kernelConfig,kernelLogger);
+    //conectar_con_servidor_file_system(kernelConfig,kernelLogger);
    /////////////////////////////// CONEXION CON MEMORIA /////////////////////////////
     conectar_con_servidor_memoria(kernelConfig,kernelLogger);
    ////////////////////////////// CONEXION CON CONSOLA //////////////////////////////
@@ -197,23 +197,28 @@ void* planificador_largo_plazo(void* args)
                                  
         t_pcb* pcbQuePasaAReady = estado_desencolar_primer_pcb_atomic(estadoNew);
         
-        t_segmento* segmentoCero = segmento_create(0,0);
-        segmento_set_victima(segmentoCero, false);
-        pcb_set_lista_de_segmentos(pcbQuePasaAReady,segmentoCero);
+        uint32_t pidProcesoNuevo = pcb_get_pid(pcbQuePasaAReady);
+        t_buffer* bufferProcesoNuevo = buffer_create();
+        buffer_pack(bufferProcesoNuevo,&pidProcesoNuevo,sizeof(pidProcesoNuevo));
+        stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig), HEADER_iniciar_proceso,bufferProcesoNuevo);
+        buffer_destroy(bufferProcesoNuevo);
+        
+        t_buffer* bufferRespuesta = buffer_create();
+        uint8_t memoriaResponse = stream_recv_header(kernel_config_get_socket_memoria(kernelConfig));
+        stream_recv_buffer(kernel_config_get_socket_memoria(kernelConfig), bufferRespuesta);
+        if(memoriaResponse == HEADER_memoria_insuficiente){
+            proceso_pasa_a_exit(pcbQuePasaAReady);
+        } else if(memoriaResponse == HEADER_tabla_segmentos) {
+            t_list* tablaDeSegmentosActualizado = buffer_unpack_segmento_list(bufferProcesoNuevo);
+            t_segmento* test = list_get(tablaDeSegmentosActualizado,0);
+            log_info(kernelLogger, "SEGMENTO CREADO - PID <%i> - ID :<%i> ", pcb_get_pid(pcbQuePasaAReady), segmento_get_id_de_segmento(test));
+            pcbQuePasaAReady->listaDeSegmento = tablaDeSegmentosActualizado;
+            proceso_pasa_a_ready(pcbQuePasaAReady, "NEW");
+            pcbQuePasaAReady = NULL;
+        }
+        buffer_destroy(bufferRespuesta);
+         
 
-
-     //   segmento_destroy(segmentoCero);
-        //uint32_t* nuevaTablaPaginasSegmentos = mem_adapter_obtener_tabla_pagina(pcbQuePasaAReady, kernelConfig, kernelDevLogger);
-        //pcb_set_array_tabla_paginas(pcbQuePasaAReady, nuevaTablaPaginasSegmentos);
-        /*if (nuevaTablaPaginasSegmentos == NULL) {
-            responder_memoria_insuficiente(pcbQuePasaAReady);   //podria pasarnos con el segmento
-        } 
-        else {*/
-
-        proceso_pasa_a_ready(pcbQuePasaAReady, "NEW");
-            
-        //}
-        pcbQuePasaAReady = NULL;
         
     }
 

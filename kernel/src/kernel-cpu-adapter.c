@@ -130,7 +130,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         buffer_unpack(bufferPcb, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
 
         t_segmento* unSegmento = segmento_create(id_de_segmento, tamanio_de_segmento);
-    
+        log_info(kernelLogger, "NUEVO SEGMENTO ID <%i> - TAMANIO <%i> ",id_de_segmento, tamanio_de_segmento);
         pcb_set_lista_de_segmentos(pcbAActualizar,unSegmento);
 
         //segmento_destroy(unSegmento);

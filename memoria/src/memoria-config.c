@@ -13,7 +13,7 @@ t_memoria_config* memoria_config_initializer(t_config* tempCfg)
     memoriaConfig->RETARDO_MEMORIA = (uint32_t) config_get_int_value(tempCfg, "RETARDO_MEMORIA");
     memoriaConfig->RETARDO_COMPACTACION = (uint32_t) config_get_int_value(tempCfg, "RETARDO_COMPACTACION");
     memoriaConfig->ALGORITMO_ASIGNACION = strdup(config_get_string_value(tempCfg, "ALGORITMO_ASIGNACION"));
-
+    memoriaConfig->SOCKET_KERNEL = -1;
     return memoriaConfig;
 }
 
@@ -71,4 +71,12 @@ uint32_t memoria_config_get_procesos_totales(t_memoria_config* self)
 {
     //return self->TAM_MEMORIA / (self->TAM_PAGINA * self->MARCOS_POR_PROCESO);
     return 0;
+}
+
+int memoria_config_get_socket_kernel(t_memoria_config* this){
+    return this->SOCKET_KERNEL;
+}
+
+void memoria_config_set_socket_kernel(t_memoria_config* this, int socketKernel){
+    this->SOCKET_KERNEL=socketKernel;
 }
