@@ -62,47 +62,47 @@ typedef struct {
 
 ////////////////////////// SUPERBLOQUE ////////////////
 
-    void crear_superbloque_dat(t_filesystem*, t_config*);
+    void crear_superbloque_dat(t_filesystem* fs, t_config* superbloque);
 
 
 ////////////////////////// BITMAP ////////////////
 
-    void levantar_bitmap(t_filesystem*);
-    void crear_bitmap(t_filesystem*);
-    void abrir_bitmap(t_filesystem*);
+    void levantar_bitmap(t_filesystem* fs);
+    void crear_bitmap(t_filesystem* fs);
+    void abrir_bitmap(t_filesystem* fs);
 
 
 ////////////////////////// ARCHIVO DE BLOQUES ////////////////
 
-    void levantar_archivo_de_bloques(t_filesystem*);
-    void crear_archivo_de_bloques(t_filesystem*);
-    void abrir_archivo_de_bloques(t_filesystem*);
-    void buscar_bloque_libre(t_filesystem*, uint32_t*);
-    void liberar_bloque(t_filesystem*, uint32_t*);
-    void escribir_bloque_de_punteros_en_puntero_indirecto(uint32_t, uint32_t, uint32_t*, uint32_t);
-    void liberar_puntero_del_bloque_de_punteros_en_puntero_indirecto(uint32_t, uint32_t, uint32_t);
-    t_list* recuperar_bloque_de_punteros(uint32_t, int, uint32_t);
+    void levantar_archivo_de_bloques(t_filesystem* fs);
+    void crear_archivo_de_bloques(t_filesystem* fs);
+    void abrir_archivo_de_bloques(t_filesystem* fs);
+    void buscar_bloque_libre(t_filesystem* fs, uint32_t* puntero_bloque_libre);
+    void liberar_bloque(t_filesystem* fs, uint32_t* puntero_bloque_a_liberar);
+    void escribir_bloque_de_punteros_en_puntero_indirecto(uint32_t puntero_indirecto, uint32_t numero_puntero_X, uint32_t* puntero_a_escribir, uint32_t block_size);
+    void liberar_puntero_del_bloque_de_punteros_en_puntero_indirecto(uint32_t puntero_indirecto, uint32_t posicion_ultimo_puntero, uint32_t block_size);
+    t_list* recuperar_bloque_de_punteros(uint32_t puntero_indirecto, int tamanio_archivo, uint32_t block_size);
 
 
 ////////////////////////// FCB ////////////////
 
-    t_fcb* crear_fcb_inexistente(char*, t_filesystem*);
-    void mostrar_info_fcb(t_fcb*, t_log*);
-    void mostrar_bloques_fcb(t_list*, t_log*);
+    t_fcb* crear_fcb_inexistente(char* nombre_archivo, t_filesystem* fs);
+    void mostrar_info_fcb(t_fcb* fcb_a_mostrar, t_log* logger);
+    void mostrar_bloques_fcb(t_list* bloques_fcb, t_log* logger, uint32_t puntero_directo);
 
 
 ////////////////////////// DIRECTORIO DEL FCB  ////////////////
 
-    void levantar_fcbs_del_directorio(t_filesystem*, t_list*);
-    int el_directorio_fcb_esta_vacio(t_filesystem*);
-    void crear_fcbs_del_directorio(t_filesystem*, t_list*);
-    void crear_directorios(t_filesystem*);
+    void levantar_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs_global);
+    int el_directorio_fcb_esta_vacio(t_filesystem* fs);
+    void crear_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs_global);
+    void crear_directorios(t_filesystem* fs);
 
 
 ////////////////////////// OTRAS ////////////////
 
-    void cargar_t_filesystem(t_config*, t_config*, t_filesystem*);
-    char* devolver_fcb_path_config(char*, char*);
+    void cargar_t_filesystem(t_config* fs_config, t_config* superbloque_config, t_filesystem* fs);
+    char* devolver_fcb_path_config(char* path, char* nombre_archivo);
     void cerrar_archivos();
 
 

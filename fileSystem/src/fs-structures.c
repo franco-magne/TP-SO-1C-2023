@@ -287,27 +287,31 @@ void mostrar_info_fcb(t_fcb* fcb_a_mostrar, t_log* logger) {
 
 }
 
-void mostrar_bloques_fcb(t_list* bloques, t_log* logger) {
+void mostrar_bloques_fcb(t_list* bloques, t_log* logger, uint32_t puntero_directo) {
 
     int size_bloques = list_size(bloques);
-    char* cadena_bloques = string_new();
 
-    if ( size_bloques > 0 ) {
+    if (size_bloques > 0) {
+        char* cadena_bloques = malloc((size_bloques * 12) + 1); // Tamaño máximo por bloque: 10 dígitos + 2 espacios + 1 terminador null
+        snprintf(cadena_bloques, 12, "%u", puntero_directo);
+        strcat(cadena_bloques, "  ");
 
-        for (int i = 0; i < size_bloques; i++) {
+        for (int i = 1; i < size_bloques; i++) {
             uint32_t* bloque = (uint32_t*)list_get(bloques, i);
+            char bloque_str[12]; // Suficiente para almacenar un uint32_t como cadena
 
-            string_append(&cadena_bloques, string_itoa( (int)(*bloque)) ); // VALGRIND: 14 Y 61 BYTES PERDIDOS 
-            string_append(&cadena_bloques, "  ");
+            snprintf(bloque_str, sizeof(bloque_str), "%u", *bloque);
+            strcat(cadena_bloques, bloque_str);
+            strcat(cadena_bloques, "  ");
         }
 
-        log_info(logger, " ---> Cant. bloques: %d", list_size(bloques));
-        log_info(logger, " ---> Bloques: %s", cadena_bloques);
-    } else {
-        log_info(logger, " ---> Cant. bloques: %d", list_size(bloques));
-    }
+        log_info(logger, " ---> Cant. bloques: %d", size_bloques);
+        log_info(logger, " ---> Bloques de datos: %s", cadena_bloques);
 
-    free(cadena_bloques);
+        free(cadena_bloques);
+    } else {
+        log_info(logger, " ---> Cant. bloques: %d", size_bloques);
+    }
 }
 
 /*------------------------------------------------------------------------- DIRECTORIO DEL FCB ----------------------------------------------------------------------------- */
@@ -366,16 +370,15 @@ void crear_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs) {
         exit(1);
     }
 
-    // LEO LOS ARCHIVOS DEL DIRECTORIO Y CREO LOS FCBs A MEMORIA
+    // LEO LOS ARCHIVOS DEL DIRECTORIO Y CREO LOS FCBs A MEMORIA    
 
-    while( (entrada = readdir(directorio_fcbs)) ) {
-
-        t_fcb* fcb_existente = malloc(sizeof(t_fcb));
+    while( (entrada = readdir(directorio_fcbs)) ) {               
 
         if (strcmp(entrada->d_name, ".") == 0 || strcmp(entrada->d_name, "..") == 0) {
             continue;
         } else {
 
+            t_fcb* fcb_existente = malloc(sizeof(t_fcb));
             char* path_fcb_config = devolver_fcb_path_config(fs->fcb_path, entrada->d_name);  
 
             t_config* config_aux = config_create(path_fcb_config);
@@ -394,7 +397,7 @@ void crear_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs) {
             fcb_existente->puntero_indirecto = config_get_int_value(config_aux, "PUNTERO_INDIRECTO");
             fcb_existente->fcb_config = config_aux;
             
-            if ( atoi(fcb_existente->tamanio_archivo) >= fs->block_size ) {
+            if ( atoi(fcb_existente->tamanio_archivo) > fs->block_size ) {
                 fcb_existente->bloques = recuperar_bloque_de_punteros(fcb_existente->puntero_indirecto, atoi(fcb_existente->tamanio_archivo), fs->block_size);
             } else {
                 fcb_existente->bloques = list_create();
@@ -402,14 +405,14 @@ void crear_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs) {
 
             log_info(fs->logger, "%d) FCB levantado del directorio", contador);
             mostrar_info_fcb(fcb_existente, fs->logger);
-            mostrar_bloques_fcb(fcb_existente->bloques, fs->logger);
+            mostrar_bloques_fcb(fcb_existente->bloques, fs->logger, fcb_existente->puntero_directo);
 
             free(path_fcb_config);
             contador++;
-        }
 
-        list_add(lista_fcbs, fcb_existente);        
-    }
+            list_add(lista_fcbs, fcb_existente);
+        }         
+    }    
 
     log_info(fs->logger, "Cantidad de FCBs levantados del directorio: %d", list_size(lista_fcbs));
 

@@ -16,8 +16,9 @@ int main() {
    fs->logger = fs_logger;
    log_info(fs->logger, "FILESYSTEM iniciado");
 
+
    ///////////////////////////////// CONECTARSE A MEMORIA //////////////////////////////
-   /*
+   
    int fsSocketMemoria = conectar_a_servidor(fs->ip_memoria, fs->puerto_memoria);
    if (fsSocketMemoria == -1) {
 
@@ -25,10 +26,9 @@ int main() {
       log_destroy(fs->logger);
 
       return -2;
-   }
-   fs->socket_memoria = fsSocketMemoria;
+   }   
    log_info(fs->logger, "Conexion con MEMORIA establecida");
-   */
+   fs->socket_memoria = fsSocketMemoria;   
   
    crear_directorios(fs);
    levantar_bitmap(fs);
