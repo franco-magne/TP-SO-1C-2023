@@ -6,12 +6,13 @@ t_kernel_config* kernelConfig;
 t_kernel_recurso* recursoConfig;
 static t_estado* elegir_pcb;
 t_list* tablaGlobalDeArchivosAbiertos;
-
+t_list* tablaGlobalDeSegmentos;
 /////////// LA USAN VARIOS PROCESOS "HILOS" /////////////
 static uint32_t nextPid ;
 static int cantidad_de_recursos;
 char* nombre_recurso;
 ///////////  SEMAFOROS MUTEX ////////////////
+pthread_mutex_t mutexTablaGlobalSegmento = PTHREAD_MUTEX_INITIALIZER;
  pthread_mutex_t mutexCantidadRecursos;
  pthread_mutex_t mutexNombreRecurso;
 static pthread_mutex_t nextPidMutex;
@@ -61,6 +62,7 @@ int main(int argc, char* argv[]) {
     kernelLogger = log_create(KERNEL_LOG_UBICACION,KERNEL_PROCESS_NAME,true,LOG_LEVEL_INFO);
     t_config* kernelConfigPath = config_create(argv[1]);
     tablaGlobalDeArchivosAbiertos = list_create();
+    tablaGlobalDeSegmentos = list_create();
     nextPid++;
     pthread_mutex_init(&nextPidMutex, NULL);
    inicio_kernel();
@@ -196,27 +198,8 @@ void* planificador_largo_plazo(void* args)
         sem_wait(&gradoMultiprog);
                                  
         t_pcb* pcbQuePasaAReady = estado_desencolar_primer_pcb_atomic(estadoNew);
-        
-        uint32_t pidProcesoNuevo = pcb_get_pid(pcbQuePasaAReady);
-        t_buffer* bufferProcesoNuevo = buffer_create();
-        buffer_pack(bufferProcesoNuevo,&pidProcesoNuevo,sizeof(pidProcesoNuevo));
-        stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig), HEADER_iniciar_proceso,bufferProcesoNuevo);
-        buffer_destroy(bufferProcesoNuevo);
-        
-        t_buffer* bufferRespuesta = buffer_create();
-        uint8_t memoriaResponse = stream_recv_header(kernel_config_get_socket_memoria(kernelConfig));
-        stream_recv_buffer(kernel_config_get_socket_memoria(kernelConfig), bufferRespuesta);
-        if(memoriaResponse == HEADER_memoria_insuficiente){
-            proceso_pasa_a_exit(pcbQuePasaAReady);
-        } else if(memoriaResponse == HEADER_tabla_segmentos) {
-            t_list* tablaDeSegmentosActualizado = buffer_unpack_segmento_list(bufferProcesoNuevo);
-            t_segmento* test = list_get(tablaDeSegmentosActualizado,0);
-            log_info(kernelLogger, "SEGMENTO CREADO - PID <%i> - ID :<%i> ", pcb_get_pid(pcbQuePasaAReady), segmento_get_id_de_segmento(test));
-            pcbQuePasaAReady->listaDeSegmento = tablaDeSegmentosActualizado;
-            proceso_pasa_a_ready(pcbQuePasaAReady, "NEW");
-            pcbQuePasaAReady = NULL;
-        }
-        buffer_destroy(bufferRespuesta);
+                proceso_pasa_a_ready(pcbQuePasaAReady, "NEW");
+                pcbQuePasaAReady = NULL;
          
 
         

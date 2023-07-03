@@ -36,6 +36,7 @@ typedef struct {
 }t_pcb;
 
 typedef struct {
+    uint32_t pid;
     uint32_t id_de_segmento;
     uint32_t base_del_segmento;
     uint32_t tamanio_de_segmento;
@@ -54,13 +55,15 @@ void segmento_destroy(t_segmento* this);
 uint32_t segmento_get_id_de_segmento(t_segmento* this);
 uint32_t segmento_get_tamanio_de_segmento(t_segmento* this);
 uint32_t segmento_get_base_de_segmento(t_segmento* this);
-t_segmento* segmento_victima(t_pcb* this) ;
+t_segmento* segmento_victima(t_list* this);
 void segmento_set_victima(t_segmento* this, bool cambioEstado);
 bool segmento_get_victima(t_segmento* this);
-void modificar_victima_lista_segmento(t_pcb* this, uint32_t id_victima, bool cambioVictima);
-t_segmento* remover_segmento_victima_lista(t_pcb* this);
-t_list* buffer_unpack_segmento_list(t_buffer* buffer);
+uint32_t index_posicion_del_segmento_victima(t_list* this, uint32_t id, uint32_t pid);
+void modificar_victima_lista_segmento(t_list* this, uint32_t id_victima, uint32_t pid, bool cambioVictima);
 
+t_list* buffer_unpack_segmento_list(t_buffer* buffer);
+void segmento_set_pid(t_segmento* this, uint32_t pid);
+uint32_t segmento_get_pid(t_segmento* this);
 
 /////////////////////// GETTERS ////////////////////////
 t_registros_cpu* pcb_get_registros_cpu(t_pcb* this);

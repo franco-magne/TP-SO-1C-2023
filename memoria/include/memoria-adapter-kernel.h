@@ -14,7 +14,7 @@ typedef struct
  uint32_t id_de_segmento;
  uint32_t base_del_segmento;
  bool victima;
- 
+ uint32_t pid;
 
 }t_segmento;
 

@@ -27,33 +27,6 @@ void atender_peticiones_kernel(int socketKernel) {
         stream_recv_buffer(socketKernel, buffer);
 
         switch (header) {
-            case HEADER_iniciar_proceso:{
-                int pid;
-                buffer_unpack(buffer, &pid, sizeof(pid));
-                //t_list* tabla_segmentos_solicitada = obtener_tabla_de_segmentos_por_pid(pid);
-
-                if(!puedo_crear_proceso_o_segmento(memoria_config_get_tamanio_segmento_0(memoriaConfig))){ //+sizeof(*tabla_de_segmentos)
-                    log_error(memoriaLogger, "No se pudo crear el proceso, no hay espacio en memoria");
-                    stream_send_empty_buffer(socketKernel, HEADER_memoria_insuficiente);
-                  
-                } else {
-                
-                t_buffer* buffer_rta = buffer_create();
-                t_segmento* segmentoCero = segmento_kernel_create();
-                t_list* tabla_segmentos_solicitada = list_create();
-                list_add(tabla_segmentos_solicitada,segmentoCero);
-                buffer_pack_segmento_list(buffer_rta,tabla_segmentos_solicitada);
-                stream_send_buffer(socketKernel, HEADER_tabla_segmentos, buffer_rta);
-                log_info(memoriaLogger, "SEGMENTO 0 CREADO PARA PROCESO PID : <%i> ", pid);
-                //list_destroy(tabla_segmentos_solicitada);
-                buffer_destroy(buffer_rta);
-                
-             
-                break;
-                }
-            
-             break;
-            }
             case HEADER_create_segment: { 
                // log_info(memoriaLogger,"socket kernel -> 1- <%i> ", socketKernel);
 
@@ -88,7 +61,7 @@ void atender_peticiones_kernel(int socketKernel) {
 
                 pthread_mutex_lock(&mutexListaDeSegmento);
                 t_list* tablaDeSegmentoActualizada = listaDeSegmentos;
-                tablaDeSegmentoActualizada = list_filter_ok(tablaDeSegmentoActualizada,segmentos_del_mismo_pid, unSegmento);
+                tablaDeSegmentoActualizada = list_filter(tablaDeSegmentoActualizada,segmentos_validez_1);
                 tablaDeSegmentoActualizada = list_map(tablaDeSegmentoActualizada,adapter_segmento_memoria_kernel);
                 pthread_mutex_unlock(&mutexListaDeSegmento);
 
@@ -122,14 +95,19 @@ void atender_peticiones_kernel(int socketKernel) {
                 segmento_set_pid(segABorrar, pid);
                 //sumar_memoriaRecuperada_a_tamMemoriaActual(segABorrar->tamanio); 
                 eliminar_segmento_memoria(segABorrar);
-                log_info(memoriaLogger, "Borramos el segmento <%i> del proceos <%i>", id_de_segmento, pid);
+                log_info(memoriaLogger, "Borramos el segmento <%i> del proceso <%i>", id_de_segmento, pid);
 
-                t_list* tabla_segmentos_solic_actualizada = obtener_tabla_de_segmentos_por_pid(pid);
-                log_info(memoriaLogger,"Tabla de Segmentos con PID <%d> actualizada ", pid);
-                mostrar_lista_segmentos(listaDeSegmentos);
+                pthread_mutex_lock(&mutexListaDeSegmento);
+                t_list* tablaDeSegmentoActualizada = listaDeSegmentos;
+                tablaDeSegmentoActualizada = list_filter(tablaDeSegmentoActualizada,segmentos_validez_1);
+                tablaDeSegmentoActualizada = list_map(tablaDeSegmentoActualizada,adapter_segmento_memoria_kernel);
+                pthread_mutex_unlock(&mutexListaDeSegmento);
 
-
-                stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
+                t_buffer* bufferTablaDeSegmentoActualizada = buffer_create();
+                buffer_pack_segmento_list(bufferTablaDeSegmentoActualizada, tablaDeSegmentoActualizada);
+                stream_send_buffer(socketKernel, HANDSHAKE_ok_continue,bufferTablaDeSegmentoActualizada);
+                buffer_destroy(bufferTablaDeSegmentoActualizada);
+               
 
                 break;
             }

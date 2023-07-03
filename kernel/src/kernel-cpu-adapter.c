@@ -1,5 +1,9 @@
 #include <../include/kernel-cpu-adapter.h> 
 
+extern t_list* tablaGlobalDeSegmentos;
+extern pthread_mutex_t mutexTablaGlobalSegmento;
+
+
 void cpu_adapter_enviar_pcb_a_cpu(t_pcb* pcbAEnviar, uint8_t header, t_kernel_config* kernelConfig, t_log* kernelLogger)
 {
     uint32_t pidAEnviar = pcb_get_pid(pcbAEnviar);
@@ -131,9 +135,11 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
 
         t_segmento* unSegmento = segmento_create(id_de_segmento, tamanio_de_segmento);
         log_info(kernelLogger, "NUEVO SEGMENTO ID <%i> - TAMANIO <%i> ",id_de_segmento, tamanio_de_segmento);
-        pcb_set_lista_de_segmentos(pcbAActualizar,unSegmento);
+        
+        pthread_mutex_lock(&mutexTablaGlobalSegmento);
+        list_add(tablaGlobalDeSegmentos,unSegmento);
+        pthread_mutex_unlock(&mutexTablaGlobalSegmento);
 
-        //segmento_destroy(unSegmento);
 
         break;
 
@@ -142,7 +148,10 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         
         buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
         log_info(kernelLogger, "ID <%i> Segmento eliminar ", id_de_segmento);
-        modificar_victima_lista_segmento(pcbAActualizar,id_de_segmento, true);
+
+        pthread_mutex_lock(&mutexTablaGlobalSegmento);
+        modificar_victima_lista_segmento(tablaGlobalDeSegmentos,id_de_segmento,pcb_get_pid(pcbAActualizar), true);
+        pthread_mutex_unlock(&mutexTablaGlobalSegmento);
 
 
         break;

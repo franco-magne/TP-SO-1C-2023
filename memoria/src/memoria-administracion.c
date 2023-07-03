@@ -53,7 +53,9 @@ bool segmentos_validez_0(Segmento* unSegmento){
     return (segmento_get_bit_validez(unSegmento) == 0);
 }
 
-
+bool segmentos_validez_1(Segmento* unSegmento){
+    return (segmento_get_bit_validez(unSegmento) == 1);
+}
  
 t_list* segmento_disponibles_del_tamanio(Segmento* nuevoSegmento, t_list* listaDeSegmentoHuecoLibres){
  

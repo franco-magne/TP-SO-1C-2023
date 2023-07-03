@@ -29,6 +29,7 @@ t_pcb* pcb_create(uint32_t pid)
 
 t_segmento* segmento_create(uint32_t id_de_segmento, uint32_t tamanio_de_segmento){
     t_segmento* this = malloc(sizeof(*this));
+    this->pid = -1;
     this->id_de_segmento = id_de_segmento;
     this->base_del_segmento = -1;
     this->tamanio_de_segmento = tamanio_de_segmento;
@@ -60,12 +61,17 @@ void segmento_set_victima(t_segmento* this, bool cambioEstado){
     this->victima = cambioEstado;
 }
 
+uint32_t segmento_get_pid(t_segmento* this){
+    return this->pid;
+}
+
+void segmento_set_pid(t_segmento* this, uint32_t pid){
+    this->pid = pid;
+}
 ///////////////////////////// FUNCIONES UTILITARIAS DEL SEGMENTO POSIBLE MIGRACION A KERNEL-ESTRUCTURA-SEGMENTO //////////////////
 
-bool es_el_segmento_victima(t_segmento* element, t_segmento* target) {
-    if(element->victima)
-    return true;
-    return false;
+bool es_el_segmento_por_id(t_segmento* unSegmento, t_segmento* otroSegmento){
+    return (unSegmento->id_de_segmento == otroSegmento->id_de_segmento) && (unSegmento->pid == otroSegmento->pid);
 }
 
 bool es_el_segmento_victimaok(t_segmento* element) {
@@ -74,39 +80,25 @@ bool es_el_segmento_victimaok(t_segmento* element) {
     return false;
 }
 
-bool es_el_segmento_por_id(t_segmento* unSegmento, t_segmento* otroSegmento){
-    return unSegmento->id_de_segmento == otroSegmento->id_de_segmento;
-}
-
-
-t_segmento* segmento_victima(t_pcb* this) {
-    t_segmento* aux2 = list_find(pcb_get_lista_de_segmentos(this), es_el_segmento_victimaok);
+t_segmento* segmento_victima(t_list* this) {
+    t_segmento* aux2 = list_find(this, es_el_segmento_victimaok);
     return aux2;
 }
 
-t_segmento* remover_segmento_victima_lista(t_pcb* this) {
-    t_segmento* aux1 = segmento_create(-1, -1);
-    segmento_set_victima(aux1, true);
-    uint32_t index =  list_get_index(pcb_get_lista_de_segmentos(this),es_el_segmento_victimaok, aux1);
-    t_segmento* aux2 = list_remove(pcb_get_lista_de_segmentos(this),index);
-    free(aux1);
-    return aux2;
-}
-
-
-uint32_t index_posicion_del_segmento_victima(t_pcb* this, uint32_t id){
+uint32_t index_posicion_del_segmento_victima(t_list* this, uint32_t id, uint32_t pid){
     t_segmento* aux1 = segmento_create(id, -1);
-    uint32_t index = list_get_index(pcb_get_lista_de_segmentos(this),es_el_segmento_por_id, aux1);
+    segmento_set_pid(aux1, pid);
+    uint32_t index = list_get_index(this,es_el_segmento_por_id, aux1);
     segmento_destroy(aux1);
     return index;
 }
 
-void modificar_victima_lista_segmento(t_pcb* this, uint32_t id_victima, bool cambiovictima){
-    uint32_t index = index_posicion_del_segmento_victima(this,id_victima);
+void modificar_victima_lista_segmento(t_list* this, uint32_t id_victima, uint32_t pid, bool cambiovictima){
+    uint32_t index = index_posicion_del_segmento_victima(this,id_victima,pid);
     if (index != -1) {
-        t_segmento* aux2 = list_get(pcb_get_lista_de_segmentos(this), index);
+        t_segmento* aux2 = list_get(this, index);
         segmento_set_victima(aux2, cambiovictima);
-        list_replace(pcb_get_lista_de_segmentos(this), index, aux2);
+        list_replace(this, index, aux2);
         
     } 
 }
@@ -114,7 +106,7 @@ void modificar_victima_lista_segmento(t_pcb* this, uint32_t id_victima, bool cam
 
 t_segmento* buffer_unpack_segmento(t_buffer* buffer) {
     t_segmento* segmento = segmento_create(-1,-1);
-
+    buffer_unpack(buffer, &(segmento->pid), sizeof(segmento->pid));
     buffer_unpack(buffer, &(segmento->id_de_segmento), sizeof(segmento->id_de_segmento));
     buffer_unpack(buffer, &(segmento->base_del_segmento), sizeof(segmento->base_del_segmento));
     buffer_unpack(buffer, &(segmento->tamanio_de_segmento), sizeof(segmento->tamanio_de_segmento));

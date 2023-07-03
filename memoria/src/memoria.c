@@ -151,12 +151,12 @@ void aceptar_conexiones_memoria(const int socketEscucha) {
             uint8_t handshake = stream_recv_header(clienteAceptado);
             if (handshake == HANDSHAKE_cpu) {
                 pthread_t threadAtencion;
-                memoria_config_set_socket_kernel(memoriaConfig,clienteAceptado);
                 pthread_create(&threadAtencion, NULL, atender_conexiones_cpu, &clienteAceptado);
                 pthread_detach(threadAtencion);
                 cpuSinAtender = false;
             } else if (handshake == HANDSHAKE_kernel) {
                 pthread_t threadAtencion;
+                memoria_config_set_socket_kernel(memoriaConfig,clienteAceptado);
                 pthread_create(&threadAtencion, NULL, atender_conexiones_kernel, &clienteAceptado);
                 pthread_detach(threadAtencion);
                 kernelSinAtender = false;
