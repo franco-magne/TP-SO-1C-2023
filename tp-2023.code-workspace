@@ -47,7 +47,8 @@
 			"memoria-estructuras.h": "c",
 			"memoria-atender-cpu.h": "c",
 			"segmento-estado.h": "c",
-			"semaphore.h": "c"
+			"semaphore.h": "c",
+			"memoria-atender-fs.h": "c"
 		}
 	}
 }

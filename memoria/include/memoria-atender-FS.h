@@ -13,6 +13,7 @@
 #include <pthread.h>
 
 #include <stdio.h>
+#include "memoria-estructuras.h"
 
 void atender_peticiones_fileSystem(int socketFS);
 
