@@ -17,6 +17,8 @@ void administrar_nuevo_segmento(Segmento* nuevoSegmento);
 void eliminar_segmento_memoria(Segmento* segmentoAEliminar);
 void mostrar_tabla(t_list* tablaDeSegmentosSolic);
 void mostrar_lista_segmentos(t_list* lista);
+bool segmentos_validez_0(Segmento* unSegmento);
+bool segmentos_validez_1(Segmento* unSegmento);
 
 
 #endif

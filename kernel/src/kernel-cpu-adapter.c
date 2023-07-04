@@ -1,5 +1,9 @@
 #include <../include/kernel-cpu-adapter.h> 
 
+extern t_list* tablaGlobalDeSegmentos;
+extern pthread_mutex_t mutexTablaGlobalSegmento;
+
+
 void cpu_adapter_enviar_pcb_a_cpu(t_pcb* pcbAEnviar, uint8_t header, t_kernel_config* kernelConfig, t_log* kernelLogger)
 {
     uint32_t pidAEnviar = pcb_get_pid(pcbAEnviar);
@@ -17,12 +21,36 @@ void cpu_adapter_enviar_pcb_a_cpu(t_pcb* pcbAEnviar, uint8_t header, t_kernel_co
     char* registroCx =  pcb_get_registros_cpu(pcbAEnviar)->registroCx;
     char* registroDx =  pcb_get_registros_cpu(pcbAEnviar)->registroDx;
 
+
+    char* registroEAx =  pcb_get_registros_cpu(pcbAEnviar)->registroEAx;
+    char* registroEBx =  pcb_get_registros_cpu(pcbAEnviar)->registroEBx;
+    char* registroECx =  pcb_get_registros_cpu(pcbAEnviar)->registroECx;
+    char* registroEDx =  pcb_get_registros_cpu(pcbAEnviar)->registroEDx;
+    
+    char* registroRAx =  pcb_get_registros_cpu(pcbAEnviar)->registroRAx;
+    char* registroRBx =  pcb_get_registros_cpu(pcbAEnviar)->registroRBx;
+    char* registroRCx =  pcb_get_registros_cpu(pcbAEnviar)->registroRCx;
+    char* registroRDx =  pcb_get_registros_cpu(pcbAEnviar)->registroRDx;
+
+    // todo los egistros 
+
+
     //Empaquetamos los registros
     buffer_pack_string(bufferPcbAEjecutar, registroAx );
     buffer_pack_string(bufferPcbAEjecutar, registroBx );
     buffer_pack_string(bufferPcbAEjecutar, registroCx );
     buffer_pack_string(bufferPcbAEjecutar, registroDx );
 
+    buffer_pack_string(bufferPcbAEjecutar, registroEAx );
+    buffer_pack_string(bufferPcbAEjecutar, registroEBx );
+    buffer_pack_string(bufferPcbAEjecutar, registroECx );
+    buffer_pack_string(bufferPcbAEjecutar, registroEDx );
+
+    buffer_pack_string(bufferPcbAEjecutar, registroRAx );
+    buffer_pack_string(bufferPcbAEjecutar, registroRBx );
+    buffer_pack_string(bufferPcbAEjecutar, registroRCx );
+    buffer_pack_string(bufferPcbAEjecutar, registroRDx );
+    
     //stream_send_empty_buffer(kernel_config_get_socket_dispatch_cpu(kernelConfig), header);
     stream_send_buffer(kernel_config_get_socket_dispatch_cpu(kernelConfig), header, bufferPcbAEjecutar);
     stream_send_buffer(kernel_config_get_socket_dispatch_cpu(kernelConfig), HEADER_lista_instrucciones, pcb_get_instrucciones_buffer(pcbAEnviar));
@@ -34,7 +62,21 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
 {
     uint32_t pidRecibido = 0;
     uint32_t programCounterActualizado = 0;
-    char* registroAxActualizado = NULL, registroBxActualizado = NULL, registroCxActualizado = NULL, registroDxActualizado = NULL;
+    char* registroAxActualizado = NULL;
+    char* registroBxActualizado = NULL;
+    char* registroCxActualizado = NULL;
+    char* registroDxActualizado = NULL;
+    char* registroEAxActualizado = NULL;
+    char* registroEBxActualizado = NULL;
+    char* registroECxActualizado = NULL;
+    char* registroEDxActualizado = NULL;
+    char* registroRAxActualizado = NULL;
+    char* registroRBxActualizado = NULL;
+    char* registroRCxActualizado = NULL;
+    char* registroRDxActualizado = NULL;
+    
+    
+    
     uint32_t cantidadUnidadesTiemposIo = 0;
     // MEMORIA
     uint32_t id_de_segmento;
@@ -58,6 +100,18 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
     registroCxActualizado = buffer_unpack_string(bufferPcb);
     registroDxActualizado = buffer_unpack_string(bufferPcb);
 
+    registroEAxActualizado = buffer_unpack_string(bufferPcb);
+    registroEBxActualizado = buffer_unpack_string(bufferPcb);
+    registroECxActualizado = buffer_unpack_string(bufferPcb);
+    registroEDxActualizado = buffer_unpack_string(bufferPcb);
+
+    registroRAxActualizado = buffer_unpack_string(bufferPcb);
+    registroRBxActualizado = buffer_unpack_string(bufferPcb);
+    registroRCxActualizado = buffer_unpack_string(bufferPcb);
+    registroRDxActualizado = buffer_unpack_string(bufferPcb);
+
+
+
 
     switch(cpuResponse){
         case HEADER_proceso_bloqueado : 
@@ -80,10 +134,12 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         buffer_unpack(bufferPcb, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
 
         t_segmento* unSegmento = segmento_create(id_de_segmento, tamanio_de_segmento);
-    
-        pcb_set_lista_de_segmentos(pcbAActualizar,unSegmento);
+        log_info(kernelLogger, "NUEVO SEGMENTO ID <%i> - TAMANIO <%i> ",id_de_segmento, tamanio_de_segmento);
+        
+        pthread_mutex_lock(&mutexTablaGlobalSegmento);
+        list_add(tablaGlobalDeSegmentos,unSegmento);
+        pthread_mutex_unlock(&mutexTablaGlobalSegmento);
 
-        //segmento_destroy(unSegmento);
 
         break;
 
@@ -92,7 +148,10 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         
         buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
         log_info(kernelLogger, "ID <%i> Segmento eliminar ", id_de_segmento);
-        modificar_victima_lista_segmento(pcbAActualizar,id_de_segmento, true);
+
+        pthread_mutex_lock(&mutexTablaGlobalSegmento);
+        modificar_victima_lista_segmento(tablaGlobalDeSegmentos,id_de_segmento,pcb_get_pid(pcbAActualizar), true);
+        pthread_mutex_unlock(&mutexTablaGlobalSegmento);
 
 
         break;
@@ -151,7 +210,6 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         list_replace(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),index,archivoFRW);
         break;
     }
-    
    if (pidRecibido == pcb_get_pid(pcbAActualizar)) {
         
         switch(cpuResponse){
@@ -168,16 +226,26 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
             case HEADER_f_read:
             case HEADER_f_write:
 
-             pcb_set_program_counter(pcbAActualizar, programCounterActualizado);
+            pcb_set_program_counter(pcbAActualizar, programCounterActualizado);
 
-             pcb_set_registro_ax_cpu(pcbAActualizar, registroAxActualizado);
-             pcb_set_registro_bx_cpu(pcbAActualizar, registroAxActualizado);
-             pcb_set_registro_cx_cpu(pcbAActualizar, registroAxActualizado);
-             pcb_set_registro_dx_cpu(pcbAActualizar, registroAxActualizado);
+            pcb_set_registro_ax_cpu(pcbAActualizar, registroAxActualizado);
+            pcb_set_registro_bx_cpu(pcbAActualizar, registroBxActualizado);
+            pcb_set_registro_cx_cpu(pcbAActualizar, registroCxActualizado);
+            pcb_set_registro_dx_cpu(pcbAActualizar, registroDxActualizado);
 
-             break;
+            pcb_set_registro_eax_cpu(pcbAActualizar, registroEAxActualizado);
+            pcb_set_registro_ebx_cpu(pcbAActualizar, registroEBxActualizado);
+            pcb_set_registro_ecx_cpu(pcbAActualizar, registroECxActualizado);
+            pcb_set_registro_edx_cpu(pcbAActualizar, registroEDxActualizado);
 
-             default: break;
+            pcb_set_registro_rax_cpu(pcbAActualizar, registroRAxActualizado);
+            pcb_set_registro_rbx_cpu(pcbAActualizar, registroRBxActualizado);
+            pcb_set_registro_rcx_cpu(pcbAActualizar, registroRCxActualizado);
+            pcb_set_registro_rdx_cpu(pcbAActualizar, registroRDxActualizado);
+    
+            break;
+
+            default: break;
 
         }
     

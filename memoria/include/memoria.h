@@ -17,6 +17,7 @@
 #include "memoria-config.h"
 #include "memoria-atender-kernel.h"
 #include "memoria-atender-cpu.h"
+#include "memoria-atender-FS.h"
 #include "segmento-estado.h"
 
 #define MEMORIA_CONFIG_UBICACION "config/memoria.config"

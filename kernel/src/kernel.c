@@ -6,12 +6,13 @@ t_kernel_config* kernelConfig;
 t_kernel_recurso* recursoConfig;
 static t_estado* elegir_pcb;
 t_list* tablaGlobalDeArchivosAbiertos;
-
+t_list* tablaGlobalDeSegmentos;
 /////////// LA USAN VARIOS PROCESOS "HILOS" /////////////
 static uint32_t nextPid ;
 static int cantidad_de_recursos;
 char* nombre_recurso;
 ///////////  SEMAFOROS MUTEX ////////////////
+pthread_mutex_t mutexTablaGlobalSegmento = PTHREAD_MUTEX_INITIALIZER;
  pthread_mutex_t mutexCantidadRecursos;
  pthread_mutex_t mutexNombreRecurso;
 static pthread_mutex_t nextPidMutex;
@@ -61,6 +62,7 @@ int main(int argc, char* argv[]) {
     kernelLogger = log_create(KERNEL_LOG_UBICACION,KERNEL_PROCESS_NAME,true,LOG_LEVEL_INFO);
     t_config* kernelConfigPath = config_create(argv[1]);
     tablaGlobalDeArchivosAbiertos = list_create();
+    tablaGlobalDeSegmentos = list_create();
     nextPid++;
     pthread_mutex_init(&nextPidMutex, NULL);
    inicio_kernel();
@@ -71,7 +73,7 @@ int main(int argc, char* argv[]) {
    /////////////////////////////// CONEXION CON CPU /////////////////////////////
     conectar_a_servidor_cpu_dispatch(kernelConfig,kernelLogger);
     /////////////////////////////// CONEXION CON FILE_SYSTEM /////////////////////////////
-   // conectar_con_servidor_file_system(kernelConfig,kernelLogger);
+    //conectar_con_servidor_file_system(kernelConfig,kernelLogger);
    /////////////////////////////// CONEXION CON MEMORIA /////////////////////////////
     conectar_con_servidor_memoria(kernelConfig,kernelLogger);
    ////////////////////////////// CONEXION CON CONSOLA //////////////////////////////
@@ -196,27 +198,10 @@ void* planificador_largo_plazo(void* args)
         sem_wait(&gradoMultiprog);
                                  
         t_pcb* pcbQuePasaAReady = estado_desencolar_primer_pcb_atomic(estadoNew);
-        
-        t_segmento* segmentoCero = segmento_create(0,0);
-        segmento_set_victima(segmentoCero, false);
-        pcb_set_lista_de_segmentos(pcbQuePasaAReady,segmentoCero);
-     //   segmento_destroy(segmentoCero);
+                proceso_pasa_a_ready(pcbQuePasaAReady, "NEW");
+                pcbQuePasaAReady = NULL;
+         
 
-        
-        //uint32_t* nuevaTablaPaginasSegmentos = mem_adapter_obtener_tabla_pagina(pcbQuePasaAReady, kernelConfig, kernelDevLogger);
-
-        //pcb_set_array_tabla_paginas(pcbQuePasaAReady, nuevaTablaPaginasSegmentos);
-
-        /*if (nuevaTablaPaginasSegmentos == NULL) {
-                
-            responder_memoria_insuficiente(pcbQuePasaAReady);   //podria pasarnos con el segmento
-        } 
-        else {*/
-
-        proceso_pasa_a_ready(pcbQuePasaAReady, "NEW");
-            
-        //}
-        pcbQuePasaAReady = NULL;
         
     }
 
@@ -314,9 +299,8 @@ void* atender_pcb(void* args)
                 break;
             case HEADER_f_write:
                 instruccion_f_write(pcb);
-
+                break;
             default:
-
                 log_error(kernelLogger, "Error al recibir mensaje de CPU");
                 break;
         }

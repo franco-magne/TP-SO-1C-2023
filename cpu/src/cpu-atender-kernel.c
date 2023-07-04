@@ -92,10 +92,21 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
         //Empaqueto pc
         buffer_pack(buffer, &programCounterActualizado, sizeof(programCounterActualizado));
         //Empaquetamos registros
-        buffer_pack_string(buffer, cpu_pcb_get_registros(pcb)->registroAx);
-        buffer_pack_string(buffer, cpu_pcb_get_registros(pcb)->registroBx);
-        buffer_pack_string(buffer, cpu_pcb_get_registros(pcb)->registroCx);
-        buffer_pack_string(buffer, cpu_pcb_get_registros(pcb)->registroDx);
+        buffer_pack_string(buffer, registrosCpuActualizado->registroAx);
+        buffer_pack_string(buffer, registrosCpuActualizado->registroBx);
+        buffer_pack_string(buffer, registrosCpuActualizado->registroCx);
+        buffer_pack_string(buffer, registrosCpuActualizado->registroDx);
+        
+        buffer_pack_string(buffer, registrosCpuActualizado->registroEAx);
+        buffer_pack_string(buffer, registrosCpuActualizado->registroEBx);
+        buffer_pack_string(buffer, registrosCpuActualizado->registroECx);
+        buffer_pack_string(buffer, registrosCpuActualizado->registroEDx);
+
+        buffer_pack_string(buffer, registrosCpuActualizado->registroRAx);
+        buffer_pack_string(buffer, registrosCpuActualizado->registroRBx);
+        buffer_pack_string(buffer, registrosCpuActualizado->registroRCx);
+        buffer_pack_string(buffer, registrosCpuActualizado->registroRDx);
+
         
         switch(header){
             case HEADER_proceso_bloqueado : buffer_pack(buffer, &unidadesDeTrabajo, sizeof(unidadesDeTrabajo));
@@ -119,7 +130,6 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
             buffer_pack_string(buffer,nombreArchivo);
             buffer_pack(buffer,&punteroArchivo, sizeof(punteroArchivo));
             break;
-
             case HEADER_f_write:
             case HEADER_f_read:
             buffer_pack_string(buffer,nombreArchivo);
@@ -179,25 +189,41 @@ static char*  get_registro_segun_tipo(t_registro tipoRegistro, t_cpu_pcb* pcb)
     switch (tipoRegistro)
     {
         case REGISTRO_ax:
-            
             return cpu_pcb_get_registro_ax(pcb);
             break;
-
         case REGISTRO_bx:
-            
             return cpu_pcb_get_registro_bx(pcb);
             break;
-
         case REGISTRO_cx:
-            
             return cpu_pcb_get_registro_cx(pcb);
             break;
-
         case REGISTRO_dx:
-            
             return cpu_pcb_get_registro_dx(pcb);
             break;
-
+        case REGISTRO_eax:           
+            return cpu_pcb_get_registro_eax(pcb);
+            break;
+        case REGISTRO_ebx:     
+            return cpu_pcb_get_registro_ebx(pcb);
+            break;
+        case REGISTRO_ecx:
+            return cpu_pcb_get_registro_ecx(pcb);
+            break;
+        case REGISTRO_edx:
+            return cpu_pcb_get_registro_edx(pcb);
+            break;
+        case REGISTRO_rax:
+            return cpu_pcb_get_registro_rax(pcb);
+            break;
+        case REGISTRO_rbx:
+            return cpu_pcb_get_registro_rbx(pcb);
+            break;
+        case REGISTRO_rcx:
+            return cpu_pcb_get_registro_rcx(pcb);
+            break;
+        case REGISTRO_rdx:
+            return cpu_pcb_get_registro_rdx(pcb);
+            break;
         default:
             return 0;
             break;
@@ -210,22 +236,50 @@ void cpu_pcb_set_registro(t_registros_cpu* registros, t_registro tipoRegistro, c
             free(registros->registroAx); // Liberar la memoria del registro anterior
             registros->registroAx = strdup(valor); // Asignar el nuevo valor al registro
             break;
-
         case REGISTRO_bx:
             free(registros->registroBx);
             registros->registroBx = strdup(valor);
             break;
-
         case REGISTRO_cx:
             free(registros->registroCx);
             registros->registroCx = strdup(valor);
             break;
-
         case REGISTRO_dx:
             free(registros->registroDx);
             registros->registroDx = strdup(valor);
             break;
-
+        case REGISTRO_eax:
+            free(registros->registroEAx);
+            registros->registroEAx = strdup(valor);
+            break;
+        case REGISTRO_ebx:
+            free(registros->registroEBx);
+            registros->registroEBx = strdup(valor);
+            break;
+        case REGISTRO_ecx:
+            free(registros->registroECx);
+            registros->registroECx = strdup(valor);
+            break;
+        case REGISTRO_edx:
+            free(registros->registroEDx);
+            registros->registroEDx = strdup(valor);
+            break;
+        case REGISTRO_rax:
+            free(registros->registroRAx);
+            registros->registroRAx = strdup(valor);
+            break;
+        case REGISTRO_rbx:
+            free(registros->registroRBx);
+            registros->registroRBx = strdup(valor);
+            break;
+        case REGISTRO_rcx:
+            free(registros->registroRCx);
+            registros->registroRCx = strdup(valor);
+            break;
+        case REGISTRO_rdx:
+            free(registros->registroRDx);
+            registros->registroRDx = strdup(valor);
+            break;
         default:
             // Registro inválido, no se hace nada
             break;
@@ -517,7 +571,6 @@ static bool cpu_ejecutar_ciclos_de_instruccion(t_cpu_pcb* pcb)
     switch (tipoInstruccion)
     {   
         case INSTRUCCION_SET:
-      
             registro1 = instruccion_get_registro1(nextInstruction);
             dispositivo = instruccion_get_dispositivo(nextInstruction);
                 
@@ -530,7 +583,6 @@ static bool cpu_ejecutar_ciclos_de_instruccion(t_cpu_pcb* pcb)
             shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, NULL, NULL, NULL);
             break;
         case INSTRUCCION_IO:
-            
             operando1 = instruccion_get_operando1(nextInstruction);
             shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion,(void*) &operando1, NULL, NULL);
             break;
@@ -571,7 +623,6 @@ static bool cpu_ejecutar_ciclos_de_instruccion(t_cpu_pcb* pcb)
             break;
         case INSTRUCCION_F_READ:
         case INSTRUCCION_F_WRITE:
-
             dispositivo = instruccion_get_dispositivo(nextInstruction);
             operando1 = instruccion_get_operando1(nextInstruction);
             operando2 = instruccion_get_operando2(nextInstruction);
@@ -588,7 +639,6 @@ static bool cpu_ejecutar_ciclos_de_instruccion(t_cpu_pcb* pcb)
             registro2 = instruccion_get_registro2(nextInstruction);
             shouldStopExec = cpu_exec_instruction(pcb, tipoInstruccion, (void*) &operando1, (void*) &registro2,NULL );
             break;
-            
         default:
             break;
     }
@@ -634,6 +684,14 @@ static void dispatch_peticiones_de_kernel()
             registrosCpu->registroBx = buffer_unpack_string(bufferPcb);
             registrosCpu->registroCx = buffer_unpack_string(bufferPcb);
             registrosCpu->registroDx = buffer_unpack_string(bufferPcb);
+            registrosCpu->registroEAx = buffer_unpack_string(bufferPcb);
+            registrosCpu->registroEBx = buffer_unpack_string(bufferPcb);
+            registrosCpu->registroECx = buffer_unpack_string(bufferPcb);
+            registrosCpu->registroECx = buffer_unpack_string(bufferPcb);
+            registrosCpu->registroRAx = buffer_unpack_string(bufferPcb);
+            registrosCpu->registroRBx = buffer_unpack_string(bufferPcb);
+            registrosCpu->registroRCx = buffer_unpack_string(bufferPcb);
+            registrosCpu->registroRCx = buffer_unpack_string(bufferPcb);
             
             /*Desempaquetamos todo los datos que nos trae socket dispatch y lo guardamos*/
 

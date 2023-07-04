@@ -5,13 +5,14 @@ extern t_memoria_config* memoriaConfig;
 extern uint32_t tamActualMemoria;
 extern Segmento* segCompartido;
 
+
 void atender_peticiones_cpu(int socketCpu) {
     uint8_t header;
      while ((header = stream_recv_header(socketCpu)) != -1) {
         t_buffer* buffer = buffer_create();
         stream_recv_buffer(socketCpu, buffer);
         switch (header){
-        case HEADER_marco :{
+        case HEADER_marco :{ //acceso a memoria
             //marco es la direccion Fisica
             log_info(memoriaLogger, "\e[1;93mPetición de marco\e[0m");
             uint32_t id_segmento;
@@ -24,12 +25,13 @@ void atender_peticiones_cpu(int socketCpu) {
             Segmento* segementoSolic = obtener_segmento_por_id(pid, id_segmento);
             log_info(memoriaLogger, "Se quiere la dirección física del segmento <%i>",id_segmento);
             
-            //Logica de desplazamiento ...          base < limite
-            /*if(desplazamiento_segmento >= segmento_get_limite(segementoSolic)){
-                segmentation_fault...
-            }*/
-
-            
+            //Logica de desplazamiento ...          desplazamiento <= limite todo ok, si es > entonces hay segmentation fault
+            if(desplazamiento_segmento > segmento_get_tamanio(segementoSolic)){
+                stream_send_empty_buffer(socketCpu, HEADER_Segmentation_fault);
+                log_error(memoriaLogger, "Segmentation Fault!! Fallo en el acceso al segmento <%i> con pid <%i>", id_segmento, pid);
+                //Deberia finalizar el proceso
+                break;
+            }
             
             uint32_t marco = segmento_get_id(segementoSolic);//obtener_marco(pid, id_segmento); //base y limite no +
             

@@ -18,35 +18,35 @@ static char* t_registro_to_char(t_registro registro)
         
         return "DX";
     }
-    if(registro == REGISTRO_ax) {
+    else if(registro == REGISTRO_eax) {
 
         return "EAX";
     }
-    else if(registro == REGISTRO_bx) {
+    else if(registro == REGISTRO_ebx) {
 
         return "EBX";
     }
-    else if(registro == REGISTRO_cx) {
+    else if(registro == REGISTRO_ecx) {
         
         return "ECX";
     }
-    else if(registro == REGISTRO_dx) {
+    else if(registro == REGISTRO_edx) {
         
         return "EDX";
     }
-    if(registro == REGISTRO_ax) {
+    else if(registro == REGISTRO_rax) {
 
         return "RAX";
     }
-    else if(registro == REGISTRO_bx) {
+    else if(registro == REGISTRO_rbx) {
 
         return "RBX";
     }
-    else if(registro == REGISTRO_cx) {
+    else if(registro == REGISTRO_rcx) {
         
         return "RCX";
     }
-    else if(registro == REGISTRO_dx) {
+    else if(registro == REGISTRO_rdx) {
         
         return "RDX";
     }

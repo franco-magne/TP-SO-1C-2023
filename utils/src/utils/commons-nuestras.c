@@ -189,6 +189,22 @@ void inicio_kernel(){
 
 }
 
+
+t_list* list_filter_ok(t_list* lista, bool (*condition)(void*, void*), void* argumento) {
+    t_list* resultado = list_create();
+ 
+    for (int i = 0; i < lista->elements_count; i++) {
+        void* elemento = list_get(lista, i);
+        if (condition(elemento, argumento)) {
+            list_add(resultado, elemento);
+        }
+    }
+ 
+    return resultado;
+}
+
+
+
 void inicio_cpu(){
         printf("\033[1;31m");  // Establece el color de texto a rojo brillante
     printf("  CCCC   ");

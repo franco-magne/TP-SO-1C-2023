@@ -5,6 +5,7 @@
 extern t_cpu_config *cpuConfig;
 extern t_log *cpuLogger;
 
+//seria la implementacion segmentation
 static uint32_t cpu_solicitar_a_memoria(int toSocket, uint32_t num_segmento, uint32_t pid, uint32_t desplazamiento_segmento ,  t_header requestHeader) {
     t_buffer *requestBuffer = buffer_create();
     
@@ -12,13 +13,15 @@ static uint32_t cpu_solicitar_a_memoria(int toSocket, uint32_t num_segmento, uin
     buffer_pack(requestBuffer, &pid, sizeof(pid));
     buffer_pack(requestBuffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
 
-    stream_send_buffer(toSocket, requestHeader, requestBuffer);
+    stream_send_buffer(toSocket, requestHeader, requestBuffer); //---->>>> requestHeader == HEADER_marco
     buffer_destroy(requestBuffer);
-    uint8_t responseHeader = stream_recv_header(toSocket);
-    if (responseHeader != requestHeader) {
-        log_error(cpuLogger, "Error al realizar una solicitud de memoria");
+    uint8_t responseHeader = stream_recv_header(toSocket);  //---->>>> Aca recibo el HEADER_marco o el HEADER_Segmentation_fault
+    if (responseHeader != requestHeader) { //si me mandan un HEADER_SegFault
+        log_error(cpuLogger, "PID: <%i> - Error SEG_FAULT- Segmento_id: <%i> -Offset: <%i> - Tamaño: <TAMANIO>", pid, num_segmento, desplazamiento_segmento);
+        //avisarle a Kernel que lo mande a EXIT x SegFault
         exit(-1);
     }
+    log_info(cpuLogger, "PID: <%i> - Acción: <LEER / ESCRIBIR> - Segmento: <NUMERO SEGMENTO> - Dirección Física: <DIRECCION FISICA> - Valor: <VALOR LEIDO / ESCRITO>");
     t_buffer *responseBuffer = buffer_create();
     stream_recv_buffer(toSocket, responseBuffer);
     uint32_t requestRetVal = -1;
@@ -27,7 +30,7 @@ static uint32_t cpu_solicitar_a_memoria(int toSocket, uint32_t num_segmento, uin
     return requestRetVal;
 }
 
-
+//MMU
 uint32_t cpu_obtener_marco(int toSocket, uint32_t direccionLogica, uint32_t pid) {
     int tamanioMaximoSegmento = cpu_config_get_tamanio_maximo_segmento(cpuConfig);
 

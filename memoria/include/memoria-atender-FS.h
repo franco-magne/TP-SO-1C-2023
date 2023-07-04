@@ -1,5 +1,5 @@
-#ifndef MEMORIA_ATENDER_KERNEL_H
-#define MEMORIA_ATENDER_KERNEL_H
+#ifndef MEMORIA_ATENDER_FS_H
+#define MEMORIA_ATENDER_FS_H
 
 #include <errno.h>
 #include <stdlib.h>
@@ -13,11 +13,7 @@
 #include <pthread.h>
 
 #include <stdio.h>
-#include "memoria-estructuras.h"
-#include "memoria.h"
-#include "memoria-administracion.h"
-#include "memoria-adapter-kernel.h"
-void atender_peticiones_kernel(int socketKernel);
-bool puedo_crear_segmento_o_proceso(uint32_t tamanio);
+
+void atender_peticiones_fileSystem(int socketFS);
 
 #endif

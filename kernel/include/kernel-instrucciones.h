@@ -29,5 +29,6 @@ void instruccion_f_read(t_pcb* pcb);
 
 char* string_pids_ready(t_estado* estadoReady);
 void proceso_pasa_a_ready(t_pcb* pcb, char* estadoActual);
+void proceso_pasa_a_exit(t_pcb* pcbAExit);
 
 #endif

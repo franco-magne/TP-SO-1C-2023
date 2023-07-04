@@ -69,7 +69,7 @@ void file_system_adapter_recv_f_open(t_pcb* pcb, t_kernel_config* kernelConfig){
 
 t_pcb* atender_f_close(char* nombreArchivo){
 
-    pthread_mutex_lock(&mutexTablaGlobal);
+  pthread_mutex_lock(&mutexTablaGlobal);
   int index = archivo_kernel_index(tablaGlobalDeArchivosAbiertos,nombreArchivo);
   t_kernel_archivo* archivo = list_get(tablaGlobalDeArchivosAbiertos, index);
   pthread_mutex_unlock(&mutexTablaGlobal);
@@ -146,5 +146,13 @@ void atender_f_seek(t_pcb* pcb, t_kernel_config* kernelConfig, t_log* kernelLogg
   archivo_pcb_set_victima(archivoFSeek,false);
   list_replace(pcb_get_lista_de_archivos_abiertos(pcb),index,archivoFSeek);
 
+
+}
+
+void file_system_adapter_send_f_read(){
+
+}
+
+void file_system_adapter_send_f_write(){
 
 }
