@@ -1,9 +1,9 @@
 #include <../include/memoria-atender-kernel.h>
 
 
-pthread_mutex_t mutexMemoriaData = PTHREAD_MUTEX_INITIALIZER; //extern
+extern pthread_mutex_t mutexMemoriaData; 
 pthread_mutex_t mutexTamMemoriaActual = PTHREAD_MUTEX_INITIALIZER; //extern
-pthread_mutex_t mutexListaDeSegmento = PTHREAD_MUTEX_INITIALIZER;
+extern pthread_mutex_t mutexListaDeSegmento;
 extern t_log *memoriaLogger;
 extern t_memoria_config* memoriaConfig;
 extern uint32_t tamActualMemoria;

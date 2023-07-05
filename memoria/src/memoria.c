@@ -13,7 +13,8 @@ static bool kernelSinAtender;
 static bool fileSystemSinAtender;
 static pthread_t threadAntencionCpu;
 static pthread_t threadAntencionKernel;
-
+pthread_mutex_t mutexMemoriaData = PTHREAD_MUTEX_INITIALIZER;   //para controlar el flujo de atender-kernel/cpu/FS
+pthread_mutex_t mutexListaDeSegmento = PTHREAD_MUTEX_INITIALIZER;
 
 int main() {
 
@@ -36,7 +37,7 @@ int main() {
     segmento_set_limite(segmentoUsuario, segmento_get_base(segmentoUsuario) + segmento_get_tamanio(segmentoUsuario));
     segmento_set_bit_validez(segmentoUsuario, 0);
     list_add_in_index(listaDeSegmentos,1, segmentoUsuario);
-    log_info(memoriaLogger,"Crear Segmento 1: <%i> - Base: <%i> - TAMAÑO: <%i> - LIMITE <%i>", segmento_get_id(segmentoUsuario), segmento_get_base(segmentoUsuario), segmento_get_tamanio(segmentoUsuario), segmento_get_limite(segmentoUsuario));
+    log_info(memoriaLogger,"Crear Hueco Libre: <%i> - Base: <%i> - TAMAÑO: <%i> - LIMITE <%i>", segmento_get_id(segmentoUsuario), segmento_get_base(segmentoUsuario), segmento_get_tamanio(segmentoUsuario), segmento_get_limite(segmentoUsuario));
 
    //tabla_segmentos = estado_create();
 

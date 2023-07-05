@@ -118,6 +118,16 @@ Segmento* obtener_segmento_por_id(int pid_victima, int id_victima){
     return aux2;
 }
 
+void modificarSegmento(int pid_victima, int id_victima, Segmento* segNuevo){
+    Segmento* aux1 = crear_segmento(-1);
+    segmento_set_id(aux1, id_victima);
+    segmento_set_pid(aux1, pid_victima);
+
+    uint32_t index = list_get_index(listaDeSegmentos, es_el_segmento_victima_id, aux1);
+    list_replace(listaDeSegmentos, index, segNuevo);
+    printf("Segmento de ID <%i> modificado", id_victima);
+}
+
 Segmento* desencolar_segmento_por_id(int pid_segmento, int id_segmento){
     if(list_is_empty(listaDeSegmentos)){
       exit(EXIT_FAILURE);

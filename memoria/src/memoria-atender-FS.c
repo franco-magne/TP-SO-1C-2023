@@ -1,7 +1,9 @@
 #include <../include/memoria-atender-FS.h>
 
-pthread_mutex_t mutexMemoriaData = PTHREAD_MUTEX_INITIALIZER; //extern
+extern pthread_mutex_t mutexMemoriaData; //extern
+pthread_mutex_t mutexListaDeSegmento;
 extern t_log *memoriaLogger;
+extern t_list* listaDeSegmentos;
 
 void atender_peticiones_fileSystem(int socketFS) {
     uint8_t header;
@@ -12,7 +14,7 @@ void atender_peticiones_fileSystem(int socketFS) {
         stream_recv_buffer(socketFS, buffer);
 
         switch (header) {
-            case HEADER_f_read:{
+            case HEADER_f_read:{        //Lee del archivo y escribe en memoria
                 log_info(memoriaLogger, "\e[1;93mPetición de escritura\e[0m");
             
                 uint32_t pid;
@@ -23,8 +25,11 @@ void atender_peticiones_fileSystem(int socketFS) {
                 contenidoAEscribir = buffer_unpack_string(buffer);
                 
                 Segmento* unSegmento = obtener_segmento_por_id(pid, id_segmento);
-                //cada vez que hago un obtener segmento hago un list_replace
+                
                 segmento_set_contenido(unSegmento, contenidoAEscribir);
+                pthread_mutex_lock(&mutexListaDeSegmento);
+                modificarSegmento(pid, id_segmento, unSegmento);    //es un obtener-segmento con list_replace
+                pthread_mutex_unlock(&mutexListaDeSegmento);
 
                 log_info(memoriaLogger, "Contenido escrito : <%s> - En el segmento ID : <%i> ", contenidoAEscribir, id_segmento);
                 break;
@@ -38,8 +43,10 @@ void atender_peticiones_fileSystem(int socketFS) {
                 buffer_unpack(buffer, &pid, sizeof(pid));
                 //buffer_unpack(buffer, &desplazamiento_segmento, sizeof(pid));
 
-                //Segmento* unSegmento = obtener_segmento_por_id(pid, id_segmento);
-        
+                Segmento* segmentoLeido = obtener_segmento_por_id(pid, id_segmento);
+                //char* contenidoAenviar = malloc(strlen(segmentoLeido->contenido) + 1);
+                //strcpy(contenidoAenviar, segmentoLeido->contenido);
+
                 char* contenidoAenviar = malloc(strlen("HOLA") + 1);  // Reservas memoria suficiente para la cadena "HOLA" y el carácter nulo
                 strcpy(contenidoAenviar, "HOLA");
                 t_buffer* bufferContenido = buffer_create();        
@@ -48,7 +55,7 @@ void atender_peticiones_fileSystem(int socketFS) {
 
                 stream_send_buffer(socketFS, HEADER_move_in, bufferContenido);
 
-                buffer_destroy(bufferContenido);
+                buffer_destroy(bufferContenido);    
                 break;
             }
             default:
