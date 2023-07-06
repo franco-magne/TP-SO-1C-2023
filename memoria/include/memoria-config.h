@@ -21,6 +21,7 @@ typedef struct  {
     uint32_t RETARDO_MEMORIA;
     uint32_t RETARDO_COMPACTACION;
     char* ALGORITMO_ASIGNACION;
+    int SOCKET_KERNEL;
 
 } t_memoria_config;
 
@@ -44,12 +45,15 @@ t_memoria_config* memoria_config_initializer(t_config* );
 void memoria_config_destroy(t_memoria_config* );
 char* memoria_config_get_ip_escucha(t_memoria_config*);
 char* memoria_config_get_puerto_escucha(t_memoria_config*);
+char* memoria_config_get_algoritmo_asignacion(t_memoria_config*);
 uint32_t memoria_config_get_cant_de_segmentos(t_memoria_config*);
 uint32_t memoria_config_get_procesos_totales(t_memoria_config*);
 uint32_t memoria_config_get_retardo_memoria(t_memoria_config*);
 uint32_t memoria_config_get_retardo_compactacion(t_memoria_config*);
 uint32_t memoria_config_get_tamanio_memoria(t_memoria_config*);
 uint32_t memoria_config_get_tamanio_segmento_0(t_memoria_config*);
+int memoria_config_get_socket_kernel(t_memoria_config* this);
+void memoria_config_set_socket_kernel(t_memoria_config* this, int socketKernel);
 
 
 #endif

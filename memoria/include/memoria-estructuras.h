@@ -69,7 +69,7 @@ Segmento* desencolar_segmento_por_id(int pid_segmento, int id_segmento);
 Segmento* desencolar_segmento_primer_segmento_atomic();
 void encolar_segmento_atomic(Segmento* targetSegmento);
 t_list* obtener_tabla_de_segmentos_por_pid(int pid);
-
+void modificarSegmento(int pid_victima, int id_victima, Segmento* segNuevo);
 
 void sumar_memoriaRecuperada_a_tamMemoriaActual(uint32_t tamMemorRecuperada);
 void liberar_tabla_segmentos(int pid);
