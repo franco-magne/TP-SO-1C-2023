@@ -99,15 +99,12 @@ double obtener_diferencial_de_tiempo_en_milisegundos(struct timespec end, struct
 
 
 bool es_el_ultimo_elemento(t_list* lista, t_link_element* elemento) {
-    if (lista->head == NULL || elemento == NULL) {
+     if (lista->head == NULL || elemento == NULL) {
         return false;
     }
     
     t_link_element* actual = lista->head;
     while (actual->next != NULL) {
-        if (actual == elemento) {
-            return false;
-        }
         actual = actual->next;
     }
     

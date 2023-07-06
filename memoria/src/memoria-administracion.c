@@ -3,6 +3,7 @@
 extern t_list* listaDeSegmentos;
 extern t_log *memoriaLogger;
 extern t_memoria_config* memoriaConfig;
+extern pthread_mutex_t mutexListaDeSegmento;
 
 void mostrar_lista_segmentos(t_list* lista) {
     int cantidad_segmentos = list_size(lista);
@@ -182,9 +183,11 @@ int segmento_anterior_esta_libre(int index){
 
 
 int segmento_siguiente_esta_libre(int index){
-    Segmento* segmentoAnterior = list_get(listaDeSegmentos, index + 1);
+   
 
+    Segmento* segmentoAnterior = list_get(listaDeSegmentos, index + 1);
     return segmento_get_bit_validez(segmentoAnterior);
+   
 }
 
 Segmento* consolidar_segmentos(Segmento* unSegmento, Segmento* segSiguiente){
@@ -198,12 +201,13 @@ Segmento* consolidar_segmentos(Segmento* unSegmento, Segmento* segSiguiente){
 
 }
 
+
 void eliminar_segmento_memoria(Segmento* segmentoAEliminar){
     
     int index = list_get_index(listaDeSegmentos,es_el_mismo_segmento_pid_id, segmentoAEliminar ); 
-    Segmento* segmentoRealAModificar = list_get(listaDeSegmentos,index);
+    Segmento* segmentoRealAModificar = list_get(list_filter_ok(listaDeSegmentos,es_el_mismo_segmento_pid_id,segmentoAEliminar),0);
+    if(segmentoRealAModificar->pid == -1) return 0;
     segmento_set_bit_validez(segmentoRealAModificar, 0);
-    log_info(memoriaLogger, "PROCESO: PID <%i> -  SEGMENTO <%i> - VALIDEZ <%i> ", segmento_get_pid(segmentoRealAModificar), segmento_get_id(segmentoRealAModificar), segmento_get_bit_validez(segmentoRealAModificar));
 
     if(es_el_ultimo_elemento(listaDeSegmentos,segmentoRealAModificar)){ // ES EL ULTIMO SEGMENTO DE LA MEMORIA
         if(segmento_anterior_esta_libre(index) == 0){
@@ -226,16 +230,17 @@ void eliminar_segmento_memoria(Segmento* segmentoAEliminar){
             Segmento* segmentoConsolidado  = consolidar_segmentos(segmentoAnterior, segmentoRealAModificar);
             list_replace(listaDeSegmentos,index - 1,segmentoConsolidado);
             list_remove(listaDeSegmentos, index);
-       
+            index = index -1;
         } 
         if(segmento_siguiente_esta_libre(index) == 0){
+            Segmento* aux = list_get(listaDeSegmentos,index);
             Segmento* segmentoSiguiente = list_get(listaDeSegmentos, index+1);    
-            Segmento* segmentoConsolidado  = consolidar_segmentos(segmentoRealAModificar, segmentoSiguiente);
+            Segmento* segmentoConsolidado  = consolidar_segmentos(aux, segmentoSiguiente);
             list_replace(listaDeSegmentos,index,segmentoConsolidado);
             list_remove(listaDeSegmentos, index + 1);
+
         }  
         
-        list_replace(listaDeSegmentos,index,segmentoRealAModificar);
         
 
 
@@ -247,11 +252,16 @@ void eliminar_segmento_memoria(Segmento* segmentoAEliminar){
 
 void liberar_tabla_segmentos(int pid){
     t_list* tablaDeSegmentoAELiminar = obtener_tabla_de_segmentos_por_pid(pid);
-    
+
     for (int i = 0; i < list_size(tablaDeSegmentoAELiminar); i++)
-    {
+    {   
         Segmento* segmentoAEliminar = list_get(tablaDeSegmentoAELiminar,i); 
-        eliminar_segmento_memoria(segmentoAEliminar);    
+
+        if(segmentoAEliminar->pid != -1 && segmentoAEliminar->validez != 0){
+        log_info(memoriaLogger, "ID <%i> PID <%i>", segmentoAEliminar->segmento_id, segmentoAEliminar->pid);
+        eliminar_segmento_memoria(segmentoAEliminar);  
+
+        }
     }
      
     list_destroy(tablaDeSegmentoAELiminar);
