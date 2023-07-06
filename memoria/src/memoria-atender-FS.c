@@ -1,7 +1,7 @@
 #include <../include/memoria-atender-FS.h>
 
 extern pthread_mutex_t mutexMemoriaData; //extern
-pthread_mutex_t mutexListaDeSegmento;
+extern pthread_mutex_t mutexListaDeSegmento;
 extern t_log *memoriaLogger;
 extern t_list* listaDeSegmentos;
 

@@ -20,7 +20,7 @@ typedef enum {
     HEADER_pid,
     HEADER_lista_instrucciones,
     HEADER_interrumpir_ejecucion,
-    HEADER_marco,
+    HEADER_chequeo_DF,
     HEADER_memoria_insuficiente,
     HEADER_pcb_a_ejecutar,
     HEADER_proceso_bloqueado,

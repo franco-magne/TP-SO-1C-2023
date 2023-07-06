@@ -45,6 +45,12 @@ uint8_t memoria_adapter_recibir_create_segment(t_pcb* pcbAActualizar, t_kernel_c
         
         pthread_mutex_lock(&mutexTablaGlobalSegmento); 
         tablaGlobalDeSegmentos = buffer_unpack_segmento_list(bufferTablaSegmentoActualizada);
+        
+        t_segmento* aux = segmento_create(-1,-1);
+        segmento_set_pid(aux, pcb_get_pid(pcbAActualizar));
+        pcb_set_lista_de_segmentos(pcbAActualizar, list_filter_ok(tablaGlobalDeSegmentos,es_el_segmento_pid,aux));
+        segmento_destroy(aux);
+
         int index = index_posicion_del_segmento_victima(tablaGlobalDeSegmentos, id_de_segmento,pcb_get_pid(pcbAActualizar));
         t_segmento* test = list_get(tablaGlobalDeSegmentos,index);
         log_info(kernelLogger, "PID <%i> : Segmento ID <%i> : Base <%i> : Tamaño <%i>", test->pid, test->id_de_segmento, test->base_del_segmento, test->tamanio_de_segmento);

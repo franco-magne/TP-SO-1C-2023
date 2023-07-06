@@ -14,35 +14,33 @@ void atender_peticiones_cpu(int socketCpu) {
         stream_recv_buffer(socketCpu, buffer);
         switch (header){
 
-        case HEADER_marco :{ //acceso a memoria  HEADER_chequeo_DF
+        case HEADER_chequeo_DF :{ //acceso a memoria  HEADER_chequeo_DF
             //marco es la direccion Fisica
             log_info(memoriaLogger, "\e[1;93mPetición de marco\e[0m");
-            uint32_t id_segmento;
-            int pid;
+            uint32_t base_segmento;
             uint32_t desplazamiento_segmento;
-            buffer_unpack(buffer, &id_segmento, sizeof(id_segmento));
-            buffer_unpack(buffer, &pid, sizeof(pid));
+            
+            buffer_unpack(buffer, &base_segmento, sizeof(base_segmento));
             buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
             
-            Segmento* segementoSolic = obtener_segmento_por_id(pid, id_segmento);
-            log_info(memoriaLogger, "Se quiere la dirección física del segmento <%i>",id_segmento);
+            Segmento* segementoSolic = obtener_segmento_por_BASE(base_segmento);
+            log_info(memoriaLogger, "Se quiere la dirección física del segmento <%i>");//,id_segmento);
             
             //Logica de desplazamiento ...          desplazamiento <= limite todo ok, si es > entonces hay segmentation fault
             if(desplazamiento_segmento > segmento_get_tamanio(segementoSolic)){
                 stream_send_empty_buffer(socketCpu, HEADER_Segmentation_fault);
-                log_error(memoriaLogger, "Segmentation Fault!! Fallo en el acceso al segmento <%i> con pid <%i>", id_segmento, pid);
+                //log_info(memoriaLogger, "Segmentation Fault!! Fallo en el acceso al segmento <%i> con pid <%i>", id_segmento, pid);
                 //Deberia finalizar el proceso
+                // BORRAR TODA LAS TABLAS DE SEGMENTO DE ESE PROCESO 
                 break;
+            } else {
+                
+                stream_send_empty_buffer(socketCpu, HEADER_chequeo_DF);
+                log_info(memoriaLogger, "Se enviá la dirección física [%i]", base_segmento+desplazamiento_segmento);
+            
             }
             
-            uint32_t marco = segmento_get_id(segementoSolic);//obtener_marco(pid, id_segmento); //base y limite no +
-            
-            t_buffer* buffer_rta = buffer_create();
-            buffer_pack(buffer_rta, &marco, sizeof(marco));
-            stream_send_buffer(socketCpu, HEADER_marco, buffer_rta);
-            buffer_destroy(buffer_rta);
-            log_info(memoriaLogger, "Se enviá la dirección física [%d]", marco);
-            
+          
             //buffer_destroy(buffer);
         }
         break;

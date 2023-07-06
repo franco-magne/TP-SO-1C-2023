@@ -44,12 +44,22 @@ typedef struct  {
     uint32_t tamanioArchivo;
     uint32_t punteroArchivo;
     uint32_t direccionFisicaArchivo;
+    t_list* tablaDeSegmento;
 } t_cpu_pcb;
 
 typedef struct{
     uint32_t tiempoIO;
     char* recursoUtilizado;
 } recurso;
+
+typedef struct {
+    uint32_t pid;
+    uint32_t id_de_segmento;
+    uint32_t base_del_segmento;
+    uint32_t tamanio_de_segmento;
+    bool victima;
+}t_segmento;
+
 
 
 extern t_log* cpuLogger;

@@ -175,7 +175,7 @@ static char* cpu_fetch_operands(t_instruccion* nextInstruction, t_cpu_pcb* pcb)
     
     uint32_t direccionLogicaOrigen = instruccion_get_operando2(nextInstruction);
     
-    char* fetchedValue = cpu_leer_en_memoria(cpu_config_get_socket_memoria(cpuConfig), direccionLogicaOrigen, cpu_pcb_get_pid(pcb) );
+    char* fetchedValue = cpu_leer_en_memoria(cpu_config_get_socket_memoria(cpuConfig), direccionLogicaOrigen, pcb );
     //log_info(cpuLogger, "FETCH OPERANDS: PCB <ID %d> MOVIN  Fetched Value: %s",cpu_pcb_get_pid(pcb), fetchedValue);
     return fetchedValue;
     
@@ -481,7 +481,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t puntero = *((uint32_t*) operando2);
         uint32_t direccionLogica = *((uint32_t*) operando3);
 
-        uint32_t direccionFisica = cpu_obtener_marco(cpu_config_get_socket_memoria(cpuConfig),direccionLogica,cpu_pcb_get_pid(pcb));
+        uint32_t direccionFisica = cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),direccionLogica,pcb);
 
 
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
@@ -505,7 +505,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t puntero = *((uint32_t*) operando2);
         uint32_t direccionLogica = *((uint32_t*) operando3);
 
-        uint32_t direccionFisica = cpu_obtener_marco(cpu_config_get_socket_memoria(cpuConfig),direccionLogica,cpu_pcb_get_pid(pcb));
+        uint32_t direccionFisica = cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),direccionLogica, pcb);
         
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_WRITE> - <%s> - <%i> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo, puntero, direccionLogica);
@@ -544,7 +544,8 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         t_registro registro = *((t_registro*) operando2);
         
         char* contenidoAEnviar = get_registro_segun_tipo(registro, pcb);
-        cpu_escribir_en_memoria(cpu_config_get_socket_memoria(cpuConfig) , dirLogica, contenidoAEnviar, cpu_pcb_get_pid(pcb));
+        cpu_escribir_en_memoria(cpu_config_get_socket_memoria(cpuConfig) , dirLogica, contenidoAEnviar, pcb);
+        
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <MOV_OUT> - <%i> - <%s>", cpu_pcb_get_pid(pcb), dirLogica,  t_registro_to_char(registro) );
 
@@ -675,7 +676,9 @@ static void dispatch_peticiones_de_kernel()
             buffer_unpack(bufferPcb, &pidRecibido, sizeof(pidRecibido));
             //Desempaquetamos pc pcb
             buffer_unpack(bufferPcb, &programCounter, sizeof(programCounter));
-
+            
+            t_list* listaDeSegmentoActualizada = buffer_unpack_segmento_list(bufferPcb);
+            cpu_pcb_set_tabla_de_segmento(pcb,listaDeSegmentoActualizada);
 
             registrosCpu = registros_cpu_create();
             //Desempaquetamos registros cpu

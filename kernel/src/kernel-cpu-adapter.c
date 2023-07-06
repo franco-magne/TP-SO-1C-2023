@@ -16,6 +16,8 @@ void cpu_adapter_enviar_pcb_a_cpu(t_pcb* pcbAEnviar, uint8_t header, t_kernel_co
     buffer_pack(bufferPcbAEjecutar, &pidAEnviar, sizeof(pidAEnviar));
     buffer_pack(bufferPcbAEjecutar, &pcAEnviar, sizeof(pcAEnviar));
 
+    buffer_pack_segmento_list(bufferPcbAEjecutar, pcb_get_lista_de_segmentos(pcbAEnviar));
+
     char* registroAx =  pcb_get_registros_cpu(pcbAEnviar)->registroAx;
     char* registroBx =  pcb_get_registros_cpu(pcbAEnviar)->registroBx;
     char* registroCx =  pcb_get_registros_cpu(pcbAEnviar)->registroCx;

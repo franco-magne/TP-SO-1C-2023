@@ -64,6 +64,7 @@ void modificar_victima_lista_segmento(t_list* this, uint32_t id_victima, uint32_
 t_list* buffer_unpack_segmento_list(t_buffer* buffer);
 void segmento_set_pid(t_segmento* this, uint32_t pid);
 uint32_t segmento_get_pid(t_segmento* this);
+bool es_el_segmento_pid(t_segmento* unSegmento, t_segmento* otroSegmento);
 
 /////////////////////// GETTERS ////////////////////////
 t_registros_cpu* pcb_get_registros_cpu(t_pcb* this);
@@ -90,7 +91,7 @@ void pcb_set_recurso_utilizado(t_pcb* this, char* recurso);
 void pcb_set_tiempo_en_ready(t_pcb* this, struct timespec tiempo_en_ready);
 void pcb_set_rafaga_actual(t_pcb* this,double );
 void pcb_set_rafaga_anterior(t_pcb* this,double );
-void pcb_set_lista_de_segmentos(t_pcb* this, t_segmento* unSegmento);
+void pcb_set_lista_de_segmentos(t_pcb* this, t_list* unSegmento);
 void pcb_add_lista_de_archivos(t_pcb* this,t_pcb_archivo* unArchivo );
 
 void pcb_set_registro_ax_cpu(t_pcb* this, char* registro);

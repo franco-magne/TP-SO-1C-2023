@@ -27,22 +27,4 @@ bool segmentos_del_mismo_pid(Segmento* unSegmento, Segmento* otroSegmento){
 
 }
 
-void buffer_pack_segmento(t_buffer* buffer, t_segmento* segmento) {
-    buffer_pack(buffer, &(segmento->pid), sizeof(segmento->pid));
-    buffer_pack(buffer, &(segmento->id_de_segmento), sizeof(segmento->id_de_segmento));
-    buffer_pack(buffer, &(segmento->base_del_segmento), sizeof(segmento->base_del_segmento));
-    buffer_pack(buffer, &(segmento->tamanio_de_segmento), sizeof(segmento->tamanio_de_segmento));
-    buffer_pack(buffer, &(segmento->victima), sizeof(segmento->victima));
-}
-
-void buffer_pack_segmento_list(t_buffer* buffer, t_list* lista_segmentos) {
-    int cantidad_segmentos = list_size(lista_segmentos);
-    buffer_pack(buffer, &cantidad_segmentos, sizeof(cantidad_segmentos));
-
-    for(int i = 0; i<list_size(lista_segmentos); i++){
-       t_segmento* segmento = list_get(lista_segmentos,i);
-       buffer_pack_segmento(buffer,segmento);
-    }
-
-}
 

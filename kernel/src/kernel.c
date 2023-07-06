@@ -220,7 +220,16 @@ void* atender_pcb(void* args)
         pthread_mutex_unlock(estado_get_mutex(estadoExec));
 
         uint8_t headerAEnviar = HEADER_pcb_a_ejecutar;
-        
+
+
+        pthread_mutex_lock(&mutexTablaGlobalSegmento); 
+        t_segmento* aux = segmento_create(-1,-1);
+        segmento_set_pid(aux, pcb_get_pid(pcb));
+        pcb_set_lista_de_segmentos(pcb, list_filter_ok(tablaGlobalDeSegmentos,es_el_segmento_pid,aux));
+        segmento_destroy(aux);
+        pthread_mutex_unlock(&mutexTablaGlobalSegmento); 
+
+
         struct timespec start;
         set_timespec(&start);
         cpu_adapter_enviar_pcb_a_cpu(pcb, headerAEnviar, kernelConfig, kernelLogger);
