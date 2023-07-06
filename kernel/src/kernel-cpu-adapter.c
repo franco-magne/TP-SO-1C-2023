@@ -227,6 +227,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
             case HEADER_f_truncate:
             case HEADER_f_read:
             case HEADER_f_write:
+            case HEADER_Segmentation_fault:
 
             pcb_set_program_counter(pcbAActualizar, programCounterActualizado);
 

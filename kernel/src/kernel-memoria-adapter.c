@@ -116,7 +116,23 @@ void memoria_adapter_recibir_delete_segment(t_pcb* pcbAActualizar, t_kernel_conf
         pthread_mutex_lock(&mutexTablaGlobalSegmento); 
         tablaGlobalDeSegmentos = buffer_unpack_segmento_list(bufferTablaSegmentoActualizada);
         int index = index_posicion_del_segmento_victima(tablaGlobalDeSegmentos, id_de_segmento,pcb_get_pid(pcbAActualizar));
+        
+        t_segmento* aux = segmento_create(-1,-1);
+        segmento_set_pid(aux, pcb_get_pid(pcbAActualizar));
+        pcb_set_lista_de_segmentos(pcbAActualizar, list_filter_ok(tablaGlobalDeSegmentos,es_el_segmento_pid,aux));
+        
         log_info(kernelLogger, "CANTIDAD DE SEGMENTOS TOTAL EN LA TABLA : <%i>", list_size(tablaGlobalDeSegmentos));
+        //ACA
+        printf("\n");
+        printf("[");
+
+        for(int i = 0; i<list_size(pcb_get_lista_de_segmentos(pcbAActualizar)); i++){
+            t_segmento* aux1 = list_get(pcb_get_lista_de_segmentos(pcbAActualizar), i);
+            printf("Segmento ID - <%i> - BASE - <%i> \t", aux1->id_de_segmento, aux1->base_del_segmento);
+        }
+        printf("]");
+        printf("\n");
+
         pthread_mutex_unlock(&mutexTablaGlobalSegmento); 
         
         buffer_destroy(bufferTablaSegmentoActualizada);
@@ -129,6 +145,27 @@ void memoria_adapter_recibir_delete_segment(t_pcb* pcbAActualizar, t_kernel_conf
         log_error(kernelLogger, "Error al recibir buffer de la creacion");
         exit(-1);
     }
+
+
+}
+
+
+void memoria_adapter_enviar_finalizar_proceso(t_pcb* pcb,  t_kernel_config* kernelConfig, t_log* kernelLogger, char* formaNotificar){
+
+uint32_t pid = pcb_get_pid(pcb);
+
+t_buffer* bufferProcesoFinalizado = buffer_create();
+
+buffer_pack(bufferProcesoFinalizado, &pid, sizeof(pid));
+
+stream_send_buffer(kernel_config_get_socket_memoria(kernelConfig), HEADER_proceso_terminado,bufferProcesoFinalizado);
+
+uint8_t memoriaResponse =  stream_recv_header(kernel_config_get_socket_memoria(kernelConfig));
+stream_recv_empty_buffer(kernel_config_get_socket_memoria(kernelConfig));
+
+if(memoriaResponse == HANDSHAKE_ok_continue){
+    log_info(kernelLogger, "Finaliza el proceso <%i> - Motivo: <%s>", pid, formaNotificar);
+}
 
 
 }

@@ -11,6 +11,7 @@
 #include <commons/config.h>
 //Bibliotecas static-utils
 #include "../../utils/src/utils/instrucciones.h"
+#include <../../utils/src/utils/commons-nuestras.h>
 //Bibliotecas internas modulo consola
 
 #define CPU_MODULE_NAME "Cpu"
@@ -52,13 +53,13 @@ typedef struct{
     char* recursoUtilizado;
 } recurso;
 
-typedef struct {
+/*typedef struct {
     uint32_t pid;
     uint32_t id_de_segmento;
     uint32_t base_del_segmento;
     uint32_t tamanio_de_segmento;
     bool victima;
-}t_segmento;
+}t_segmento;*/
 
 
 

@@ -56,6 +56,20 @@ uint32_t obtener_siguiente_pid(void)
 
 
 
+void liberar_segmentos_del_proceso_tabla_global(t_pcb* pcb){
+
+    t_segmento* aux = segmento_create(-1,-1);
+    segmento_set_pid(aux, pcb_get_pid(pcb));
+    
+    pthread_mutex_lock(&mutexTablaGlobalSegmento);
+    tablaGlobalDeSegmentos = list_filter_ok(tablaGlobalDeSegmentos,es_el_segmento_pid,aux);
+    pthread_mutex_unlock(&mutexTablaGlobalSegmento);
+
+
+}
+
+
+
 //////////////////////////////////////////////////////////////////////////
 /////////////////////////////// FUNCION MAIN ////////////////////////////
 int main(int argc, char* argv[]) {
@@ -178,7 +192,6 @@ void* hilo_que_libera_pcbs_en_exit(void* args)
         sem_wait(estado_get_sem(estadoExit));
         t_pcb* pcbALiberar = malloc(sizeof(pcbALiberar));
         pcbALiberar = estado_desencolar_primer_pcb_atomic(estadoExit);
-        //mem_adapter_finalizar_proceso(pcbALiberar, kernelConfig, kernelLogger);
         log_info(kernelLogger, "\e[0;32mSe finaliza PCB <ID %d>", pcb_get_pid(pcbALiberar));
         //pcb_destroy(pcbALiberar);
         sem_post(&gradoMultiprog);
@@ -254,9 +267,15 @@ void* atender_pcb(void* args)
                 break;
                 
             case HEADER_proceso_terminado:
-                
+                liberar_segmentos_del_proceso_tabla_global(pcb);
+                memoria_adapter_enviar_finalizar_proceso(pcb,kernelConfig,kernelLogger, "SUCCES");
                 instruccion_exit(pcb);
-
+                break;
+                
+            case HEADER_Segmentation_fault:
+                liberar_segmentos_del_proceso_tabla_global(pcb);
+                memoria_adapter_enviar_finalizar_proceso(pcb,kernelConfig,kernelLogger, "SEG_FAULT");
+                instruccion_exit(pcb);
                 break;
 
             case HEADER_proceso_bloqueado:
@@ -380,11 +399,7 @@ void inicializar_estructuras(void) {
     
    // PLANI CORTO PLAZO
     nextPid = 1;
-    //procesoBloqueadoOTerminado = false;
     pthread_mutex_init(&nextPidMutex, NULL);
-    //pthread_mutex_init(&procesoBloqueadoOTerminadoMutex, NULL);
-    //pthread_mutex_init(&mutexSocketMemoria, NULL);
-    //pthread_mutex_init(&estadoEsperandoMemoria, 1);
     pthread_mutex_init(&mutexNombreRecurso, NULL);
     pthread_mutex_init(&mutexCantidadRecursos, NULL);
 
@@ -392,7 +407,7 @@ void inicializar_estructuras(void) {
     
     sem_init(&hayPcbsParaAgregarAlSistema, 0, 0);
     sem_init(&gradoMultiprog, 0, valorInicialGradoMultiprog);
-    sem_init(&dispatchPermitido, 0, 1); // plani de corto plazo
+    sem_init(&dispatchPermitido, 0, 1); 
     log_info(kernelLogger, "Se inicializa el grado multiprogramación en %d", valorInicialGradoMultiprog);
     
  

@@ -68,6 +68,8 @@ static char* t_registro_to_char(t_registro registro)
     }
 }
 
+
+
 void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
 
         uint32_t pid = cpu_pcb_get_pid(pcb);
@@ -146,6 +148,7 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
 }
 
 
+
 //Dispatch module
 
 //ciclo de instruccion 
@@ -174,10 +177,15 @@ static char* cpu_fetch_operands(t_instruccion* nextInstruction, t_cpu_pcb* pcb)
 {
     
     uint32_t direccionLogicaOrigen = instruccion_get_operando2(nextInstruction);
-    
-    char* fetchedValue = cpu_leer_en_memoria(cpu_config_get_socket_memoria(cpuConfig), direccionLogicaOrigen, pcb );
-    //log_info(cpuLogger, "FETCH OPERANDS: PCB <ID %d> MOVIN  Fetched Value: %s",cpu_pcb_get_pid(pcb), fetchedValue);
-    return fetchedValue;
+    uint32_t dirFisica = cpu_mmu(cpu_config_get_socket_memoria(cpuConfig), direccionLogicaOrigen, cpu_pcb_get_tabla_de_segmento(pcb), cpu_pcb_get_pid(cpu_pcb_create));
+    if(dirFisica == 0){
+            return NULL;
+    } else {
+           char* fetchedValue = cpu_leer_en_memoria(cpu_config_get_socket_memoria(cpuConfig), dirFisica, pcb );
+            //log_info(cpuLogger, "FETCH OPERANDS: PCB <ID %d> MOVIN  Fetched Value: %s",cpu_pcb_get_pid(pcb), fetchedValue);
+           return fetchedValue;
+    }
+ 
     
 
 
@@ -332,9 +340,6 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
 
         empaquetar_instruccion(pcb, HEADER_proceso_desalojado);
 
-
-        
-
         
     } else if (tipoInstruccion == INSTRUCCION_IO ) {
         
@@ -354,8 +359,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
 
         empaquetar_instruccion(pcb, HEADER_proceso_bloqueado);
 
-        
-
+    
     } else if (tipoInstruccion == INSTRUCCION_SIGNAL ) {
         
         char* recurso1 = string_duplicate((char*) operando1);
@@ -367,7 +371,6 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
 
         empaquetar_instruccion(pcb, HEADER_proceso_devolver_recurso);
 
-        //cpu_pcb_set_registros
         shouldStopExec = true;
 
     } else if (tipoInstruccion == INSTRUCCION_WAIT ) {
@@ -376,15 +379,12 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         cpu_set_recurso_sem(recursos, recurso1);
 
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <WAIT> - <%s> ", cpu_pcb_get_pid(pcb), recurso1);
-        
 
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
         cpu_pcb_set_recurso_utilizar(pcb, recurso1);
 
         empaquetar_instruccion(pcb, HEADER_proceso_pedir_recurso);
         shouldStopExec = true;
-
-
 
     } else if (tipoInstruccion == INSTRUCCION_CREATE_SEGMENT ) {
     
@@ -481,7 +481,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t puntero = *((uint32_t*) operando2);
         uint32_t direccionLogica = *((uint32_t*) operando3);
 
-        uint32_t direccionFisica = cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),direccionLogica,pcb);
+        uint32_t direccionFisica = cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),direccionLogica,cpu_pcb_get_tabla_de_segmento(pcb), cpu_pcb_get_pid(pcb));
 
 
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
@@ -505,7 +505,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t puntero = *((uint32_t*) operando2);
         uint32_t direccionLogica = *((uint32_t*) operando3);
 
-        uint32_t direccionFisica = cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),direccionLogica, pcb);
+        uint32_t direccionFisica = cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),direccionLogica,cpu_pcb_get_tabla_de_segmento(pcb), cpu_pcb_get_pid(pcb));
         
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
         log_info(cpuLogger, "PID: <%d> - Ejecutando: <F_WRITE> - <%s> - <%i> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo, puntero, direccionLogica);
@@ -527,30 +527,43 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         t_registro registroASetear = *((t_registro*) operando1);
         char* valorASetear = string_duplicate((char*) operando2);
 
+        if(valorASetear == NULL){
+             // ACA ENTRARIA POR EL SEGMENTATION FAULT
+            cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+            empaquetar_instruccion(pcb, HEADER_Segmentation_fault);
+            shouldStopExec = true;
+        } else {
 
-        uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);
+            uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);
+            log_info(cpuLogger, "PID: <%d> - Ejecutando: <MOV_IN> - <%s> - <%s>", cpu_pcb_get_pid(pcb), t_registro_to_char(registroASetear), valorASetear);
+            intervalo_de_pausa(retardoInstruccion);   
+            cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+        }
 
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <MOV_IN> - <%s> - <%s>", cpu_pcb_get_pid(pcb), t_registro_to_char(registroASetear), valorASetear);
-
-        intervalo_de_pausa(retardoInstruccion);
-        
-        //set_registro_segun_tipo(registroASetear,valorASetear, pcb);
-        
-        cpu_pcb_set_program_counter(pcb, programCounterActualizado);
 
     } else if (tipoInstruccion == INSTRUCCION_MOV_OUT ) {
 
         uint32_t dirLogica = *((uint32_t*) operando1);
         t_registro registro = *((t_registro*) operando2);
-        
-        char* contenidoAEnviar = get_registro_segun_tipo(registro, pcb);
-        cpu_escribir_en_memoria(cpu_config_get_socket_memoria(cpuConfig) , dirLogica, contenidoAEnviar, pcb);
-        
-        uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
-        log_info(cpuLogger, "PID: <%d> - Ejecutando: <MOV_OUT> - <%i> - <%s>", cpu_pcb_get_pid(pcb), dirLogica,  t_registro_to_char(registro) );
+        char* contenidoAEnviar = get_registro_segun_tipo(registro, pcb);    
 
-        intervalo_de_pausa(retardoInstruccion);
-        cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+        uint32_t dirFisica = cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),dirLogica,cpu_pcb_get_tabla_de_segmento(pcb), cpu_pcb_get_pid(pcb));
+        if(dirFisica != 0){
+            cpu_escribir_en_memoria(cpu_config_get_socket_memoria(cpuConfig) , dirFisica, contenidoAEnviar, pcb);
+            uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
+            log_info(cpuLogger, "PID: <%d> - Ejecutando: <MOV_OUT> - <%i> - <%s>", cpu_pcb_get_pid(pcb), dirLogica,  t_registro_to_char(registro) );
+            intervalo_de_pausa(retardoInstruccion);
+            cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+
+        } else {
+            // ACA ENTRARIA POR EL SEGMENTATION FAULT
+            cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+            empaquetar_instruccion(pcb, HEADER_Segmentation_fault);
+            shouldStopExec = true;
+        
+        }
+
+
     } 
 
     return shouldStopExec;
@@ -678,7 +691,6 @@ static void dispatch_peticiones_de_kernel()
             buffer_unpack(bufferPcb, &programCounter, sizeof(programCounter));
             
             t_list* listaDeSegmentoActualizada = buffer_unpack_segmento_list(bufferPcb);
-            cpu_pcb_set_tabla_de_segmento(pcb,listaDeSegmentoActualizada);
 
             registrosCpu = registros_cpu_create();
             //Desempaquetamos registros cpu
@@ -706,6 +718,7 @@ static void dispatch_peticiones_de_kernel()
             }
             
             pcb = cpu_pcb_create(pidRecibido, programCounter, registrosCpu); 
+            cpu_pcb_set_tabla_de_segmento(pcb,listaDeSegmentoActualizada);
 
             kernelResponse = stream_recv_header(cpu_config_get_socket_dispatch(cpuConfig));
             

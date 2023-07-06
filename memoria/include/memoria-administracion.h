@@ -19,6 +19,7 @@ void mostrar_tabla(t_list* tablaDeSegmentosSolic);
 void mostrar_lista_segmentos(t_list* lista);
 bool segmentos_validez_0(Segmento* unSegmento);
 bool segmentos_validez_1(Segmento* unSegmento);
-
+void borrar_tabla_de_segmentos_x_pid(uint32_t pid);
+void borrar_tabla_de_segmentos_x_pid(uint32_t pid);
 
 #endif

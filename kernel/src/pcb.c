@@ -27,15 +27,6 @@ t_pcb* pcb_create(uint32_t pid)
 
 //////////////////////////////////// SEGMENTO /////////////////////////////////////////
 
-t_segmento* segmento_create(uint32_t id_de_segmento, uint32_t tamanio_de_segmento){
-    t_segmento* this = malloc(sizeof(*this));
-    this->pid = -1;
-    this->id_de_segmento = id_de_segmento;
-    this->base_del_segmento = -1;
-    this->tamanio_de_segmento = tamanio_de_segmento;
-    this->victima = true;
-    return this;
-}
 
 void segmento_destroy(t_segmento* this){
     free(this);

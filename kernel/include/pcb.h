@@ -35,22 +35,12 @@ typedef struct {
     t_list *listaArchivosAbiertos;
 }t_pcb;
 
-typedef struct {
-    uint32_t pid;
-    uint32_t id_de_segmento;
-    uint32_t base_del_segmento;
-    uint32_t tamanio_de_segmento;
-    bool victima;
-}t_segmento;
-
-
 ////////////////////////// DEFINICION DE LAS FUNCIONES ////////////////
 t_pcb* pcb_create(uint32_t pid);
 bool pcb_es_este_pcb_por_pid(void* unPcb, void* otroPcb);
 
 ///////////////////////////// SEGMENTO ////////////////////////////////////////////
 
-t_segmento* segmento_create(uint32_t id_de_segmento, uint32_t tamanio_de_segmento);
 void segmento_destroy(t_segmento* this);
 uint32_t segmento_get_id_de_segmento(t_segmento* this);
 uint32_t segmento_get_tamanio_de_segmento(t_segmento* this);

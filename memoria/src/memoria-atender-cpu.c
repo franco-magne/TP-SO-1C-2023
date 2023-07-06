@@ -19,41 +19,46 @@ void atender_peticiones_cpu(int socketCpu) {
             log_info(memoriaLogger, "\e[1;93mPetición de marco\e[0m");
             uint32_t base_segmento;
             uint32_t desplazamiento_segmento;
+            uint32_t pid;
             
             buffer_unpack(buffer, &base_segmento, sizeof(base_segmento));
             buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
             
             Segmento* segementoSolic = obtener_segmento_por_BASE(base_segmento);
-            log_info(memoriaLogger, "Se quiere la dirección física del segmento <%i>");//,id_segmento);
-            
+            log_info(memoriaLogger, "Se quiere la dirección física del segmento con base<%i>", base_segmento);
+            pid = segmento_get_pid(segementoSolic);
+
+            t_buffer* respuestaBuffer = buffer_create();
             //Logica de desplazamiento ...          desplazamiento <= limite todo ok, si es > entonces hay segmentation fault
             if(desplazamiento_segmento > segmento_get_tamanio(segementoSolic)){
-                stream_send_empty_buffer(socketCpu, HEADER_Segmentation_fault);
+                uint32_t baseSegFault = 0;
+                buffer_pack(respuestaBuffer, &baseSegFault, sizeof(baseSegFault));
+                stream_send_buffer(socketCpu, HEADER_chequeo_DF,respuestaBuffer);   //seria el HEADER_SegFault
+
+                printf("\nentra al if de segFautl\n");
                 //log_info(memoriaLogger, "Segmentation Fault!! Fallo en el acceso al segmento <%i> con pid <%i>", id_segmento, pid);
                 //Deberia finalizar el proceso
                 // BORRAR TODA LAS TABLAS DE SEGMENTO DE ESE PROCESO 
-                break;
+                //--->>> lo hago cuando kernel me avisa que tengo que eliminar el proceso
             } else {
-                
-                stream_send_empty_buffer(socketCpu, HEADER_chequeo_DF);
-                log_info(memoriaLogger, "Se enviá la dirección física [%i]", base_segmento+desplazamiento_segmento);
+                buffer_pack(respuestaBuffer, &base_segmento, sizeof(base_segmento));
+                stream_send_buffer(socketCpu, HEADER_chequeo_DF,respuestaBuffer);
+                log_info(memoriaLogger, "Se enviá la base del segmento[%i]", base_segmento);
             
             }
             
           
-            //buffer_destroy(buffer);
+            buffer_destroy(respuestaBuffer);
         }
         break;
+        
         case HEADER_move_in :{ //lee de memoria y lo guarda en el registro
-            uint32_t pid;
-            uint32_t id_segmento;
-            //uint32_t desplazamiento_segmento;
-
-            buffer_unpack(buffer, &id_segmento, sizeof(id_segmento));
-            buffer_unpack(buffer, &pid, sizeof(pid));
-            //buffer_unpack(buffer, &desplazamiento_segmento, sizeof(pid));
-
-            Segmento* segmentoLeido = obtener_segmento_por_id(pid, id_segmento);
+            log_info(memoriaLogger, "\e[1;93mPetición de lectura\e[0m");
+            uint32_t base_segmento;
+            
+            buffer_unpack(buffer, &base_segmento, sizeof(base_segmento));
+            
+            Segmento* segmentoLeido = obtener_segmento_por_BASE(base_segmento);
             char* contenidoAenviar = malloc(strlen(segmentoLeido->contenido) + 1);
             strcpy(contenidoAenviar, segmentoLeido->contenido);
 
@@ -64,27 +69,27 @@ void atender_peticiones_cpu(int socketCpu) {
             stream_send_buffer(socketCpu, HEADER_move_in, bufferContenido);
 
             buffer_destroy(bufferContenido);    
-
+            log_info(memoriaLogger, "Contenido leido : <%s> - En el segmento ID : <%i> ", contenidoAenviar, segmento_get_id(segmentoLeido));
             //buffer_destroy(buffer);
         }
         break;
         case HEADER_move_out : {//"escribir"
             log_info(memoriaLogger, "\e[1;93mPetición de escritura\e[0m");
             
-            uint32_t pid;
-            uint32_t id_segmento;            
+            uint32_t base_segmento;
+            
+            buffer_unpack(buffer, &base_segmento, sizeof(base_segmento));
+
             char* contenidoAEscribir;
-            buffer_unpack(buffer, &id_segmento, sizeof(id_segmento));
-            buffer_unpack(buffer, &pid, sizeof(pid));
             contenidoAEscribir = buffer_unpack_string(buffer);
             
-            Segmento* unSegmento = obtener_segmento_por_id(pid, id_segmento);
+            Segmento* unSegmento = obtener_segmento_por_BASE(base_segmento);
             //cada vez que hago un obtener segmento hago un list_replace
             segmento_set_contenido(unSegmento, contenidoAEscribir);
             pthread_mutex_lock(&mutexListaDeSegmento);
-            modificarSegmento(pid, id_segmento, unSegmento);    //es un obtener-segmento con list_replace
+            modificarSegmento(base_segmento, unSegmento);    //es un obtener-segmento con list_replace
             pthread_mutex_unlock(&mutexListaDeSegmento);
-            log_info(memoriaLogger, "Contenido escrito : <%s> - En el segmento ID : <%i> ", contenidoAEscribir, id_segmento);
+            log_info(memoriaLogger, "Contenido escrito : <%s> - En el segmento ID : <%i> ", contenidoAEscribir, segmento_get_id(unSegmento));
 
             //buffer_destroy(buffer);
             break;

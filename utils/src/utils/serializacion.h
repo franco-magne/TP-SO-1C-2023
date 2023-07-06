@@ -8,22 +8,11 @@
 #include <errno.h>
 #include <sys/socket.h>
 #include <commons/collections/list.h>
+
 typedef struct {
     uint32_t size;
     void *stream;
 } t_buffer;
-
-typedef struct 
-{
- uint32_t tamanio_de_segmento;
- uint32_t id_de_segmento;
- uint32_t base_del_segmento;
- bool victima;
- uint32_t pid;
-
-}t_segmento;
-
-
 
 /**
  * @brief Desempaqueta un string del buffer, leyendo y desempaquetando
@@ -73,10 +62,6 @@ t_buffer* buffer_unpack(t_buffer *buffer, void *dest, int size);
 
 
 void buffer_peek(t_buffer* buffer, void* dest, int size, int offset);
-t_list* buffer_unpack_segmento_list(t_buffer* buffer);
-t_segmento* buffer_unpack_segmento(t_buffer* buffer);
-void buffer_pack_segmento(t_buffer* buffer, t_segmento* segmento);
-void buffer_pack_segmento_list(t_buffer* buffer, t_list* lista_segmentos);
 
 
 ///////////////////////////////////////////////////////// STREAM /////////////////////////////////////////

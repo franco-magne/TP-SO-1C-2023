@@ -6,6 +6,6 @@
 
 void cpu_escribir_en_memoria(int toSocket, uint32_t direccionAEscribir, char* contenidoAEscribir, t_cpu_pcb* pcb);
 char* cpu_leer_en_memoria( int toSocket, uint32_t direccionALeer, t_cpu_pcb* pcb);
-uint32_t cpu_mmu(int toSocket, uint32_t direccionLogica, t_cpu_pcb* pcb);
+uint32_t cpu_mmu(int toSocket, uint32_t direccionLogica, t_list* tablaDeSegmento, uint32_t pid);
 
 #endif

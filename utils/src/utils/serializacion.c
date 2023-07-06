@@ -77,52 +77,6 @@ void buffer_peek(t_buffer* self, void* dest, int size, int offset) {
 }
 
 
-
-t_segmento* buffer_unpack_segmento(t_buffer* buffer) {
-    t_segmento* segmento = segmento_create(-1,-1);
-    buffer_unpack(buffer, &(segmento->pid), sizeof(segmento->pid));
-    buffer_unpack(buffer, &(segmento->id_de_segmento), sizeof(segmento->id_de_segmento));
-    buffer_unpack(buffer, &(segmento->base_del_segmento), sizeof(segmento->base_del_segmento));
-    buffer_unpack(buffer, &(segmento->tamanio_de_segmento), sizeof(segmento->tamanio_de_segmento));
-    buffer_unpack(buffer, &(segmento->victima), sizeof(bool));
-
-    return segmento;
-}
-
-t_list* buffer_unpack_segmento_list(t_buffer* buffer) {
-    t_list* lista_segmentos = list_create();
-
-    int cantidad_segmentos;
-    buffer_unpack(buffer, &cantidad_segmentos, sizeof(cantidad_segmentos));
-
-    for (int i = 0; i < cantidad_segmentos; i++) {
-        t_segmento* segmento = buffer_unpack_segmento(buffer);
-        list_add(lista_segmentos, segmento);
-    }
-
-    return lista_segmentos;
-}
-
-
-void buffer_pack_segmento(t_buffer* buffer, t_segmento* segmento) {
-    buffer_pack(buffer, &(segmento->pid), sizeof(segmento->pid));
-    buffer_pack(buffer, &(segmento->id_de_segmento), sizeof(segmento->id_de_segmento));
-    buffer_pack(buffer, &(segmento->base_del_segmento), sizeof(segmento->base_del_segmento));
-    buffer_pack(buffer, &(segmento->tamanio_de_segmento), sizeof(segmento->tamanio_de_segmento));
-    buffer_pack(buffer, &(segmento->victima), sizeof(segmento->victima));
-}
-
-void buffer_pack_segmento_list(t_buffer* buffer, t_list* lista_segmentos) {
-    int cantidad_segmentos = list_size(lista_segmentos);
-    buffer_pack(buffer, &cantidad_segmentos, sizeof(cantidad_segmentos));
-
-    for(int i = 0; i<list_size(lista_segmentos); i++){
-       t_segmento* segmento = list_get(lista_segmentos,i);
-       buffer_pack_segmento(buffer,segmento);
-    }
-
-}
-
 ///////////////////////////////////////////////////////// STREAM /////////////////////////////////////////
 
 static void stream_send(int toSocket, void* streamToSend, uint32_t bufferSize) {
