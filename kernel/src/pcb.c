@@ -27,15 +27,6 @@ t_pcb* pcb_create(uint32_t pid)
 
 //////////////////////////////////// SEGMENTO /////////////////////////////////////////
 
-t_segmento* segmento_create(uint32_t id_de_segmento, uint32_t tamanio_de_segmento){
-    t_segmento* this = malloc(sizeof(*this));
-    this->pid = -1;
-    this->id_de_segmento = id_de_segmento;
-    this->base_del_segmento = -1;
-    this->tamanio_de_segmento = tamanio_de_segmento;
-    this->victima = true;
-    return this;
-}
 
 void segmento_destroy(t_segmento* this){
     free(this);
@@ -74,6 +65,10 @@ bool es_el_segmento_por_id(t_segmento* unSegmento, t_segmento* otroSegmento){
     return (unSegmento->id_de_segmento == otroSegmento->id_de_segmento) && (unSegmento->pid == otroSegmento->pid);
 }
 
+bool es_el_segmento_pid(t_segmento* unSegmento, t_segmento* otroSegmento){
+    return unSegmento->pid == otroSegmento->pid;
+}
+
 bool es_el_segmento_victimaok(t_segmento* element) {
     if(element->victima)
     return true;
@@ -101,32 +96,6 @@ void modificar_victima_lista_segmento(t_list* this, uint32_t id_victima, uint32_
         list_replace(this, index, aux2);
         
     } 
-}
-//////////////////////////////////////////////////////////////////////////////////////
-
-t_segmento* buffer_unpack_segmento(t_buffer* buffer) {
-    t_segmento* segmento = segmento_create(-1,-1);
-    buffer_unpack(buffer, &(segmento->pid), sizeof(segmento->pid));
-    buffer_unpack(buffer, &(segmento->id_de_segmento), sizeof(segmento->id_de_segmento));
-    buffer_unpack(buffer, &(segmento->base_del_segmento), sizeof(segmento->base_del_segmento));
-    buffer_unpack(buffer, &(segmento->tamanio_de_segmento), sizeof(segmento->tamanio_de_segmento));
-    buffer_unpack(buffer, &(segmento->victima), sizeof(bool));
-
-    return segmento;
-}
-
-t_list* buffer_unpack_segmento_list(t_buffer* buffer) {
-    t_list* lista_segmentos = list_create();
-
-    int cantidad_segmentos;
-    buffer_unpack(buffer, &cantidad_segmentos, sizeof(cantidad_segmentos));
-
-    for (int i = 0; i < cantidad_segmentos; i++) {
-        t_segmento* segmento = buffer_unpack_segmento(buffer);
-        list_add(lista_segmentos, segmento);
-    }
-
-    return lista_segmentos;
 }
 
 //////////////////////// GETTERS /////////////////////
@@ -306,8 +275,8 @@ void pcb_set_rafaga_actual(t_pcb* this, double rafaga){
 }
 
 
-void pcb_set_lista_de_segmentos(t_pcb* this, t_segmento* unSegmento){
-   list_add(this->listaDeSegmento,unSegmento);
+void pcb_set_lista_de_segmentos(t_pcb* this, t_list* listaDeSegmento){
+   this->listaDeSegmento = listaDeSegmento;
 }
 
 void pcb_add_lista_de_archivos(t_pcb* this,t_pcb_archivo* unArchivo ){

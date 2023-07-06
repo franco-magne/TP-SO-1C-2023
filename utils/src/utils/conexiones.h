@@ -20,7 +20,7 @@ typedef enum {
     HEADER_pid,
     HEADER_lista_instrucciones,
     HEADER_interrumpir_ejecucion,
-    HEADER_marco,
+    HEADER_chequeo_DF,
     HEADER_memoria_insuficiente,
     HEADER_pcb_a_ejecutar,
     HEADER_proceso_bloqueado,
@@ -43,8 +43,8 @@ typedef enum {
     HEADER_iniciar_proceso,
     HEADER_tabla_segmentos,
     HEADER_Compactacion,
-    HEADER_Compactacion_finalizada
-
+    HEADER_Compactacion_finalizada,
+    HEADER_Segmentation_fault
 
 
 } t_header;
@@ -55,6 +55,7 @@ typedef enum {
     HANDSHAKE_kernel,
     HANDSHAKE_memoria,
     HANDSHAKE_cpu,
+    HANDSHAKE_fileSystem,
     HANDSHAKE_interrupt,
     HANDSHAKE_dispatch,
     HANDSHAKE_ok_continue,

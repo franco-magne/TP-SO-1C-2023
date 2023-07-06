@@ -15,6 +15,7 @@ t_cpu_pcb* cpu_pcb_create (uint32_t pid, uint32_t programCounter, t_registros_cp
     this->tamanioArchivo = -1;
     this->punteroArchivo = -1;
     this->direccionFisicaArchivo = -1;
+    this->tablaDeSegmento = list_create();
     return this;
 }
 
@@ -149,7 +150,13 @@ uint32_t cpu_pcb_get_direccion_fisica_archivo(t_cpu_pcb* this){
     return this->direccionFisicaArchivo;
 }
 
+void cpu_pcb_set_tabla_de_segmento(t_cpu_pcb* this, t_list* listaDeSegmento){
+    this->tablaDeSegmento = listaDeSegmento;
+}
 
+t_list* cpu_pcb_get_tabla_de_segmento(t_cpu_pcb* this){
+    return this->tablaDeSegmento;
+}
 
 ////////////////////////////  Registros 4bits  /////////////////////////////////////////
 char*  cpu_pcb_get_registro_ax(t_cpu_pcb* this)

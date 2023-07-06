@@ -88,6 +88,9 @@ t_list* obtener_tabla_de_segmentos_por_pid(int pid){
     return tablaDeSegdelProceso;
 }
 
+bool es_el_segmento_por_BASE(Segmento* element, Segmento* segVictima){
+    return element->base ==  segVictima->base;
+}
 
 Segmento* crear_segmento(int tamSegmento){
     Segmento* this = malloc(sizeof(*this)); //no seria sizeof(limite)?? que pasa si limite es muy chico, no puedo guardar id_segmento...
@@ -116,6 +119,26 @@ Segmento* obtener_segmento_por_id(int pid_victima, int id_victima){
     free(aux1);
     
     return aux2;
+}
+
+Segmento* obtener_segmento_por_BASE(uint32_t base_segmento){
+    Segmento* aux1 = crear_segmento(-1);
+    segmento_set_base(aux1, base_segmento);
+
+    uint32_t index = list_get_index(listaDeSegmentos, es_el_segmento_por_BASE, aux1);
+    Segmento* aux2 = list_get(listaDeSegmentos, index);
+    free(aux1);
+    return aux2;
+}
+
+void modificarSegmento(uint32_t baseSegmento, Segmento* segNuevo){
+    Segmento* aux1 = crear_segmento(-1);
+    segmento_set_base(aux1, baseSegmento);
+
+    uint32_t index = list_get_index(listaDeSegmentos, es_el_segmento_por_BASE, aux1);
+    list_replace(listaDeSegmentos, index, segNuevo);
+    printf("Segmento de ID <%i> modificado", segmento_get_id(segNuevo));
+    free(aux1);
 }
 
 Segmento* desencolar_segmento_por_id(int pid_segmento, int id_segmento){

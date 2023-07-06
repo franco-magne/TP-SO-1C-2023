@@ -245,6 +245,8 @@ void instruccion_create_segment(t_pcb* pcb){
     uint8_t memoriaResponse = memoria_adapter_recibir_create_segment(pcb, kernelConfig, kernelLogger);
 
     if(memoriaResponse == HEADER_memoria_insuficiente){
+        liberar_segmentos_del_proceso_tabla_global(pcb);
+        memoria_adapter_enviar_finalizar_proceso(pcb,kernelConfig,kernelLogger, "OUT_OF_MEMORY");
         proceso_pasa_a_exit(pcb);
     }
 

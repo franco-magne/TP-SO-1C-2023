@@ -1,9 +1,9 @@
 #include <../include/memoria-atender-kernel.h>
 
 
-pthread_mutex_t mutexMemoriaData = PTHREAD_MUTEX_INITIALIZER; //extern
+extern pthread_mutex_t mutexMemoriaData; 
 pthread_mutex_t mutexTamMemoriaActual = PTHREAD_MUTEX_INITIALIZER; //extern
-pthread_mutex_t mutexListaDeSegmento = PTHREAD_MUTEX_INITIALIZER;
+extern pthread_mutex_t mutexListaDeSegmento;
 extern t_log *memoriaLogger;
 extern t_memoria_config* memoriaConfig;
 extern uint32_t tamActualMemoria;
@@ -111,12 +111,17 @@ void atender_peticiones_kernel(int socketKernel) {
 
                 break;
             }
-            /*case HEADER_proceso_terminado: {
-                int pid;
+            case HEADER_proceso_terminado: {
+                uint32_t pid;
                 buffer_unpack(buffer, &pid, sizeof(pid));
+                pthread_mutex_lock(&mutexListaDeSegmento);
                 liberar_tabla_segmentos(pid);
-                stream_send_empty_buffer(socketKernel, HEADER_proceso_terminado);
-            }*/
+                pthread_mutex_unlock(&mutexListaDeSegmento);
+                stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
+                log_info(memoriaLogger, "Eliminación de Proceso PID: <%i>", pid);
+                mostrar_lista_segmentos(listaDeSegmentos);
+
+            }
             default:
                 //exit(-1);
                 break;

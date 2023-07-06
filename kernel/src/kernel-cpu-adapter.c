@@ -16,6 +16,8 @@ void cpu_adapter_enviar_pcb_a_cpu(t_pcb* pcbAEnviar, uint8_t header, t_kernel_co
     buffer_pack(bufferPcbAEjecutar, &pidAEnviar, sizeof(pidAEnviar));
     buffer_pack(bufferPcbAEjecutar, &pcAEnviar, sizeof(pcAEnviar));
 
+    buffer_pack_segmento_list(bufferPcbAEjecutar, pcb_get_lista_de_segmentos(pcbAEnviar));
+
     char* registroAx =  pcb_get_registros_cpu(pcbAEnviar)->registroAx;
     char* registroBx =  pcb_get_registros_cpu(pcbAEnviar)->registroBx;
     char* registroCx =  pcb_get_registros_cpu(pcbAEnviar)->registroCx;
@@ -225,6 +227,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
             case HEADER_f_truncate:
             case HEADER_f_read:
             case HEADER_f_write:
+            case HEADER_Segmentation_fault:
 
             pcb_set_program_counter(pcbAActualizar, programCounterActualizado);
 

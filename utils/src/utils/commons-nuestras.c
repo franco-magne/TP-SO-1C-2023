@@ -114,6 +114,63 @@ bool es_el_ultimo_elemento(t_list* lista, t_link_element* elemento) {
     return (actual == elemento);
 }
 
+t_segmento* segmento_create(uint32_t id_de_segmento, uint32_t tamanio_de_segmento){
+    t_segmento* this = malloc(sizeof(*this));
+    this->pid = -1;
+    this->id_de_segmento = id_de_segmento;
+    this->base_del_segmento = -1;
+    this->tamanio_de_segmento = tamanio_de_segmento;
+    this->victima = true;
+    return this;
+}
+
+
+t_segmento* buffer_unpack_segmento(t_buffer* buffer) {
+    t_segmento* segmento = segmento_create(-1,-1);
+    buffer_unpack(buffer, &(segmento->pid), sizeof(segmento->pid));
+    buffer_unpack(buffer, &(segmento->id_de_segmento), sizeof(segmento->id_de_segmento));
+    buffer_unpack(buffer, &(segmento->base_del_segmento), sizeof(segmento->base_del_segmento));
+    buffer_unpack(buffer, &(segmento->tamanio_de_segmento), sizeof(segmento->tamanio_de_segmento));
+    buffer_unpack(buffer, &(segmento->victima), sizeof(bool));
+
+    return segmento;
+}
+
+t_list* buffer_unpack_segmento_list(t_buffer* buffer) {
+    t_list* lista_segmentos = list_create();
+
+    int cantidad_segmentos;
+    buffer_unpack(buffer, &cantidad_segmentos, sizeof(cantidad_segmentos));
+
+    for (int i = 0; i < cantidad_segmentos; i++) {
+        t_segmento* segmento = buffer_unpack_segmento(buffer);
+        list_add(lista_segmentos, segmento);
+    }
+
+    return lista_segmentos;
+}
+
+
+void buffer_pack_segmento(t_buffer* buffer, t_segmento* segmento) {
+    buffer_pack(buffer, &(segmento->pid), sizeof(segmento->pid));
+    buffer_pack(buffer, &(segmento->id_de_segmento), sizeof(segmento->id_de_segmento));
+    buffer_pack(buffer, &(segmento->base_del_segmento), sizeof(segmento->base_del_segmento));
+    buffer_pack(buffer, &(segmento->tamanio_de_segmento), sizeof(segmento->tamanio_de_segmento));
+    buffer_pack(buffer, &(segmento->victima), sizeof(segmento->victima));
+}
+
+void buffer_pack_segmento_list(t_buffer* buffer, t_list* lista_segmentos) {
+    int cantidad_segmentos = list_size(lista_segmentos);
+    buffer_pack(buffer, &cantidad_segmentos, sizeof(cantidad_segmentos));
+
+    for(int i = 0; i<list_size(lista_segmentos); i++){
+       t_segmento* segmento = list_get(lista_segmentos,i);
+       buffer_pack_segmento(buffer,segmento);
+    }
+
+}
+
+
 
 
 

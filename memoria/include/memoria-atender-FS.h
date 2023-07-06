@@ -1,5 +1,5 @@
-#ifndef MEMORIA_ATENDER_CPU_H
-#define MEMORIA_ATENDER_CPU_H
+#ifndef MEMORIA_ATENDER_FS_H
+#define MEMORIA_ATENDER_FS_H
 
 #include <errno.h>
 #include <stdlib.h>
@@ -14,13 +14,7 @@
 
 #include <stdio.h>
 #include "memoria-estructuras.h"
-#include "memoria.h"
 
-
-#define MEMORIA_CONFIG_UBICACION "config/memoria.config"
-#define MEMORIA_LOG_UBICACION "logs/memoria.log"
-#define MEMORIA_PROCESS_NAME "Memoria"
-
-void atender_peticiones_cpu(int socketCpu);
+void atender_peticiones_fileSystem(int socketFS);
 
 #endif

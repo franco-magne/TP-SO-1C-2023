@@ -27,7 +27,6 @@ typedef struct {
     char* contenido;
 } Segmento;
 
-
 #include "memoria.h"
 
 int segmento_get_id(Segmento*);
@@ -42,6 +41,8 @@ int segmento_get_pid(Segmento* );
 void segmento_set_pid(Segmento* , int );
 int segmento_get_bit_validez(Segmento* );
 void segmento_set_bit_validez(Segmento* , int );
+char* segmento_get_contenido(Segmento* un_segmento);
+void segmento_set_contenido(Segmento* un_segmento, char* contenido);
 
 void inicializar_memoria();
 void inicializar_estructuras();
@@ -69,7 +70,8 @@ Segmento* desencolar_segmento_por_id(int pid_segmento, int id_segmento);
 Segmento* desencolar_segmento_primer_segmento_atomic();
 void encolar_segmento_atomic(Segmento* targetSegmento);
 t_list* obtener_tabla_de_segmentos_por_pid(int pid);
-
+void modificarSegmento(uint32_t baseSegmento, Segmento* segNuevo);
+Segmento* obtener_segmento_por_BASE(uint32_t base_segmento);
 
 void sumar_memoriaRecuperada_a_tamMemoriaActual(uint32_t tamMemorRecuperada);
 void liberar_tabla_segmentos(int pid);

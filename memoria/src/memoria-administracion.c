@@ -243,6 +243,8 @@ void eliminar_segmento_memoria(Segmento* segmentoAEliminar){
 
 }
 
+
+
 void liberar_tabla_segmentos(int pid){
     t_list* tablaDeSegmentoAELiminar = obtener_tabla_de_segmentos_por_pid(pid);
     
