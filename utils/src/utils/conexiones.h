@@ -10,6 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <stdbool.h>
 
 
 
@@ -40,7 +41,9 @@ typedef enum {
     HEADER_move_in,
     HEADER_move_out,
     HEADER_iniciar_proceso,
-    HEADER_tabla_segmentos
+    HEADER_tabla_segmentos,
+    HEADER_Compactacion,
+    HEADER_Compactacion_finalizada
 
 
 
@@ -63,6 +66,7 @@ typedef enum {
 int conectar_a_servidor(char* ip, char* puerto);
 int iniciar_servidor(char* ip, char* puerto);
 int esperar_cliente(int socket_servidor);
+bool not(bool x);
 
 
 

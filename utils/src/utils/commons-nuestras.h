@@ -22,5 +22,10 @@ int list_get_index(t_list* list, bool (*cutting_condition)(void*, void*), void* 
 void set_timespec(struct timespec* timespec);
 double obtener_diferencial_de_tiempo_en_milisegundos(struct timespec end, struct timespec start);
 bool es_el_ultimo_elemento(t_list* lista, t_link_element* elemento);
+t_list* list_filter_ok(t_list* lista, bool (*condition)(void*, void*), void* argumento);
+
+void inicio_kernel();
+void inicio_cpu();
+
 
 #endif

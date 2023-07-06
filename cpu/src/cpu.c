@@ -12,11 +12,12 @@ int main() {
     
     t_config* configIncial = config_create(CPU_CONFIG_UBICACION);
     cpuConfig = cpu_config_initializer(configIncial);
-  
+    inicio_cpu();
+
   
 
     ///////////////////////////////// CONECTARSE A MEMORIA //////////////////////////////
-   
+    
      int cpuSocketMemoria = conectar_a_servidor("127.0.0.1", "8002");
       if (cpuSocketMemoria == -1) {
         log_error(cpuLogger, "Error al intentar establecer conexión inicial con módulo Memoria");

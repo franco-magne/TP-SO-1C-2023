@@ -27,7 +27,8 @@ static uint32_t cpu_solicitar_a_memoria(int toSocket, uint32_t num_segmento, uin
     return requestRetVal;
 }
 
-static uint32_t cpu_obtener_marco(int toSocket, uint32_t direccionLogica, uint32_t pid) {
+
+uint32_t cpu_obtener_marco(int toSocket, uint32_t direccionLogica, uint32_t pid) {
     int tamanioMaximoSegmento = cpu_config_get_tamanio_maximo_segmento(cpuConfig);
 
     uint32_t num_segmento  = floor(direccionLogica / tamanioMaximoSegmento);

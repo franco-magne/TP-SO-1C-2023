@@ -14,6 +14,7 @@ t_cpu_pcb* cpu_pcb_create (uint32_t pid, uint32_t programCounter, t_registros_cp
     this->nombreArchivo = NULL;
     this->tamanioArchivo = -1;
     this->punteroArchivo = -1;
+    this->direccionFisicaArchivo = -1;
     return this;
 }
 
@@ -139,6 +140,17 @@ uint32_t cpu_pcb_get_puntero_archivo(t_cpu_pcb* this){
     return this->punteroArchivo;
 }
 
+void cpu_pcb_set_direccion_fisica_archivo(t_cpu_pcb* this, uint32_t direccionFisica){
+    this->direccionFisicaArchivo = direccionFisica;
+}
+
+
+uint32_t cpu_pcb_get_direccion_fisica_archivo(t_cpu_pcb* this){
+    return this->direccionFisicaArchivo;
+}
+
+
+
 ////////////////////////////  Registros 4bits  /////////////////////////////////////////
 char*  cpu_pcb_get_registro_ax(t_cpu_pcb* this)
 {
@@ -182,85 +194,85 @@ void cpu_pcb_set_registro_dx(t_cpu_pcb* this, char*  registro)
 }
 
 ////////////////////////////  Registros 8bits  /////////////////////////////////////////
-uint32_t cpu_pcb_get_registro_eax(t_cpu_pcb* this)
+char* cpu_pcb_get_registro_eax(t_cpu_pcb* this)
 {
     return cpu_pcb_get_registros(this)->registroEAx;
 
 }
 
-uint32_t cpu_pcb_get_registro_ebx(t_cpu_pcb* this)
+char* cpu_pcb_get_registro_ebx(t_cpu_pcb* this)
 {
     return cpu_pcb_get_registros(this)->registroEBx;
 }
 
-uint32_t cpu_pcb_get_registro_ecx(t_cpu_pcb* this)
+char* cpu_pcb_get_registro_ecx(t_cpu_pcb* this)
 {
     return cpu_pcb_get_registros(this)->registroECx;
 }
 
-uint32_t cpu_pcb_get_registro_edx(t_cpu_pcb* this)
+char* cpu_pcb_get_registro_edx(t_cpu_pcb* this)
 {
     return cpu_pcb_get_registros(this)->registroEDx;
 }
 
-void cpu_pcb_set_registro_eax(t_cpu_pcb* this, uint32_t registro)
+void cpu_pcb_set_registro_eax(t_cpu_pcb* this, char* registro)
 {
     cpu_pcb_get_registros(this)->registroEAx = registro;
 }
 
-void cpu_pcb_set_registro_ebx(t_cpu_pcb* this, uint32_t registro)
+void cpu_pcb_set_registro_ebx(t_cpu_pcb* this, char* registro)
 {
     cpu_pcb_get_registros(this)->registroEBx = registro;
 }
 
-void cpu_pcb_set_registro_ecx(t_cpu_pcb* this, uint32_t registro)
+void cpu_pcb_set_registro_ecx(t_cpu_pcb* this, char* registro)
 {
     cpu_pcb_get_registros(this)->registroECx = registro;
 }
 
-void cpu_pcb_set_registro_edx(t_cpu_pcb* this, uint32_t registro)
+void cpu_pcb_set_registro_edx(t_cpu_pcb* this, char* registro)
 {
     cpu_pcb_get_registros(this)->registroEDx = registro;
 }
 
 ////////////////////////////  Registros 16bits  /////////////////////////////////////////
 
-uint32_t cpu_pcb_get_registro_rax(t_cpu_pcb* this)
+char* cpu_pcb_get_registro_rax(t_cpu_pcb* this)
 {
     return cpu_pcb_get_registros(this)->registroRAx;
 }
 
-uint32_t cpu_pcb_get_registro_rbx(t_cpu_pcb* this)
+char* cpu_pcb_get_registro_rbx(t_cpu_pcb* this)
 {
     return cpu_pcb_get_registros(this)->registroRBx;
 }
 
-uint32_t cpu_pcb_get_registro_rcx(t_cpu_pcb* this)
+char* cpu_pcb_get_registro_rcx(t_cpu_pcb* this)
 {
     return cpu_pcb_get_registros(this)->registroRCx;
 }
 
-uint32_t cpu_pcb_get_registro_rdx(t_cpu_pcb* this)
+char* cpu_pcb_get_registro_rdx(t_cpu_pcb* this)
 {
     return cpu_pcb_get_registros(this)->registroRDx;
 }
 
-void cpu_pcb_set_registro_rax(t_cpu_pcb* this, uint32_t registro)
+void cpu_pcb_set_registro_rax(t_cpu_pcb* this, char* registro)
 {
     cpu_pcb_get_registros(this)->registroRAx = registro;
 }
 
-void cpu_pcb_set_registro_rbx(t_cpu_pcb* this, uint32_t registro)
+void cpu_pcb_set_registro_rbx(t_cpu_pcb* this, char* registro)
 {
     cpu_pcb_get_registros(this)->registroRBx = registro;
 }
 
-void cpu_pcb_set_registro_rcx(t_cpu_pcb* this, uint32_t registro)
+void cpu_pcb_set_registro_rcx(t_cpu_pcb* this, char* registro)
 {
     cpu_pcb_get_registros(this)->registroRCx = registro;
 }
 
-void cpu_pcb_set_registro_rdx(t_cpu_pcb* this, uint32_t registro)
+void cpu_pcb_set_registro_rdx(t_cpu_pcb* this, char* registro)
 {
     cpu_pcb_get_registros(this)->registroRDx = registro;
 }

@@ -289,9 +289,9 @@ void instruccion_f_close(t_pcb* pcb){
 
     log_info(kernelLogger,"PID: <%i> - Cerrar Archivo: <%s>", pcb_get_pid(pcb), nombreArchivo);
 
-    eliminar_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
-
     t_pcb* pcbBloqueado = atender_f_close(nombreArchivo);
+
+    eliminar_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
 
     if(pcbBloqueado == NULL){
     
@@ -324,5 +324,46 @@ proceso_pasa_a_ready(pcb, "BLOCK");
 void instruccion_f_seek(t_pcb* pcb){
 
     atender_f_seek(pcb,kernelConfig, kernelLogger);
+
+}
+
+
+////////////////////// F_WRITE //////////////////////
+
+void instruccion_f_write(t_pcb* pcb){
+      uint32_t pid = pcb_get_pid(pcb);
+    t_pcb_archivo* archivoEscribir = list_find(pcb_get_lista_de_archivos_abiertos(pcb), es_el_archivo_victima);
+    char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoEscribir);
+    uint32_t puntero = archivo_pcb_get_puntero_archivo(archivoEscribir);
+    uint32_t tamanioArchivo = archivo_pcb_get_tamanio_archivo(archivoEscribir);
+    uint32_t direccionFisica = archivo_pcb_get_direccion_fisica(archivoEscribir);
+
+    
+    log_info(kernelLogger,"PID: <%i> - Escribir Archivo: <%s> - Puntero <%i> - Dirección Memoria <%i> - Tamaño <%i>",pid,nombreArchivo,puntero,direccionFisica,tamanioArchivo);
+
+    
+    int index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
+    archivo_pcb_set_victima(archivoEscribir,false);
+    list_replace(pcb_get_lista_de_archivos_abiertos(pcb), index ,archivoEscribir);
+
+}
+
+////////////////////// F_READ ///////////////////////
+
+void instruccion_f_read(t_pcb* pcb){
+    uint32_t pid = pcb_get_pid(pcb);
+    t_pcb_archivo* archivoLeer = list_find(pcb_get_lista_de_archivos_abiertos(pcb), es_el_archivo_victima);
+    char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoLeer);
+    uint32_t puntero = archivo_pcb_get_puntero_archivo(archivoLeer);
+    uint32_t tamanioArchivo = archivo_pcb_get_tamanio_archivo(archivoLeer);
+    uint32_t direccionFisica = archivo_pcb_get_direccion_fisica(archivoLeer);
+
+    
+    log_info(kernelLogger,"PID: <%i> - Leer Archivo: <%s> - Puntero <%i> - Dirección Memoria <%i> - Tamaño <%i>",pid,nombreArchivo,puntero,direccionFisica,tamanioArchivo);
+
+    
+    int index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
+    archivo_pcb_set_victima(archivoLeer,false);
+    list_replace(pcb_get_lista_de_archivos_abiertos(pcb), index ,archivoLeer);
 
 }
