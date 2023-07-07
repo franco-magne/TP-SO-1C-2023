@@ -206,10 +206,18 @@ void liberar_puntero_del_bloque_de_punteros_en_puntero_indirecto(uint32_t punter
     memset(posicion_en_bytes_a_liberar, 0, sizeof(uint32_t));
 }
 
-void leer_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32_t bytes_a_leer, uint32_t block_size, char* cadena) {
+char* leer_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32_t bytes_a_leer, t_filesystem* fs) {
 
-    
+    char* cadena = malloc(bytes_a_leer);
+    uint32_t posicion_puntero_a_leer_en_bytes = puntero_acceder * fs->block_size;
 
+    if ( bitarray_test_bit(bitmap, puntero_acceder) == 1 ) {
+
+        log_info(fs->logger, "\e[1;92mAcceso a Bitmap - Bloque: <%d> - Estado: <%d>\e[0m", puntero_acceder, 1);
+        memcpy(cadena, map_bloques + posicion_puntero_a_leer_en_bytes, bytes_a_leer);
+    }
+
+    return cadena;
 }
 
 t_list* recuperar_bloque_de_punteros(uint32_t puntero_indirecto, int tamanio_archivo, uint32_t block_size) {

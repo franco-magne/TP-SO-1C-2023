@@ -14,6 +14,7 @@
 #include <commons/config.h>
 
 //////////////////////////////// BIBLOTECA UTILS NUESTRA //////////////
+#include <../../utils/src/utils/commons-nuestras.h>
 #include <../../utils/src/utils/serializacion.h>
 #include <../../utils/src/utils/conexiones.h>
 #include "../include/fs-structures.h"
@@ -23,22 +24,22 @@
 ////////////////////////// DEFINICION DE LAS FUNCIONES ////////////////
 
 
-////////////////////////// ATENDER KERNEL ////////////////
+/*------------------------------------------------------------------------- ATENDER KERNEL ----------------------------------------------------------------------------- */
 
     void atender_kernel(t_filesystem*);
 
 
-////////////////////////// F_OPEN ////////////////
+/*------------------------------------------------------------------------- F_OPEN ----------------------------------------------------------------------------- */
 
-    int abrir_archivo(char* nombre_archivo, t_filesystem* fs);
+    int abrir_archivo_fs(char* nombre_archivo, t_filesystem* fs);
 
 
-////////////////////////// F_CREATE ////////////////
+/*------------------------------------------------------------------------- F_CREATE ----------------------------------------------------------------------------- */
 
     int crear_archivo(char* nombre_archivo, t_filesystem* fs);
 
 
-////////////////////////// F_TRUNCATE ////////////////
+/*------------------------------------------------------------------------- F_TRUNCATE ----------------------------------------------------------------------------- */
 
     int truncar_archivo(char* nombre_archivo, uint32_t nuevo_tamanio, t_filesystem* fs);
     t_fcb* ampliar_tamanio_archivo(char* nombre_archivo, uint32_t nuevo_tamanio, t_filesystem* fs, int posicion_fcb);
@@ -46,25 +47,25 @@
     t_fcb* reducir_tamanio_archivo(char* nombre_archivo, uint32_t nuevo_tamanio, t_filesystem* fs, int posicion_fcb);
 
 
-////////////////////////// F_READ ////////////////
+/*------------------------------------------------------------------------- F_READ ----------------------------------------------------------------------------- */
 
     int leer_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_leer, uint32_t puntero_proceso, t_filesystem* fs);
 
 
-////////////////////////// F_WRITE ////////////////
+/*------------------------------------------------------------------------- F_WRITE ----------------------------------------------------------------------------- */
 
     int escribir_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_escribir, uint32_t puntero_proceso, t_filesystem* fs);
 
 
-////////////////////////// ESPERAR KERNEL ////////////////
+/*------------------------------------------------------------------------- ESPERAR KERNEL ----------------------------------------------------------------------------- */
 
     int fs_escuchando_en(int servidor_fs, t_filesystem* fs);
 
 
-////////////////////////// OTRAS ////////////////
+/*------------------------------------------------------------------------- OTRAS ----------------------------------------------------------------------------- */
 
     int devolver_posicion_fcb_en_la_lista(char* nombre_archivo);
-    void devolver_cantidad_bytes_en_array(uint32_t cantidad_bytes, uint32_t* array_bytes, uint32_t block_size);
+    void convertir_bytes_a_leer_en_array(uint32_t cantidad_bytes, uint32_t* array_bytes, uint32_t block_size);
 
 
 #endif
