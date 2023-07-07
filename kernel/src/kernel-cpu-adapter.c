@@ -88,6 +88,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
     uint32_t tamanioArchivo;
     uint32_t punteroArchivo;
     uint32_t direccionFisicaArchivo;
+    uint32_t cantidadByte;
 
     t_buffer* bufferPcb = buffer_create();
 
@@ -201,14 +202,14 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         case HEADER_f_write:
 
         nombreArchivo = buffer_unpack_string(bufferPcb);
-        buffer_unpack(bufferPcb, &punteroArchivo, sizeof(punteroArchivo));
+        buffer_unpack(bufferPcb, &cantidadByte, sizeof(cantidadByte));
         buffer_unpack(bufferPcb, &direccionFisicaArchivo, sizeof(direccionFisicaArchivo));
 
         index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),nombreArchivo);
         t_pcb_archivo* archivoFRW = list_get(pcb_get_lista_de_archivos_abiertos(pcbAActualizar), index);
-        archivo_pcb_set_puntero_archivo(archivoFRW,punteroArchivo);
         archivo_pcb_set_victima(archivoFRW,true);
         archivo_pcb_set_direccion_fisica(archivoFRW,direccionFisicaArchivo);
+        archivo_pcb_set_cantidad_byte(archivoFRW,cantidadByte);
         list_replace(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),index,archivoFRW);
         break;
     }

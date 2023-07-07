@@ -2,74 +2,139 @@
 
 t_list* lista_fcbs;
 
+/*------------------------------------------------------------------------- ATENDER KERNEL ----------------------------------------------------------------------------- */
+
 void atender_kernel(t_filesystem* fs) {
 
     int operacion_OK = 0;
-    //lista_fcbs = crear_fcbs(fs->logger);
-    
-    while (fs->socket_kernel != -1) {
+    lista_fcbs = list_create();
+    levantar_fcbs_del_directorio(fs, lista_fcbs);    
 
-        uint8_t header = stream_recv_header(fs->socket_kernel); // RECIBO LA OPERACION QUE KERNEL QUIERA SOLICITAR
+    while (fs->socket_kernel != -1) {
+        
+        log_info(fs->logger, "Esperando peticion de KERNEL...");
+        uint8_t header = stream_recv_header(fs->socket_kernel); // RECIBO LA OPERACION QUE KERNEL QUIERA SOLICITAR        
 
         switch(header) {
-            case HEADER_f_open:
+
+            case HEADER_f_open:                
                                         
                 char* nombre_archivo_open;
-                t_buffer* buffer_nombre_archivo_open = buffer_create();
+                t_buffer* bufferOpen = buffer_create();                
 
-                stream_recv_buffer(fs->socket_kernel, buffer_nombre_archivo_open); // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
-                nombre_archivo_open = buffer_unpack_string(buffer_nombre_archivo_open); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
+                stream_recv_buffer(fs->socket_kernel, bufferOpen); // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
+                nombre_archivo_open = buffer_unpack_string(bufferOpen); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
 
-                //operacion_OK = abrir_archivo(nombre_archivo_open);
+                log_info(fs->logger, "\e[1;93mRecibo operacion F_OPEN <%s> de KERNEL\e[0m", nombre_archivo_open);
 
-                if (1) {
-                    log_info(fs->logger, "Abrir archivo: <%s>", nombre_archivo_open);
+                operacion_OK = abrir_archivo_filesystem(nombre_archivo_open, fs);
+                if (operacion_OK) {
                     stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO EXISTE Y LO AGREGUE A SU TABLA GLOBAL
                 } else {
-                    stream_send_empty_buffer(fs->socket_kernel, HEADER_error); // NO EXISTE EL FCB DE ESE ARCHIVO. TIENE QUE SOLICITAR CREARLO
-                    // ESTOY USANDO EL HEADER_ERROR PARA INDICAR QUE NO SE PUDO ABRIR EL ARCHIVO. A CONFIRMAR SI ESTO ESTA OK
-                }         
+                    log_info(fs->logger, "El archivo no existe. Solicite crearlo"); // NO EXISTE ESE ARCHIVO. TIENE QUE SOLICITAR CREARLO PARA AGREGARLO AL DIRECTORIO DE FCBs
+                    stream_send_empty_buffer(fs->socket_kernel, HEADER_f_create);                
+                }
 
                 free(nombre_archivo_open);
-                buffer_destroy(buffer_nombre_archivo_open);
+                buffer_destroy(bufferOpen);
 
             break;
+
             case HEADER_f_create:
 
+                char* nombre_archivo_create;
+                t_buffer* bufferCreate = buffer_create();
+
+                stream_recv_buffer(fs->socket_kernel, bufferCreate); // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
+                nombre_archivo_create = buffer_unpack_string(bufferCreate); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
+
+                log_info(fs->logger, "\e[1;93mRecibo operacion F_CREATE <%s> de KERNEL\e[0m", nombre_archivo_create);
+
+                operacion_OK = crear_archivo(nombre_archivo_create, fs);
+                if (operacion_OK) {
+                    stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue);
+                } else {
+                    log_info(fs->logger, "Error al crear el nuevo archivo.");
+                    stream_send_empty_buffer(fs->socket_kernel, HEADER_error);
+                }
+
+                free(nombre_archivo_create);
+                buffer_destroy(bufferCreate);
+
             break;
-            case HEADER_f_truncate:
+
+            case HEADER_f_truncate:                
 
                 char* nombre_archivo_truncate;
                 uint32_t tamanio_archivo_truncate;
-                t_buffer* bufferTruncate = buffer_create();
-
+                t_buffer* bufferTruncate = buffer_create();                
 
                 stream_recv_buffer(fs->socket_kernel, bufferTruncate); // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
                 nombre_archivo_truncate = buffer_unpack_string(bufferTruncate); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
                 buffer_unpack(bufferTruncate, &tamanio_archivo_truncate, sizeof(tamanio_archivo_truncate)); // DESERIALIZO EL TAMANIO DE ARCHIVO
 
-               // operacion_OK = truncar_archivo(nombre_archivo_truncate, tamanio_archivo_truncate);
+                log_info(fs->logger, "\e[1;93mRecibo operacion F_TRUNCATE <%s, %d> de KERNEL\e[0m", nombre_archivo_truncate, tamanio_archivo_truncate);
 
-                if (true) {
-                    log_info(fs->logger, "Truncar Archivo: <%s> - Tamaño: <%d>", nombre_archivo_truncate, tamanio_archivo_truncate);
+                operacion_OK = truncar_archivo(nombre_archivo_truncate, tamanio_archivo_truncate, fs);
+                if (operacion_OK) {                    
                     stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO SE TRUNCO
                 } else {
-                    stream_send_empty_buffer(fs->socket_kernel, HEADER_error); // FALLO EN EL TRUNCATE
-                    // ESTOY USANDO EL HEADER_ERROR PARA INDICAR QUE NO SE PUDO ABRIR EL ARCHIVO. A CONFIRMAR SI ESTO ESTA OK
+                    log_info(fs->logger, "Error al truncar. No puede pedir mas bloques");
+                    stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // FALLO EN EL TRUNCATE
                 }  
 
-                //free(nombre_archivo_truncate);
+                free(nombre_archivo_truncate);
                 buffer_destroy(bufferTruncate);
 
             break;
+
             case HEADER_f_read:
 
+                char* nombre_archivo_read;
+                uint32_t direccion_fisica_read;
+                uint32_t cantidad_bytes_a_leer;
+                uint32_t puntero_a_leer;
+                t_buffer* bufferRead = buffer_create();
+
+                stream_recv_buffer(fs->socket_kernel, bufferRead);
+                nombre_archivo_read = buffer_unpack_string(bufferRead);
+                buffer_unpack(bufferRead, &direccion_fisica_read, sizeof(direccion_fisica_read));
+                buffer_unpack(bufferRead, &cantidad_bytes_a_leer, sizeof(cantidad_bytes_a_leer));
+                buffer_unpack(bufferRead, &puntero_a_leer, sizeof(puntero_a_leer));
+
+                log_info(fs->logger, "\e[1;93mRecibo operacion F_READ < %s, %d, %d> de KERNEL\e[0m", nombre_archivo_read, direccion_fisica_read, cantidad_bytes_a_leer);
+
+
+
+                free(nombre_archivo_read);
+                buffer_destroy(bufferRead);
+
             break;
+
             case HEADER_f_write:
 
-            break;
-            default:
+                char* nombre_archivo_write;
+                uint32_t direccion_logica_write;
+                uint32_t cantidad_bytes_a_escribir;
+                t_buffer* bufferWrite = buffer_create();
 
+                stream_recv_buffer(fs->socket_kernel, bufferWrite);
+                nombre_archivo_write = buffer_unpack_string(bufferWrite);
+                buffer_unpack(bufferWrite, &direccion_logica_write, sizeof(direccion_logica_write));
+                buffer_unpack(bufferWrite, &cantidad_bytes_a_escribir, sizeof(cantidad_bytes_a_escribir));
+
+                log_info(fs->logger, "\e[1;93mRecibo operacion F_WRITE < , , > de KERNEL\e[0m");
+
+
+
+                free(nombre_archivo_write);
+                buffer_destroy(bufferWrite);
+
+            break;
+
+            default:
+                log_error(fs->logger, "Peticion incorrecta.");
+                exit(1);
             break;
         }
 
@@ -80,120 +145,339 @@ void atender_kernel(t_filesystem* fs) {
     return;
 }
 
-/*
-t_buffer* bufferArchivo = buffer_create();
-char* nombreArchivo;
-int ejemplo;
-buffer_pack_string(bufferArchivo, nombreArchivo); // EMPAQUETADO STRING
-buffer_pack(bufferArchivo,&ejemplo,sizeof(ejemplo)); // EMpaquetado int
+/*------------------------------------------------------------------------- F_OPEN ----------------------------------------------------------------------------- */
 
-stream_send_buffer(kernel_config_get_socket_filesystem(kernelConfig),HEADER_f_close,bufferArchivo ); // ENVIAR
-
-buffer_destroy(bufferArchivo);
-
-
-
-////////////////////// FILE SYSTEM ///////////////
-
-uint8_t header = stream_recv_header(socketKernel); // PRIMERO RECIBO HEADER
-if(header == HEADER_f_close){
-    char* nombreARchivoACerrar;
-    int ejemplo;
-    t_buffer* bufferArchivoCerrar = buffer_create();
-    stream_recv_buffer(socketKernel, bufferArchivoCerrar); //DESPUES RECIBO EL BUFFER
-    nombreARchivoACerrar= buffer_unpack_string(bufferArchivoCerrar); // ESTE USA PARA STRING
-    buffer_unpack(bufferArchivoCerrar, &ejemplo, sizeof(ejemplo)); // ESTE LO USAS PARA INT Y ESO
-    log_info(fileSystemlog, "nombre a archivo a cerrar <%s> ", nombreARchivoACerrar);
-
-    stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue); // ACA ME NOTIFICAS A MI QUE YA LO CERRASTE
-}
-
-*/
-
-int truncar_archivo(char* nombre_archivo, uint32_t tamanio_archivo) {
-
-    int truncado_ok;
-    int pos_archivo_a_truncar = -1;
-    int size_lista_fcbs = list_size(lista_fcbs);
-    
-    for (int i = 0; i < size_lista_fcbs; i++) {
-
-        t_fcb* fcb_aux = malloc(sizeof(t_fcb));
-        fcb_aux = list_get(lista_fcbs, i);
-
-        if (strcmp(fcb_aux->nombre_archivo, nombre_archivo) == 0) {
-            pos_archivo_a_truncar = i;
-        }
-
-        free(fcb_aux);
-    }
-
-    if (pos_archivo_a_truncar == -1) {
-        truncado_ok = 0;
-    } else {
-        t_fcb* fcb_a_truncar = malloc(sizeof(t_fcb));
-        t_fcb* nuevo_fcb = malloc(sizeof(t_fcb));
-
-        fcb_a_truncar = list_get(lista_fcbs, pos_archivo_a_truncar);
-        nuevo_fcb->nombre_archivo = fcb_a_truncar->nombre_archivo;
-        nuevo_fcb->puntero_directo = fcb_a_truncar->puntero_directo;
-        nuevo_fcb->puntero_indirecto = fcb_a_truncar->puntero_indirecto;
-
-        if (fcb_a_truncar->tamanio_archivo > tamanio_archivo) {
-            // CASO REDUCIR EL TAMANIO DEL ARCHIVO
-
-            nuevo_fcb->tamanio_archivo = fcb_a_truncar->tamanio_archivo;
-            list_replace(lista_fcbs, pos_archivo_a_truncar, nuevo_fcb);
-
-        } else {
-            // CASO AMPLIAR EL TAMANIO DEL ARCHIVO
-
-            nuevo_fcb->tamanio_archivo = fcb_a_truncar->tamanio_archivo;
-            list_replace(lista_fcbs, pos_archivo_a_truncar, nuevo_fcb);
-
-        }
-
-        truncado_ok = 1;
-        free(nuevo_fcb);
-        free(fcb_a_truncar);        
-    }
-
-    return truncado_ok;
-}
-
-int abrir_archivo(char* nombre_archivo) {
+int abrir_archivo_filesystem(char* nombre_archivo_open, t_filesystem* fs) {
 
     int encontrado = 0;
     int size_lista_fcbs = list_size(lista_fcbs);
     
     for (int i = 0; i < size_lista_fcbs; i++) {
 
-        t_fcb* fcb_aux = malloc(sizeof(t_fcb));
-        fcb_aux = list_get(lista_fcbs, i);
+        t_fcb* fcb_aux = list_get(lista_fcbs, i);
 
-        if (strcmp(fcb_aux->nombre_archivo, nombre_archivo) == 0) {
+        if (strcmp(fcb_aux->nombre_archivo, nombre_archivo_open) == 0) {
+
+            log_info(fs->logger, "\e[1;92mAbrir archivo: <%s>\e[0m", nombre_archivo_open);
+            log_info(fs->logger, "Datos del FCB:");
+            mostrar_info_fcb(fcb_aux, fs->logger);
+            mostrar_bloques_fcb(fcb_aux->bloques, fs->logger, fcb_aux->puntero_directo);
+            log_info(fs->logger, "Archivo <%s> abierto correctamente", nombre_archivo_open);
+
             encontrado = 1;
+            
+            break;
         }
-
-        free(fcb_aux);
     }
 
     return encontrado;
 }
 
+/*------------------------------------------------------------------------- F_CREATE ----------------------------------------------------------------------------- */
+
+int crear_archivo(char* nombre_archivo_create, t_filesystem* fs) {
+
+    int resultado = 0;
+    t_fcb* fcb_nuevo = crear_fcb_inexistente(nombre_archivo_create, fs);
+
+    if (fcb_nuevo != NULL) {
+    
+        log_info(fs->logger, "\e[1;92mCrear archivo: <%s>\e[0m", nombre_archivo_create);
+        log_info(fs->logger, "Datos del FCB:");
+        mostrar_info_fcb(fcb_nuevo, fs->logger);
+        mostrar_bloques_fcb(fcb_nuevo->bloques, fs->logger, fcb_nuevo->puntero_directo);
+        log_info(fs->logger, "Archivo <%s> creado y abierto correctamente", nombre_archivo_create);
+
+        list_add(lista_fcbs, fcb_nuevo);
+        resultado = 1;        
+    }
+
+    return resultado;
+}
+
+/*------------------------------------------------------------------------- F_TRUNCATE ----------------------------------------------------------------------------- */
+
+int truncar_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tamanio_archivo, t_filesystem* fs) {
+        
+    t_fcb* fcb_truncado;
+    int truncado_ok = 0;
+    int pos_archivo_a_truncar;
+    int respuesta_afirmativa = 0;
+    uint32_t fcb_a_truncar_tamanio_actual;
+    int size_lista_fcbs = list_size(lista_fcbs);
+    
+    // BUSCO LA POSICION EN LA QUE SE ENCUENTRA EL FCB A TRUNCAR DENTRO DE LA LISTA DE FCBs
+    for (int i = 0; i < size_lista_fcbs; i++) {
+
+        t_fcb* fcb_aux = list_get(lista_fcbs, i);
+        if (strcmp(fcb_aux->nombre_archivo, nombre_archivo_truncate) == 0) {            
+            fcb_a_truncar_tamanio_actual = atoi(fcb_aux->tamanio_archivo);
+            
+            if (nuevo_tamanio_archivo > fcb_a_truncar_tamanio_actual) {
+                respuesta_afirmativa = puede_ampliar_tamanio(fcb_aux, fs->block_size, nuevo_tamanio_archivo, fcb_a_truncar_tamanio_actual);
+            }
+
+            pos_archivo_a_truncar = i;
+        }
+    }    
+
+    // PROCEDO A HACER EL TRUNCATE         
+    if ( nuevo_tamanio_archivo < fcb_a_truncar_tamanio_actual ) {
+
+        fcb_truncado = reducir_tamanio_archivo(nombre_archivo_truncate, nuevo_tamanio_archivo, fs, pos_archivo_a_truncar);
+        truncado_ok = 1;
+        
+    } else if ( nuevo_tamanio_archivo > fcb_a_truncar_tamanio_actual && respuesta_afirmativa ) {
+
+        fcb_truncado = ampliar_tamanio_archivo(nombre_archivo_truncate, nuevo_tamanio_archivo, fs, pos_archivo_a_truncar);
+        truncado_ok = 1;
+    }
+
+    if (truncado_ok) {
+
+        log_info(fs->logger, "Salimos del bitmap y el archivo de bloques");
+        log_info(fs->logger, "\e[1;92mTruncar Archivo: <%s> - Tamaño: <%d>\e[0m", nombre_archivo_truncate, nuevo_tamanio_archivo);
+        log_info(fs->logger, "FCB DESPUES: ");
+        mostrar_info_fcb(fcb_truncado, fs->logger);
+        mostrar_bloques_fcb(fcb_truncado->bloques, fs->logger, fcb_truncado->puntero_directo);
+        log_info(fs->logger, "Archivo <%s, %d> truncado correctamente", nombre_archivo_truncate, nuevo_tamanio_archivo); 
+    }           
+
+    return truncado_ok;
+}
+
+t_fcb* ampliar_tamanio_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tamanio_archivo, t_filesystem* fs, int pos_archivo_a_ampliar) {
+
+    t_fcb* fcb_a_truncar = list_get(lista_fcbs, pos_archivo_a_ampliar);
+    uint32_t fcb_a_truncar_tamanio = atoi(fcb_a_truncar->tamanio_archivo);
+
+    char* nuevo_tamanio_en_char = string_itoa(nuevo_tamanio_archivo);
+    size_t longitud_nueva = strlen( nuevo_tamanio_en_char );
+
+    log_info(fs->logger, "Truncate resulta en AMPLIAR. Tamanio actual es menor al nuevo solicitado");
+    log_info(fs->logger, "FCB ANTES: ");
+    mostrar_info_fcb(fcb_a_truncar, fs->logger);
+    mostrar_bloques_fcb(fcb_a_truncar->bloques, fs->logger, fcb_a_truncar->puntero_directo);
+    log_info(fs->logger, "Accedemos al bitmap y al archivo de bloques");
+
+    uint32_t bloque_libre;
+    uint32_t cant_bloques_necesarios = (nuevo_tamanio_archivo - fcb_a_truncar_tamanio) / fs->block_size;
+
+    // PUNTERO DIRECTO
+    if (list_size(fcb_a_truncar->bloques) == 0) {
+
+        buscar_bloque_libre(fs, &bloque_libre);
+        fcb_a_truncar->puntero_directo = bloque_libre;
+        cant_bloques_necesarios--;
+
+        log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <1> - Bloque File System <%d>\e[0m", nombre_archivo_truncate, bloque_libre);
+    }
+
+    // PUNTERO INDIRECTO Y BLOQUE DE PUNTEROS
+    for (uint32_t i = 0; i < cant_bloques_necesarios; i++) {
+        
+        buscar_bloque_libre(fs, &bloque_libre);
+        if (fcb_a_truncar->puntero_indirecto == 0) {
+            fcb_a_truncar->puntero_indirecto = bloque_libre;
+        }
+
+        uint32_t* nuevo_bloque = malloc(sizeof(uint32_t)); // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO -- VALGRIND: 16 BYTES PERDIDOS
+        *nuevo_bloque = bloque_libre; // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO
+        list_add(fcb_a_truncar->bloques, nuevo_bloque);
+        
+        uint32_t puntero_numero_X = list_size(fcb_a_truncar->bloques) - 1; // RESTO UNO PORQUE NO TENGO QUE COPIAR EL PUNTERO INDIRECTO EN EL ARCHIVO DE BLOQUES
+        escribir_bloque_de_punteros_en_puntero_indirecto(fcb_a_truncar->puntero_indirecto, puntero_numero_X, nuevo_bloque, fs->block_size);
+
+        log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo_truncate, (list_size(fcb_a_truncar->bloques) + 1), bloque_libre);
+    }
+
+    char* retorno_ampliar = realloc(fcb_a_truncar->tamanio_archivo, (longitud_nueva + 1) * sizeof(char));
+    if (retorno_ampliar == NULL) {
+        log_error(fs->logger, "Error en el realloc. %s", strerror(errno));
+    } else {
+        fcb_a_truncar->tamanio_archivo = retorno_ampliar;
+        strcpy(fcb_a_truncar->tamanio_archivo, nuevo_tamanio_en_char );
+    }
+    
+    config_set_value(fcb_a_truncar->fcb_config, "NOMBRE_ARCHIVO", fcb_a_truncar->nombre_archivo);
+    config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", fcb_a_truncar->tamanio_archivo);
+    config_set_value( fcb_a_truncar->fcb_config, "PUNTERO_DIRECTO", string_itoa(fcb_a_truncar->puntero_directo) ); // VALGRIND: 7 BYTES PERDIDOS
+    config_set_value( fcb_a_truncar->fcb_config, "PUNTERO_INDIRECTO", string_itoa(fcb_a_truncar->puntero_indirecto) ); // VALGRIND: 7 BYTES PERDIDOS
+    config_save(fcb_a_truncar->fcb_config);
+
+    free(nuevo_tamanio_en_char);
+
+    return fcb_a_truncar;
+}
+
+int puede_ampliar_tamanio(t_fcb* fcb_a_ampliar, uint32_t block_size, uint32_t nuevo_tamanio, uint32_t fcb_tamanio_actual) {
+
+    int cantidad_bloques_fcb = list_size(fcb_a_ampliar->bloques) - 1;
+    int cantidad_maxima_bloques = block_size / sizeof(uint32_t);
+    int cantidad_bloques_necesarios = (nuevo_tamanio - fcb_tamanio_actual) / block_size;
+
+    if (cantidad_bloques_fcb + cantidad_bloques_necesarios > cantidad_maxima_bloques) {
+        return 0;
+    } else {
+        return 1;
+    }
+
+}
+
+t_fcb* reducir_tamanio_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tamanio_archivo, t_filesystem* fs, int pos_archivo_a_reducir) {
+
+    t_fcb* fcb_a_truncar = list_get(lista_fcbs, pos_archivo_a_reducir);
+    uint32_t fcb_a_truncar_tamanio = atoi(fcb_a_truncar->tamanio_archivo);
+
+    char* nuevo_tamanio_en_char = string_itoa(nuevo_tamanio_archivo);
+    size_t longitud_nueva = strlen( nuevo_tamanio_en_char );
+
+    log_info(fs->logger, "Truncate resulta en REDUCIR. Tamanio actual es mayor al nuevo solicitado");
+    log_info(fs->logger, "FCB ANTES: ");
+    mostrar_info_fcb(fcb_a_truncar, fs->logger);
+    mostrar_bloques_fcb(fcb_a_truncar->bloques, fs->logger, fcb_a_truncar->puntero_directo);
+    log_info(fs->logger, "Accedemos al bitmap y al archivo de bloques");
+
+    int ultima_posicion_lista_bloques;
+    uint32_t cant_bloques_a_liberar = (fcb_a_truncar_tamanio - nuevo_tamanio_archivo) / fs->block_size;
+    
+    if (nuevo_tamanio_archivo == 0) {
+        cant_bloques_a_liberar -= 1;
+    }
+
+    for (uint32_t i = 0; i < cant_bloques_a_liberar; i++) {
+
+        ultima_posicion_lista_bloques = list_size(fcb_a_truncar->bloques) - 1;
+        uint32_t* bloque_a_liberar = (uint32_t*)list_get(fcb_a_truncar->bloques, ultima_posicion_lista_bloques);
+
+        liberar_bloque(fs, bloque_a_liberar);
+        list_remove(fcb_a_truncar->bloques, ultima_posicion_lista_bloques);
+        liberar_puntero_del_bloque_de_punteros_en_puntero_indirecto(fcb_a_truncar->puntero_indirecto, ultima_posicion_lista_bloques, fs->block_size);
+
+        log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo_truncate, (ultima_posicion_lista_bloques + 1), (int)(*bloque_a_liberar));
+    }            
+
+    char* retorno_reducir = realloc(fcb_a_truncar->tamanio_archivo, (longitud_nueva + 1) * sizeof(char));      
+    if (retorno_reducir == NULL) {
+        log_error(fs->logger, "Error en el realloc. %s", strerror(errno));
+    } else {
+        fcb_a_truncar->tamanio_archivo = retorno_reducir;
+        strcpy(fcb_a_truncar->tamanio_archivo, nuevo_tamanio_en_char );
+    }
+
+    if (nuevo_tamanio_archivo == fs->block_size) {
+        fcb_a_truncar->puntero_indirecto = 0;
+    }
+
+    if (nuevo_tamanio_archivo == 0) {
+        liberar_bloque(fs, &fcb_a_truncar->puntero_directo);
+        fcb_a_truncar->puntero_directo = 0;
+        fcb_a_truncar->puntero_indirecto = 0;
+    }
+
+    config_set_value(fcb_a_truncar->fcb_config, "NOMBRE_ARCHIVO", fcb_a_truncar->nombre_archivo);
+    config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", fcb_a_truncar->tamanio_archivo);            
+    config_set_value( fcb_a_truncar->fcb_config, "PUNTERO_DIRECTO", string_itoa(fcb_a_truncar->puntero_directo) ); // VALGRIND: 2 BYTES PERDIDOS
+    config_set_value( fcb_a_truncar->fcb_config, "PUNTERO_INDIRECTO", string_itoa(fcb_a_truncar->puntero_indirecto) ); // VALGRIND: 2 BYTES PERDIDOS
+    config_save(fcb_a_truncar->fcb_config);
+
+    free(nuevo_tamanio_en_char);
+
+    return fcb_a_truncar;
+}
+
+/*------------------------------------------------------------------------- F_READ ----------------------------------------------------------------------------- */
+
+int leer_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_leer, uint32_t puntero_proceso, t_filesystem* fs) {
+    
+    int cant_bloques_a_leer = (int)ceil(cant_bytes_a_leer / fs->block_size);
+    int posicion_fcb_a_leer= devolver_posicion_fcb_en_la_lista(nombre_archivo);
+    t_fcb* fcb_a_leer = list_get(lista_fcbs, posicion_fcb_a_leer);
+
+    char* cadena_final =  malloc(cant_bytes_a_leer + 1);
+    
+    if (cant_bloques_a_leer > 1) {
+        
+        uint32_t bytes_en_array[cant_bloques_a_leer];
+        devolver_cantidad_bytes_en_array(cant_bytes_a_leer, bytes_en_array, fs->block_size);
+
+        for (int i = 0; i < cant_bloques_a_leer; i++) {
+
+            char* cadena_aux = malloc(bytes_en_array[i]);
+            uint32_t* bloque_lectura = (uint32_t*)list_get( fcb_a_leer->bloques, (puntero_proceso + 1 + i) ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO
+            leer_puntero_del_archivo_de_bloques((*bloque_lectura), bytes_en_array[i], fs->block_size, cadena_aux);
+
+            string_append(&cadena_final, cadena_aux);
+            free(cadena_aux);
+        }
+        
+    } else {
+
+        uint32_t* bloque_lectura = (uint32_t*)list_get( fcb_a_leer->bloques, (puntero_proceso + 1) ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO
+
+        leer_puntero_del_archivo_de_bloques((*bloque_lectura), cant_bytes_a_leer, fs->block_size, cadena_final);   
+    }    
+    
+    return 1;
+}
+
+/*------------------------------------------------------------------------- F_WRITE ----------------------------------------------------------------------------- */
+
+int escribir_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_escribir, uint32_t puntero_proceso, t_filesystem* fs) {
+
+
+    return 1;
+}
+
+/*------------------------------------------------------------------------- ESPERAR KERNEL ----------------------------------------------------------------------------- */
+
 int fs_escuchando_en(int server_fs, t_filesystem* fs) {
 
+    pthread_t hilo;
     int socket_kernel = esperar_cliente(server_fs);
+    
     fs->socket_kernel = socket_kernel;
+    log_info(fs->logger, "Cliente KERNEL conectado");
 
     if (socket_kernel != -1) {
-        
-        pthread_t hilo;
-        pthread_create(&hilo, NULL, (void*) atender_kernel, (void*) fs);
-        pthread_detach(hilo);
+    
+        pthread_create(&hilo, NULL, (void*) atender_kernel, (void*)fs);
+        pthread_join(hilo, NULL);
         
         return 1;
     }
 
     return 0;
+}
+
+/*------------------------------------------------------------------------- OTRAS ----------------------------------------------------------------------------- */
+
+int devolver_posicion_fcb_en_la_lista(char* nombre_archivo) {
+
+    int posicion_fcb;
+    int size_lista_fcbs = list_size(lista_fcbs);
+
+    for (int i = 0; i < size_lista_fcbs; i++) {
+
+        t_fcb* fcb_aux = list_get(lista_fcbs, i);
+        if (strcmp(fcb_aux->nombre_archivo, nombre_archivo) == 0) {            
+            posicion_fcb = i;
+
+            break;
+        }
+    }  
+
+    return posicion_fcb;
+}
+
+void devolver_cantidad_bytes_en_array(uint32_t cantidad_bytes, uint32_t* array_bytes, uint32_t block_size) {
+    
+    uint32_t bytes_restantes = cantidad_bytes % block_size;
+    int cantidad_block_size_repetido = cantidad_bytes / block_size;
+
+    for (int i = 0; i < cantidad_block_size_repetido; i++) {
+        array_bytes[i] = 64;
+    }
+
+    array_bytes[cantidad_block_size_repetido] = bytes_restantes; // LA POSICION FINAL GUARDO EL RESTO DE BYTES QUE QUEDAN
 }

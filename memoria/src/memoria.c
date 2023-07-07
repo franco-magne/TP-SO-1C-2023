@@ -95,10 +95,12 @@ void aceptar_conexiones_memoria(const int socketEscucha) {
                 pthread_detach(threadAtencion);
                 kernelSinAtender = false;
             } else if (handshake == HANDSHAKE_fileSystem) {
+                /*
                 pthread_t threadAtencion;
                 pthread_create(&threadAtencion, NULL, atender_conexiones_fileSystem, &clienteAceptado);
                 pthread_detach(threadAtencion);
                 fileSystemSinAtender = false;
+                */
             }else {
                 log_error(memoriaLogger, "Error al recibir handshake de cliente en socket [%d]", clienteAceptado);
                 close(clienteAceptado); // Cerrar el socket cliente en caso de error

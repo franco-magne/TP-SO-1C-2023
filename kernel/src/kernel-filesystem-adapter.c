@@ -56,6 +56,16 @@ void file_system_adapter_recv_f_open(t_pcb* pcb, t_kernel_config* kernelConfig){
   uint8_t fileSystemResponse = stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
   stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
 
+  
+  if(fileSystemResponse == HEADER_f_create){
+  t_buffer* bufferCreate = buffer_create();
+  buffer_pack_string(bufferCreate,nombreArchivo);
+  stream_send_buffer(kernel_config_get_socket_file_system(kernelConfig), HEADER_f_create,bufferCreate);
+  buffer_destroy(bufferCreate);
+  fileSystemResponse = stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
+  stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
+  }
+
   if(fileSystemResponse == HANDSHAKE_ok_continue){
     t_kernel_archivo* nuevoArchivo = archivo_create_kernel(pcb_get_pid(pcb),nombreArchivo);
     pthread_mutex_lock(&mutexTablaGlobal);
@@ -149,10 +159,56 @@ void atender_f_seek(t_pcb* pcb, t_kernel_config* kernelConfig, t_log* kernelLogg
 
 }
 
-void file_system_adapter_send_f_read(){
+void file_system_adapter_send_f_read(t_pcb* pcb, t_log* kernelLogger, t_kernel_config* kernelConfig){
+    uint32_t pid = pcb_get_pid(pcb);
+    t_pcb_archivo* archivoLeer = list_find(pcb_get_lista_de_archivos_abiertos(pcb), es_el_archivo_victima);
+    char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoLeer);
+    uint32_t puntero = archivo_pcb_get_puntero_archivo(archivoLeer);
+    uint32_t tamanioArchivo = archivo_pcb_get_tamanio_archivo(archivoLeer);
+    uint32_t direccionFisica = archivo_pcb_get_direccion_fisica(archivoLeer);
+    uint32_t cantidadByte = archivo_pcb_get_cantidad_byte(archivoLeer);
+    
+    log_info(kernelLogger,"PID: <%i> - Leer Archivo: <%s> - Puntero <%i> - Dirección Memoria <%i> - Tamaño <%i>",pid,nombreArchivo,puntero,direccionFisica,tamanioArchivo);
+
+     t_buffer* bufferFRead = buffer_create();
+
+    buffer_pack_string(bufferFRead,nombreArchivo);
+    buffer_pack(bufferFRead, &direccionFisica, sizeof(direccionFisica));
+    buffer_pack(bufferFRead, &cantidadByte, sizeof(cantidadByte));
+    buffer_pack(bufferFRead, &puntero, sizeof(puntero));
+
+    
+    stream_send_buffer(kernel_config_get_socket_file_system(kernelConfig),HEADER_f_read,bufferFRead);
+
+    buffer_destroy(bufferFRead);
+
 
 }
 
-void file_system_adapter_send_f_write(){
+void file_system_adapter_send_f_write(t_pcb* pcb, t_log* kernelLogger, t_kernel_config* kernelConfig){
+
+   uint32_t pid = pcb_get_pid(pcb);
+    t_pcb_archivo* archivoEscribir = list_find(pcb_get_lista_de_archivos_abiertos(pcb), es_el_archivo_victima);
+    char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoEscribir);
+    uint32_t cantidadByte = archivo_pcb_get_cantidad_byte(archivoEscribir);
+    uint32_t puntero = archivo_pcb_get_puntero_archivo(archivoEscribir);
+    uint32_t tamanioArchivo = archivo_pcb_get_tamanio_archivo(archivoEscribir);
+    uint32_t direccionFisica = archivo_pcb_get_direccion_fisica(archivoEscribir);
+
+  
+    log_info(kernelLogger,"PID: <%i> - Escribir Archivo: <%s> - Puntero <%i> - Dirección Memoria <%i> - Tamaño <%i>",pid,nombreArchivo,puntero,direccionFisica,tamanioArchivo);
+
+    t_buffer* bufferFWrite = buffer_create();
+
+    buffer_pack_string(bufferFWrite,nombreArchivo);
+    buffer_pack(bufferFWrite, &direccionFisica, sizeof(direccionFisica));
+    buffer_pack(bufferFWrite, &cantidadByte, sizeof(cantidadByte));
+    buffer_pack(bufferFWrite, &puntero, sizeof(puntero));
+
+    
+    stream_send_buffer(kernel_config_get_socket_file_system(kernelConfig),HEADER_f_write,bufferFWrite);
+
+    buffer_destroy(bufferFWrite);
+
 
 }

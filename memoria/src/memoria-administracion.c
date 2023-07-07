@@ -279,6 +279,10 @@ bool es_el_ultimo_segmento_lista(int index){
 void iniciar_compactacion(){
     Segmento* segmentoActual;
     Segmento* segmentoAnterior;
+
+    uint32_t retardoInstruccion = memoria_config_get_retardo_compactacion(memoriaConfig);
+    intervalo_de_pausa(retardoInstruccion);
+
     for(int i = 1; i< list_size(listaDeSegmentos); i++){
         segmentoActual = list_get(listaDeSegmentos,i);
 

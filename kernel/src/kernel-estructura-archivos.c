@@ -16,6 +16,7 @@ t_pcb_archivo* archivo_create_pcb(char* nombreArchivo){
     this->victimaDelArchivo = true;
     this->punteroArchivo=-1;
     this->direccionFisicaArchivo = -1;
+    this->cantidadByte = -1;
     return this;
 
 }
@@ -60,6 +61,10 @@ uint32_t archivo_pcb_get_direccion_fisica(t_pcb_archivo* this){
     return this->direccionFisicaArchivo;
 }
 
+uint32_t archivo_pcb_get_cantidad_byte(t_pcb_archivo* this){
+    return this->cantidadByte;
+}
+
 ///////////////////////// SETTER /////////////////////////////
 
 void kernel_archivo_set_pid(t_kernel_archivo* this , uint32_t pid)
@@ -91,6 +96,11 @@ void kernel_archivo_set_cola_procesos_bloqueados(t_kernel_archivo* this , t_queu
 {
     this->colaDeProcesosEsperandoPorElArchivo = cola;
 }
+
+void archivo_pcb_set_cantidad_byte(t_pcb_archivo* this, uint32_t cantidadByte){
+    this->cantidadByte = cantidadByte;
+}
+
 
 ///////////////////////////// FUNCIONES EXTRAS ///////////////////////////////
 

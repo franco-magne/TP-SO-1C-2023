@@ -42,6 +42,7 @@ uint32_t cpu_pcb_get_tamanio_archivo(t_cpu_pcb* this);
 uint32_t cpu_pcb_get_puntero_archivo(t_cpu_pcb* this);
 uint32_t cpu_pcb_get_direccion_fisica_archivo(t_cpu_pcb* this);
 t_list* cpu_pcb_get_tabla_de_segmento(t_cpu_pcb* this);
+uint32_t cpu_pcb_get_cantidad_byte_archivo(t_cpu_pcb* this);
 
 ////// FIRMAS DE SETTERS /////////////
 void cpu_pcb_set_tiempoIO(t_cpu_pcb* self, uint32_t tiempoIO);
@@ -56,6 +57,7 @@ void cpu_pcb_set_tamanio_archivo(t_cpu_pcb* this, uint32_t tamanioArchivo);
 void cpu_pcb_set_puntero_archivo(t_cpu_pcb* this, uint32_t punteroArchivo);
 void cpu_pcb_set_direccion_fisica_archivo(t_cpu_pcb* this, uint32_t direccionFisica);
 void cpu_pcb_set_tabla_de_segmento(t_cpu_pcb* this, t_list* listaDeSegmento);
+void cpu_pcb_set_cantidad_byte_archivo(t_cpu_pcb* this, uint32_t cantidadByte);
 
 
 void cpu_pcb_set_registros(t_cpu_pcb* self, t_registros_cpu* registrosCpu);

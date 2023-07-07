@@ -12,10 +12,10 @@ int main() {
    fs_config = config_create(FS_CONFIG_UBICACION);
    superbloque_config = config_create(FS_SUPERBLOQUE_UBICACION);
 
-   // TODO: LLAMAR ACA A UNA FUNCION QUE INICIE LOS SEMAFOROS QUE VAYA A NECESITAR.
-
    cargar_t_filesystem(fs_config, superbloque_config, fs);
    fs->logger = fs_logger;
+   //log_info(fs->logger, "FILESYSTEM iniciado");
+   imprimir_file_system();
 
 
    ///////////////////////////////// CONECTARSE A MEMORIA //////////////////////////////
@@ -27,24 +27,27 @@ int main() {
       log_destroy(fs->logger);
 
       return -2;
-   }
-   fs->socket_memoria = fsSocketMemoria;
+   }   
    log_info(fs->logger, "Conexion con MEMORIA establecida");
-   */
-   //levantar_bitmap(fs);
-   //crear_archivo_de_bloques(fs);
-
+   fs->socket_memoria = fsSocketMemoria;   
+  */
+   crear_directorios(fs);
+   levantar_bitmap(fs);
+   crear_superbloque_dat(fs, superbloque_config);
+   levantar_archivo_de_bloques(fs);
+   
 
    ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////
-
-   int serverFS = iniciar_servidor(fs->ip_memoria, fs->puerto_escucha); // DUDA: ¿INICIAR SERVIDOR NO DEBERIA RECIBIR SOLO EL PUERTO DE ESCUCHA?
-   log_info(fs->logger, "Servidor FILESYSTEM listo para recibir a KERNEL\n");
    
-   while (fs_escuchando_en(serverFS, fs)); // Escucho a Kernel
+   int serverFS = iniciar_servidor(fs->ip_memoria, fs->puerto_escucha);
+   log_info(fs->logger, "Servidor FILESYSTEM listo para recibir a KERNEL...");
+   
+   while (fs_escuchando_en(serverFS, fs));
 
 
    config_destroy(fs_config);
    config_destroy(superbloque_config);
+   cerrar_archivos();
 
    return 0;
 }
