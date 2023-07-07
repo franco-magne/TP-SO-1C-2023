@@ -17,7 +17,7 @@ pthread_mutex_t mutexMemoriaData = PTHREAD_MUTEX_INITIALIZER;   //para controlar
 pthread_mutex_t mutexListaDeSegmento = PTHREAD_MUTEX_INITIALIZER;
 
 int main() {
-
+    imprimir_memoria();
     memoriaLogger = log_create(MEMORIA_LOG_UBICACION,MEMORIA_PROCESS_NAME,true,LOG_LEVEL_INFO);
     memoriaConfigInicial = config_create(MEMORIA_CONFIG_UBICACION);
     memoriaConfig = memoria_config_initializer(memoriaConfigInicial);
