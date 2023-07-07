@@ -77,14 +77,16 @@ void segmento_set_contenido(Segmento* un_segmento, char* contenido){
 }
 
 
-bool es_el_segmento_victima_pid(Segmento* element, int pid_segmento) {
-   return element->pid == pid_segmento;
+bool es_el_segmento_victima_pid(Segmento* element, Segmento* otro_segmento) {
+   return element->pid == otro_segmento->pid;
 }
 
 t_list* obtener_tabla_de_segmentos_por_pid(int pid){
     t_list* tablaDeSegdelProceso = list_create();
-    tablaDeSegdelProceso = list_filter(listaDeSegmentos, es_el_segmento_victima_pid);
-
+    Segmento* aux = crear_segmento(-1);
+    segmento_set_pid(aux,pid);
+    tablaDeSegdelProceso = list_filter_ok(listaDeSegmentos, es_el_segmento_victima_pid,aux);
+    free(aux);
     return tablaDeSegdelProceso;
 }
 

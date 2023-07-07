@@ -107,7 +107,8 @@ void atender_peticiones_kernel(int socketKernel) {
                 buffer_pack_segmento_list(bufferTablaDeSegmentoActualizada, tablaDeSegmentoActualizada);
                 stream_send_buffer(socketKernel, HANDSHAKE_ok_continue,bufferTablaDeSegmentoActualizada);
                 buffer_destroy(bufferTablaDeSegmentoActualizada);
-               
+                mostrar_lista_segmentos(listaDeSegmentos);
+
 
                 break;
             }

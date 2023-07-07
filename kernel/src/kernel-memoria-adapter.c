@@ -164,7 +164,8 @@ uint8_t memoriaResponse =  stream_recv_header(kernel_config_get_socket_memoria(k
 stream_recv_empty_buffer(kernel_config_get_socket_memoria(kernelConfig));
 
 if(memoriaResponse == HANDSHAKE_ok_continue){
-    log_info(kernelLogger, "Finaliza el proceso <%i> - Motivo: <%s>", pid, formaNotificar);
+  
+    log_info(kernelLogger, CYAN ITALIC STRIKETHROUGH BOLD "Finaliza el proceso <%i> - Motivo: <%s>", pid, formaNotificar);
 }
 
 

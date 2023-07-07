@@ -201,6 +201,8 @@ int abrir_archivo(char* nombre_archivo_open, t_filesystem* fs) {
             log_info(fs->logger, "Archivo <%s> abierto correctamente", nombre_archivo_open);
 
             encontrado = 1;
+            
+            break;
         }
     }
 
@@ -420,14 +422,35 @@ t_fcb* reducir_tamanio_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tam
     return fcb_a_truncar;
 }
 
-int leer_archivo(char* nombre_archivo, uint32_t direccion_logica, uint32_t cant_bytes_a_leer) {
+/*------------------------------------------------------------------------- F_READ ----------------------------------------------------------------------------- */
+
+int leer_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_leer, uint32_t puntero_proceso, t_filesystem* fs) {
+
+    t_fcb* fcb_a_leer;
+    int cant_bloques_a_leer = (int)ceil(cant_bytes_a_leer / fs->block_size);
+    int posicion_fcb_a_leer= devolver_posicion_fcb_en_la_lista(nombre_archivo);
+
+    uint32_t bytes_en_array[cant_bloques_a_leer];
+    fcb_a_leer = list_get(lista_fcbs, posicion_fcb_a_leer);
+    uint32_t* bloque_lectura = (uint32_t*)list_get( fcb_a_leer->bloques, (puntero_proceso + 1) ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO
+
+    if (cant_bloques_a_leer > 1) {
+        devolver_cantidad_bytes_en_array(cant_bytes_a_leer, bytes_en_array, fs->block_size);
+    }
+
+    char* cadena_leida =  malloc(cant_bytes_a_leer + 1);
+    for (int i = 0; i < cant_bloques_a_leer; i++) {
 
 
+
+    }
 
     return 1;
 }
 
-int escribir_archivo(char* nombre_archivo, uint32_t direccion_logica, uint32_t cant_bytes_a_escribir) {
+/*------------------------------------------------------------------------- F_WRITE ----------------------------------------------------------------------------- */
+
+int escribir_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_escribir, uint32_t puntero_proceso, t_filesystem* fs) {
 
 
     return 1;
@@ -452,4 +475,36 @@ int fs_escuchando_en(int server_fs, t_filesystem* fs) {
     }
 
     return 0;
+}
+
+/*------------------------------------------------------------------------- OTRAS ----------------------------------------------------------------------------- */
+
+int devolver_posicion_fcb_en_la_lista(char* nombre_archivo) {
+
+    int posicion_fcb;
+    int size_lista_fcbs = list_size(lista_fcbs);
+
+    for (int i = 0; i < size_lista_fcbs; i++) {
+
+        t_fcb* fcb_aux = list_get(lista_fcbs, i);
+        if (strcmp(fcb_aux->nombre_archivo, nombre_archivo) == 0) {            
+            posicion_fcb = i;
+
+            break;
+        }
+    }  
+
+    return posicion_fcb;
+}
+
+void devolver_cantidad_bytes_en_array(uint32_t cantidad_bytes, uint32_t* array_bytes, uint32_t block_size) {
+    
+    uint32_t bytes_restantes = cantidad_bytes % block_size;
+    int cantidad_block_size_repetido = cantidad_bytes / block_size;
+
+    for (int i = 0; i < cantidad_block_size_repetido; i++) {
+        array_bytes[i] = 64;
+    }
+
+    array_bytes[cantidad_block_size_repetido] = bytes_restantes; // LA POSICION FINAL GUARDO EL RESTO DE BYTES QUE QUEDAN
 }

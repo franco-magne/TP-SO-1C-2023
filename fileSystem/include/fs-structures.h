@@ -81,6 +81,7 @@ typedef struct {
     void liberar_bloque(t_filesystem* fs, uint32_t* puntero_bloque_a_liberar);
     void escribir_bloque_de_punteros_en_puntero_indirecto(uint32_t puntero_indirecto, uint32_t numero_puntero_X, uint32_t* puntero_a_escribir, uint32_t block_size);
     void liberar_puntero_del_bloque_de_punteros_en_puntero_indirecto(uint32_t puntero_indirecto, uint32_t posicion_ultimo_puntero, uint32_t block_size);
+    void leer_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32_t bytes_a_leer, uint32_t block_size, char* cadena);
     t_list* recuperar_bloque_de_punteros(uint32_t puntero_indirecto, int tamanio_archivo, uint32_t block_size);
 
 

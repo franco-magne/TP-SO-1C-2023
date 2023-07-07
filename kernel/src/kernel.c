@@ -274,7 +274,7 @@ void* atender_pcb(void* args)
                 
             case HEADER_Segmentation_fault:
                 liberar_segmentos_del_proceso_tabla_global(pcb);
-                memoria_adapter_enviar_finalizar_proceso(pcb,kernelConfig,kernelLogger, "SEG_FAULT");
+                memoria_adapter_enviar_finalizar_proceso(pcb,kernelConfig,kernelLogger, RED "SEG_FAULT");
                 instruccion_exit(pcb);
                 break;
 

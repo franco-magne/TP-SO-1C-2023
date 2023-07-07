@@ -99,15 +99,12 @@ double obtener_diferencial_de_tiempo_en_milisegundos(struct timespec end, struct
 
 
 bool es_el_ultimo_elemento(t_list* lista, t_link_element* elemento) {
-    if (lista->head == NULL || elemento == NULL) {
+     if (lista->head == NULL || elemento == NULL) {
         return false;
     }
     
     t_link_element* actual = lista->head;
     while (actual->next != NULL) {
-        if (actual == elemento) {
-            return false;
-        }
         actual = actual->next;
     }
     
@@ -174,79 +171,6 @@ void buffer_pack_segmento_list(t_buffer* buffer, t_list* lista_segmentos) {
 
 
 
-
-
-
-///////////////////////////////////////////// FUNCIONES DECORATIVAS ///////////////////////////////
-
-void inicio_kernel(){
-  printf("\033[1;31m");  // Establece el color de texto a rojo brillante
-    printf("K  K   ");
-    printf("\033[1;32m");  // Establece el color de texto a verde brillante
-    printf("EEEEE  ");
-    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
-    printf("RRRRR   ");
-    printf("\033[1;34m");  // Establece el color de texto a azul brillante
-    printf("N   N  ");
-    printf("\033[1;35m");  // Establece el color de texto a púrpura brillante
-    printf("EEEEE  ");
-    printf("\033[1;36m");  // Establece el color de texto a cian brillante
-    printf("L      \n");
-
-    printf("K K    ");
-    printf("\033[1;32m");  // Establece el color de texto a verde brillante
-    printf("E      ");
-    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
-    printf("R   R   ");
-    printf("\033[1;34m");  // Establece el color de texto a azul brillante
-    printf("NN  N  ");
-    printf("\033[1;35m");  // Establece el color de texto a púrpura brillante
-    printf("E      ");
-    printf("\033[1;36m");  // Establece el color de texto a cian brillante
-    printf("L      \n");
-
-    printf("KK     ");
-    printf("\033[1;32m");  // Establece el color de texto a verde brillante
-    printf("EEE    ");
-    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
-    printf("RRRR    ");
-    printf("\033[1;34m");  // Establece el color de texto a azul brillante
-    printf("N N N  ");
-    printf("\033[1;35m");  // Establece el color de texto a púrpura brillante
-    printf("EEE    ");
-    printf("\033[1;36m");  // Establece el color de texto a cian brillante
-    printf("L      \n");
-
-    printf("K K    ");
-    printf("\033[1;32m");  // Establece el color de texto a verde brillante
-    printf("E      ");
-    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
-    printf("R R     ");
-    printf("\033[1;34m");  // Establece el color de texto a azul brillante
-    printf("N  NN  ");
-    printf("\033[1;35m");  // Establece el color de texto a púrpura brillante
-    printf("E      ");
-    printf("\033[1;36m");  // Establece el color de texto a cian brillante
-    printf("L      \n");
-
-    printf("K   K  ");
-    printf("\033[1;32m");  // Establece el color de texto a verde brillante
-    printf("EEEEE  ");
-    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
-    printf("R  RR   ");
-    printf("\033[1;34m");  // Establece el color de texto a azul brillante
-    printf("N   N  ");
-    printf("\033[1;35m");  // Establece el color de texto a púrpura brillante
-    printf("EEEEE  ");
-    printf("\033[1;36m");  // Establece el color de texto a cian brillante
-    printf("LLLLL  \n");
-
-    printf("\033[0m");  // Restablece los colores a los predeterminados del terminal
-
-
-}
-
-
 t_list* list_filter_ok(t_list* lista, bool (*condition)(void*, void*), void* argumento) {
     t_list* resultado = list_create();
  
@@ -262,54 +186,55 @@ t_list* list_filter_ok(t_list* lista, bool (*condition)(void*, void*), void* arg
 
 
 
+///////////////////////////////////////////// FUNCIONES DECORATIVAS ///////////////////////////////
+
+void inicio_kernel(){
+
+    printf("\033[1;31m   K   K   \033[1;32m  EEEEE   \033[1;33m  RRRRR   \033[1;34m  N     N   \033[1;35m  EEEEE   \033[1;36m  L       \033[0m\n");
+    printf("\033[1;31m   K  K    \033[1;32m  E       \033[1;33m  R    R  \033[1;34m  NN    N   \033[1;35m  E       \033[1;36m  L       \033[0m\n");
+    printf("\033[1;31m   KKK     \033[1;32m  EEEE    \033[1;33m  RRRRR   \033[1;34m  N N   N   \033[1;35m  EEEE    \033[1;36m  L       \033[0m\n");
+    printf("\033[1;31m   K  K    \033[1;32m  E       \033[1;33m  R  R    \033[1;34m  N  N  N   \033[1;35m  E       \033[1;36m  L       \033[0m\n");
+    printf("\033[1;31m   K   K   \033[1;32m  EEEEE   \033[1;33m  R   R   \033[1;34m  N   N N   \033[1;35m  EEEEE   \033[1;36m  LLLLL   \033[0m\n");
+}
+
 void inicio_cpu(){
-        printf("\033[1;31m");  // Establece el color de texto a rojo brillante
-    printf("  CCCC   ");
-    printf("\033[1;32m");  // Establece el color de texto a verde brillante
-    printf(" PPPPP   ");
-    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
-    printf(" U   U   ");
-    printf("\033[0m");  // Restablece los colores a los predeterminados del terminal
+    printf("\033[1;31m   CCCC   \033[1;32m  PPPPP   \033[1;33m  U   U   \033[0m\n");
+    printf("\033[1;31m  C       \033[1;32m  P   PP  \033[1;33m  U   U   \033[0m\n");
+    printf("\033[1;31m  C       \033[1;32m  PPPPP   \033[1;33m  U   U   \033[0m\n");
+    printf("\033[1;31m  C       \033[1;32m  P       \033[1;33m  U   U   \033[0m\n");
+    printf("\033[1;31m   CCCC   \033[1;32m  P       \033[1;33m  UUUUU   \033[0m\n");
+}
+
+
+void imprimir_consola() {
+    printf("\033[1;31m  CCCCCC   \033[1;32m  OOOOO   \033[1;33m  N     N   \033[1;34m  SSSSS   \033[1;35m  OOOOO   \033[1;36m  L       \033[1;37m  AAAAA   \033[0m\n");
+    printf("\033[1;31m C         \033[1;32m O     O  \033[1;33m  NN    N   \033[1;34m S        \033[1;35m O     O  \033[1;36m  L       \033[1;37m A     A  \033[0m\n");
+    printf("\033[1;31m C         \033[1;32m O     O  \033[1;33m  N N   N   \033[1;34m  SSSSS   \033[1;35m O     O  \033[1;36m  L       \033[1;37m AAAAAAA  \033[0m\n");
+    printf("\033[1;31m C         \033[1;32m O     O  \033[1;33m  N  N  N        \033[1;34m  S  \033[1;35m O     O  \033[1;36m  L       \033[1;37m A     A  \033[0m\n");
+    printf("\033[1;31m  CCCCCC   \033[1;32m  OOOOO   \033[1;33m  N   N N   \033[1;34m  SSSSS   \033[1;35m  OOOOO   \033[1;36m  LLLLL   \033[1;37m A     A  \033[0m\n");
+}
+
+void imprimir_memoria() {
+    printf("\033[1;31m   M   M   \033[1;32m  EEEEE   \033[1;33m  M   M   \033[1;34m  OOOOO   \033[1;35m  RRRRR   \033[1;36m  I  \033[37m  AAAAAAA   \033[0m\n");
+    printf("\033[1;31m   MM MM   \033[1;32m  E       \033[1;33m  MM MM   \033[1;34m O     O  \033[1;35m  R    R  \033[1;36m  I  \033[37m  A     A  \033[0m\n");
+    printf("\033[1;31m   M M M   \033[1;32m  EEEE    \033[1;33m  M M M   \033[1;34m O     O  \033[1;35m  RRRRR   \033[1;36m  I  \033[37m  AAAAAAA  \033[0m\n");
+    printf("\033[1;31m   M   M   \033[1;32m  E       \033[1;33m  M   M   \033[1;34m O     O  \033[1;35m  R  R    \033[1;36m  I  \033[37m  A     A  \033[0m\n");
+    printf("\033[1;31m   M   M   \033[1;32m  EEEEE   \033[1;33m  M   M   \033[1;34m  OOOOO   \033[1;35m  R   R   \033[1;36m  I  \033[37m  A     A  \033[0m\n");
+}
+
+
+void imprimir_file_system() {
+    printf("         \033[1;31m   FFFFF   \033[1;32m  IIIII   \033[1;33m  L       \033[1;34m  EEEEE   \033[0m\n");
+    printf("         \033[1;31m   F       \033[1;32m    I     \033[1;33m  L       \033[1;34m  E       \033[0m\n");
+    printf("         \033[1;31m   FFFF    \033[1;32m    I     \033[1;33m  L       \033[1;34m  EEEE    \033[0m\n");
+    printf("         \033[1;31m   F       \033[1;32m    I     \033[1;33m  L       \033[1;34m  E       \033[0m\n");
+    printf("         \033[1;31m   F       \033[1;32m  IIIII   \033[1;33m  LLLLL   \033[1;34m  EEEEE   \033[0m\n");
 
     printf("\n");
 
-    printf("\033[1;31m");  // Establece el color de texto a rojo brillante
-    printf(" C       ");
-    printf("\033[1;32m");  // Establece el color de texto a verde brillante
-    printf(" P   PP  ");
-    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
-    printf(" U   U   ");
-    printf("\033[0m");  // Restablece los colores a los predeterminados del terminal
-
-    printf("\n");
-
-    printf("\033[1;31m");  // Establece el color de texto a rojo brillante
-    printf(" C       ");
-    printf("\033[1;32m");  // Establece el color de texto a verde brillante
-    printf(" PPPPP   ");
-    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
-    printf(" U   U   ");
-    printf("\033[0m");  // Restablece los colores a los predeterminados del terminal
-
-    printf("\n");
-
-    printf("\033[1;31m");  // Establece el color de texto a rojo brillante
-    printf(" C       ");
-    printf("\033[1;32m");  // Establece el color de texto a verde brillante
-    printf(" P       ");
-    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
-    printf(" U   U   ");
-    printf("\033[0m");  // Restablece los colores a los predeterminados del terminal
-
-    printf("\n");
-
-    printf("\033[1;31m");  // Establece el color de texto a rojo brillante
-    printf("  CCCC   ");
-    printf("\033[1;32m");  // Establece el color de texto a verde brillante
-    printf(" P       ");
-    printf("\033[1;33m");  // Establece el color de texto a amarillo brillante
-    printf(" UUUUU   ");
-    printf("\033[0m");  // Restablece los colores a los predeterminados del terminal
-
-    printf("\n");
+    printf("\033[1;31m   SSSSS   \033[1;32m  Y   Y   \033[1;33m   SSSSS    \033[1;34m TTTTTT   \033[1;35m  EEEEE   \033[1;36m  M   M   \033[0m\n");
+    printf(" \033[1;31m S       \033[1;32m    Y Y    \033[1;33m  S        \033[1;34m    TT     \033[1;35m  E       \033[1;36m  M M M   \033[0m\n");
+    printf("\033[1;31m   SSSSS   \033[1;32m    Y     \033[1;33m   SSSSS   \033[1;34m    TT     \033[1;35m  EEEE    \033[1;36m  M   M   \033[0m\n");
+    printf("\033[1;31m        S  \033[1;32m    Y     \033[1;33m        S  \033[1;34m    TT     \033[1;35m  E       \033[1;36m  M   M   \033[0m\n");
+    printf("\033[1;31m  SSSSSS   \033[1;32m    Y     \033[1;33m  SSSSSS   \033[1;34m    TT     \033[1;35m  EEEEE   \033[1;36m  M   M   \033[0m\n");
 }

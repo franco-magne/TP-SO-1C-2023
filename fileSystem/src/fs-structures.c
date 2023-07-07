@@ -206,6 +206,12 @@ void liberar_puntero_del_bloque_de_punteros_en_puntero_indirecto(uint32_t punter
     memset(posicion_en_bytes_a_liberar, 0, sizeof(uint32_t));
 }
 
+void leer_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32_t bytes_a_leer, uint32_t block_size, char* cadena) {
+
+    
+
+}
+
 t_list* recuperar_bloque_de_punteros(uint32_t puntero_indirecto, int tamanio_archivo, uint32_t block_size) {
     
     t_list* lista_bloques = list_create();

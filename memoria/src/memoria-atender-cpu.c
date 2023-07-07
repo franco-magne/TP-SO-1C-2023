@@ -23,8 +23,11 @@ void atender_peticiones_cpu(int socketCpu) {
             
             buffer_unpack(buffer, &base_segmento, sizeof(base_segmento));
             buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
-            
+
+            pthread_mutex_lock(&mutexListaDeSegmento);
             Segmento* segementoSolic = obtener_segmento_por_BASE(base_segmento);
+            pthread_mutex_unlock(&mutexListaDeSegmento);
+
             log_info(memoriaLogger, "Se quiere la dirección física del segmento con base<%i>", base_segmento);
             pid = segmento_get_pid(segementoSolic);
 
@@ -58,7 +61,10 @@ void atender_peticiones_cpu(int socketCpu) {
             
             buffer_unpack(buffer, &base_segmento, sizeof(base_segmento));
             
+            pthread_mutex_lock(&mutexListaDeSegmento);
             Segmento* segmentoLeido = obtener_segmento_por_BASE(base_segmento);
+            pthread_mutex_unlock(&mutexListaDeSegmento);
+
             char* contenidoAenviar = malloc(strlen(segmentoLeido->contenido) + 1);
             strcpy(contenidoAenviar, segmentoLeido->contenido);
 
@@ -83,7 +89,10 @@ void atender_peticiones_cpu(int socketCpu) {
             char* contenidoAEscribir;
             contenidoAEscribir = buffer_unpack_string(buffer);
             
+            pthread_mutex_lock(&mutexListaDeSegmento);
             Segmento* unSegmento = obtener_segmento_por_BASE(base_segmento);
+            pthread_mutex_unlock(&mutexListaDeSegmento);
+
             //cada vez que hago un obtener segmento hago un list_replace
             segmento_set_contenido(unSegmento, contenidoAEscribir);
             pthread_mutex_lock(&mutexListaDeSegmento);
