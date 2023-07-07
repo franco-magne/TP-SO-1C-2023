@@ -245,6 +245,8 @@ void instruccion_create_segment(t_pcb* pcb){
     uint8_t memoriaResponse = memoria_adapter_recibir_create_segment(pcb, kernelConfig, kernelLogger);
 
     if(memoriaResponse == HEADER_memoria_insuficiente){
+        liberar_segmentos_del_proceso_tabla_global(pcb);
+        memoria_adapter_enviar_finalizar_proceso(pcb,kernelConfig,kernelLogger, "OUT_OF_MEMORY");
         proceso_pasa_a_exit(pcb);
     }
 
@@ -331,17 +333,12 @@ void instruccion_f_seek(t_pcb* pcb){
 ////////////////////// F_WRITE //////////////////////
 
 void instruccion_f_write(t_pcb* pcb){
-      uint32_t pid = pcb_get_pid(pcb);
+   
     t_pcb_archivo* archivoEscribir = list_find(pcb_get_lista_de_archivos_abiertos(pcb), es_el_archivo_victima);
     char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoEscribir);
-    uint32_t puntero = archivo_pcb_get_puntero_archivo(archivoEscribir);
-    uint32_t tamanioArchivo = archivo_pcb_get_tamanio_archivo(archivoEscribir);
-    uint32_t direccionFisica = archivo_pcb_get_direccion_fisica(archivoEscribir);
 
-    
-    log_info(kernelLogger,"PID: <%i> - Escribir Archivo: <%s> - Puntero <%i> - Dirección Memoria <%i> - Tamaño <%i>",pid,nombreArchivo,puntero,direccionFisica,tamanioArchivo);
+    file_system_adapter_send_f_write(pcb, kernelLogger,kernelConfig);
 
-    
     int index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
     archivo_pcb_set_victima(archivoEscribir,false);
     list_replace(pcb_get_lista_de_archivos_abiertos(pcb), index ,archivoEscribir);
@@ -354,13 +351,8 @@ void instruccion_f_read(t_pcb* pcb){
     uint32_t pid = pcb_get_pid(pcb);
     t_pcb_archivo* archivoLeer = list_find(pcb_get_lista_de_archivos_abiertos(pcb), es_el_archivo_victima);
     char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoLeer);
-    uint32_t puntero = archivo_pcb_get_puntero_archivo(archivoLeer);
-    uint32_t tamanioArchivo = archivo_pcb_get_tamanio_archivo(archivoLeer);
-    uint32_t direccionFisica = archivo_pcb_get_direccion_fisica(archivoLeer);
 
-    
-    log_info(kernelLogger,"PID: <%i> - Leer Archivo: <%s> - Puntero <%i> - Dirección Memoria <%i> - Tamaño <%i>",pid,nombreArchivo,puntero,direccionFisica,tamanioArchivo);
-
+    file_system_adapter_send_f_read(pcb,kernelLogger,kernelConfig);
     
     int index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
     archivo_pcb_set_victima(archivoLeer,false);

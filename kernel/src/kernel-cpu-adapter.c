@@ -16,6 +16,8 @@ void cpu_adapter_enviar_pcb_a_cpu(t_pcb* pcbAEnviar, uint8_t header, t_kernel_co
     buffer_pack(bufferPcbAEjecutar, &pidAEnviar, sizeof(pidAEnviar));
     buffer_pack(bufferPcbAEjecutar, &pcAEnviar, sizeof(pcAEnviar));
 
+    buffer_pack_segmento_list(bufferPcbAEjecutar, pcb_get_lista_de_segmentos(pcbAEnviar));
+
     char* registroAx =  pcb_get_registros_cpu(pcbAEnviar)->registroAx;
     char* registroBx =  pcb_get_registros_cpu(pcbAEnviar)->registroBx;
     char* registroCx =  pcb_get_registros_cpu(pcbAEnviar)->registroCx;
@@ -86,6 +88,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
     uint32_t tamanioArchivo;
     uint32_t punteroArchivo;
     uint32_t direccionFisicaArchivo;
+    uint32_t cantidadByte;
 
     t_buffer* bufferPcb = buffer_create();
 
@@ -199,14 +202,14 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         case HEADER_f_write:
 
         nombreArchivo = buffer_unpack_string(bufferPcb);
-        buffer_unpack(bufferPcb, &punteroArchivo, sizeof(punteroArchivo));
+        buffer_unpack(bufferPcb, &cantidadByte, sizeof(cantidadByte));
         buffer_unpack(bufferPcb, &direccionFisicaArchivo, sizeof(direccionFisicaArchivo));
 
         index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),nombreArchivo);
         t_pcb_archivo* archivoFRW = list_get(pcb_get_lista_de_archivos_abiertos(pcbAActualizar), index);
-        archivo_pcb_set_puntero_archivo(archivoFRW,punteroArchivo);
         archivo_pcb_set_victima(archivoFRW,true);
         archivo_pcb_set_direccion_fisica(archivoFRW,direccionFisicaArchivo);
+        archivo_pcb_set_cantidad_byte(archivoFRW,cantidadByte);
         list_replace(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),index,archivoFRW);
         break;
     }
@@ -225,6 +228,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
             case HEADER_f_truncate:
             case HEADER_f_read:
             case HEADER_f_write:
+            case HEADER_Segmentation_fault:
 
             pcb_set_program_counter(pcbAActualizar, programCounterActualizado);
 

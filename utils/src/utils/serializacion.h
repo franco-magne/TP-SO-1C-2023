@@ -7,6 +7,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/socket.h>
+#include <commons/collections/list.h>
 
 typedef struct {
     uint32_t size;

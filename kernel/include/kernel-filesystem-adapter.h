@@ -20,5 +20,9 @@ void file_system_adapter_send_f_truncate(t_pcb* pcb, t_kernel_config* kernelConf
 void file_system_adapter_recv_f_truncate(t_kernel_config* kernelConfig, t_log* kernelLogger);
 
 void atender_f_seek(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig, t_log* kernelLogger);
+void file_system_adapter_send_f_write(t_pcb* pcb, t_log* kernelLogger, t_kernel_config* kernelConfig);
+void file_system_adapter_send_f_read(t_pcb* pcb, t_log* kernelLogger, t_kernel_config* kernelConfig);
+
+
 
 #endif

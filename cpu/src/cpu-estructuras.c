@@ -98,3 +98,5 @@ uint32_t cpu_get_recurso_IO(recurso* this)
 {
     return this->tiempoIO;
 }
+
+///////////////////////////////////////// UTILS /////////////////////////////

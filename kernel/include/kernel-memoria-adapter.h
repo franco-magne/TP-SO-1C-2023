@@ -21,6 +21,8 @@ void memoria_adapter_enviar_create_segment(t_pcb* pcbAIniciar, t_kernel_config* 
 uint8_t memoria_adapter_recibir_create_segment(t_pcb* pcbAActualizar, t_kernel_config* kernelConfig, t_log* kernelLogger);
 void memoria_adapter_enviar_delete_segment(t_pcb* pcbAIniciar, t_kernel_config* kernelConfig);
 void memoria_adapter_recibir_delete_segment(t_pcb* pcbAActualizar, t_kernel_config* kernelConfig, t_log* kernelLogger);
+void memoria_adapter_enviar_finalizar_proceso(t_pcb* pcb,  t_kernel_config* kernelConfig, t_log* kernelLogger, char* motivoFinalizacion);
+
 
 
 
