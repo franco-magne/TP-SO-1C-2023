@@ -9,7 +9,6 @@ void atender_peticiones_fileSystem(int socketFS) {
     uint8_t header;
     for (;;) {
         header = stream_recv_header(socketFS);
-        pthread_mutex_lock(&mutexMemoriaData);
         t_buffer* buffer = buffer_create();
         stream_recv_buffer(socketFS, buffer);
 

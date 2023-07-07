@@ -80,8 +80,6 @@ void aceptar_conexiones_memoria(const int socketEscucha) {
     while (true) {
         const int clienteAceptado = accept(socketEscucha, &cliente, &len);
         if (clienteAceptado > -1) {
-            log_info(memoriaLogger, "Cliente aceptado en el puerto");
-
             uint8_t handshake = stream_recv_header(clienteAceptado);
             if (handshake == HANDSHAKE_cpu) {
                 pthread_t threadAtencion;
@@ -95,12 +93,12 @@ void aceptar_conexiones_memoria(const int socketEscucha) {
                 pthread_detach(threadAtencion);
                 kernelSinAtender = false;
             } else if (handshake == HANDSHAKE_fileSystem) {
-                /*
+                
                 pthread_t threadAtencion;
                 pthread_create(&threadAtencion, NULL, atender_conexiones_fileSystem, &clienteAceptado);
                 pthread_detach(threadAtencion);
                 fileSystemSinAtender = false;
-                */
+                
             }else {
                 log_error(memoriaLogger, "Error al recibir handshake de cliente en socket [%d]", clienteAceptado);
                 close(clienteAceptado); // Cerrar el socket cliente en caso de error

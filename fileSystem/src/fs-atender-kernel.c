@@ -114,16 +114,16 @@ void atender_kernel(t_filesystem* fs) {
             case HEADER_f_write:
 
                 char* nombre_archivo_write;
-                uint32_t direccion_logica_write;
+                uint32_t direccion_fisica_write;
                 uint32_t cantidad_bytes_a_escribir;
                 t_buffer* bufferWrite = buffer_create();
 
                 stream_recv_buffer(fs->socket_kernel, bufferWrite);
                 nombre_archivo_write = buffer_unpack_string(bufferWrite);
-                buffer_unpack(bufferWrite, &direccion_logica_write, sizeof(direccion_logica_write));
+                buffer_unpack(bufferWrite, &direccion_fisica_write, sizeof(direccion_fisica_write));
                 buffer_unpack(bufferWrite, &cantidad_bytes_a_escribir, sizeof(cantidad_bytes_a_escribir));
 
-                log_info(fs->logger, "\e[1;93mRecibo operacion F_WRITE < , , > de KERNEL\e[0m");
+                log_info(fs->logger, "\e[1;93mRecibo operacion F_WRITE < %s, %d, %d> de KERNEL\e[0m", nombre_archivo_write, direccion_fisica_write, cantidad_bytes_a_escribir);
 
 
 

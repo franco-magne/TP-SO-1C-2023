@@ -430,7 +430,7 @@ void crear_directorios(t_filesystem* fs) {
 
     int resultado;
 
-    resultado = mkdir("/home/elperee/UTN/SO/utnso/fs", 0777); // /home/utnso/fs
+    resultado = mkdir("/home/utnso/fs", 0777); // /home/utnso/fs
     resultado = mkdir(fs->fcb_path, 0777);
 
     if (!resultado) {
