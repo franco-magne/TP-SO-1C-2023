@@ -48,17 +48,23 @@
 
 ////////////////////////// F_READ ////////////////
 
-    int leer_archivo(char* nombre_archivo, uint32_t direccion_logica, uint32_t cant_bytes_a_leer);
+    int leer_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_leer, uint32_t puntero_proceso, t_filesystem* fs);
 
 
 ////////////////////////// F_WRITE ////////////////
 
-    int escribir_archivo(char* nombre_archivo, uint32_t direccion_logica, uint32_t cant_bytes_a_escribir);
+    int escribir_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_escribir, uint32_t puntero_proceso, t_filesystem* fs);
 
 
 ////////////////////////// ESPERAR KERNEL ////////////////
 
     int fs_escuchando_en(int servidor_fs, t_filesystem* fs);
+
+
+////////////////////////// OTRAS ////////////////
+
+    int devolver_posicion_fcb_en_la_lista(char* nombre_archivo);
+    void devolver_cantidad_bytes_en_array(uint32_t cantidad_bytes, uint32_t* array_bytes, uint32_t block_size);
 
 
 #endif
