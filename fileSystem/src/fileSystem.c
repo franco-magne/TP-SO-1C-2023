@@ -14,11 +14,12 @@ int main() {
 
    cargar_t_filesystem(fs_config, superbloque_config, fs);
    fs->logger = fs_logger;
-   log_info(fs->logger, "FILESYSTEM iniciado");
+   //log_info(fs->logger, "FILESYSTEM iniciado");
+   imprimir_file_system();
 
 
    ///////////////////////////////// CONECTARSE A MEMORIA //////////////////////////////
-   
+   /*
    int fsSocketMemoria = conectar_a_servidor(fs->ip_memoria, fs->puerto_memoria);
    if (fsSocketMemoria == -1) {
 
@@ -29,7 +30,7 @@ int main() {
    }   
    log_info(fs->logger, "Conexion con MEMORIA establecida");
    fs->socket_memoria = fsSocketMemoria;   
-  
+  */
    crear_directorios(fs);
    levantar_bitmap(fs);
    crear_superbloque_dat(fs, superbloque_config);

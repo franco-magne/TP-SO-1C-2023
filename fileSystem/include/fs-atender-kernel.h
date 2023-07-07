@@ -30,7 +30,7 @@
 
 ////////////////////////// F_OPEN ////////////////
 
-    int abrir_archivo(char* nombre_archivo, t_filesystem* fs);
+    int abrir_archivo_filesystem(char* nombre_archivo, t_filesystem* fs);
 
 
 ////////////////////////// F_CREATE ////////////////

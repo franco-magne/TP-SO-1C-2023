@@ -8,45 +8,7 @@ void atender_kernel(t_filesystem* fs) {
 
     int operacion_OK = 0;
     lista_fcbs = list_create();
-    levantar_fcbs_del_directorio(fs, lista_fcbs);
-    
-    // PARA PRUEBAS RAPIDAS
-    /* 
-        // 1) F_CREATE
-        crear_archivo("NotasSO", fs);
-        crear_archivo("NotasDDS", fs);
-        crear_archivo("NotasGDD", fs);
-
-        // 2) F_OPEN
-        abrir_archivo("NotasSO", fs);
-        abrir_archivo("NotasDDS", fs);
-        abrir_archivo("NotasGDD", fs);
-
-        // 3) F_TRUNCATE
-        abrir_archivo("NotasSO", fs);
-        sleep(2);
-        truncar_archivo("NotasSO", 512, fs);
-        sleep(3);
-        abrir_archivo("NotasDDS", fs);
-        sleep(2);
-        truncar_archivo("NotasDDS", 384, fs);
-        sleep(3);
-        truncar_archivo("NotasSO", 256, fs);
-
-        F_OPEN NotasSO
-        F_OPEN NotasDDS
-        F_TRUNCATE NotasSO 512
-        F_TRUNCATE NotasDDS 512
-        F_TRUNCATE NotasSO 256
-        F_OPEN NotasGDD
-        F_TRUNCATE NotasGDD 512
-        EXIT
-
-    */
-
-   // Bloques de 64 bytes pueden contener 16 punteros. y si necesita mas un archivo?
-   // Preguntar sobre los logs si estan bien y el retardo de acceso. va en truncate?
-   // log sobre bitmap
+    levantar_fcbs_del_directorio(fs, lista_fcbs);    
 
     while (fs->socket_kernel != -1) {
         
@@ -65,7 +27,7 @@ void atender_kernel(t_filesystem* fs) {
 
                 log_info(fs->logger, "\e[1;93mRecibo operacion F_OPEN <%s> de KERNEL\e[0m", nombre_archivo_open);
 
-                operacion_OK = abrir_archivo(nombre_archivo_open, fs);
+                operacion_OK = abrir_archivo_filesystem(nombre_archivo_open, fs);
                 if (operacion_OK) {
                     stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO EXISTE Y LO AGREGUE A SU TABLA GLOBAL
                 } else {
@@ -118,7 +80,7 @@ void atender_kernel(t_filesystem* fs) {
                     stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO SE TRUNCO
                 } else {
                     log_info(fs->logger, "Error al truncar. No puede pedir mas bloques");
-                    stream_send_empty_buffer(fs->socket_kernel, HEADER_error); // FALLO EN EL TRUNCATE
+                    stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // FALLO EN EL TRUNCATE
                 }  
 
                 free(nombre_archivo_truncate);
@@ -129,16 +91,18 @@ void atender_kernel(t_filesystem* fs) {
             case HEADER_f_read:
 
                 char* nombre_archivo_read;
-                uint32_t direccion_logica_read;
+                uint32_t direccion_fisica_read;
                 uint32_t cantidad_bytes_a_leer;
+                uint32_t puntero_a_leer;
                 t_buffer* bufferRead = buffer_create();
 
                 stream_recv_buffer(fs->socket_kernel, bufferRead);
                 nombre_archivo_read = buffer_unpack_string(bufferRead);
-                buffer_unpack(bufferRead, &direccion_logica_read, sizeof(direccion_logica_read));
+                buffer_unpack(bufferRead, &direccion_fisica_read, sizeof(direccion_fisica_read));
                 buffer_unpack(bufferRead, &cantidad_bytes_a_leer, sizeof(cantidad_bytes_a_leer));
+                buffer_unpack(bufferRead, &puntero_a_leer, sizeof(puntero_a_leer));
 
-                log_info(fs->logger, "\e[1;93mRecibo operacion F_READ < , , > de KERNEL\e[0m");
+                log_info(fs->logger, "\e[1;93mRecibo operacion F_READ < %s, %d, %d> de KERNEL\e[0m", nombre_archivo_read, direccion_fisica_read, cantidad_bytes_a_leer);
 
 
 
@@ -183,7 +147,7 @@ void atender_kernel(t_filesystem* fs) {
 
 /*------------------------------------------------------------------------- F_OPEN ----------------------------------------------------------------------------- */
 
-int abrir_archivo(char* nombre_archivo_open, t_filesystem* fs) {
+int abrir_archivo_filesystem(char* nombre_archivo_open, t_filesystem* fs) {
 
     int encontrado = 0;
     int size_lista_fcbs = list_size(lista_fcbs);
@@ -425,26 +389,35 @@ t_fcb* reducir_tamanio_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tam
 /*------------------------------------------------------------------------- F_READ ----------------------------------------------------------------------------- */
 
 int leer_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_leer, uint32_t puntero_proceso, t_filesystem* fs) {
-
-    t_fcb* fcb_a_leer;
+    
     int cant_bloques_a_leer = (int)ceil(cant_bytes_a_leer / fs->block_size);
     int posicion_fcb_a_leer= devolver_posicion_fcb_en_la_lista(nombre_archivo);
+    t_fcb* fcb_a_leer = list_get(lista_fcbs, posicion_fcb_a_leer);
 
-    uint32_t bytes_en_array[cant_bloques_a_leer];
-    fcb_a_leer = list_get(lista_fcbs, posicion_fcb_a_leer);
-    uint32_t* bloque_lectura = (uint32_t*)list_get( fcb_a_leer->bloques, (puntero_proceso + 1) ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO
-
+    char* cadena_final =  malloc(cant_bytes_a_leer + 1);
+    
     if (cant_bloques_a_leer > 1) {
+        
+        uint32_t bytes_en_array[cant_bloques_a_leer];
         devolver_cantidad_bytes_en_array(cant_bytes_a_leer, bytes_en_array, fs->block_size);
-    }
 
-    char* cadena_leida =  malloc(cant_bytes_a_leer + 1);
-    for (int i = 0; i < cant_bloques_a_leer; i++) {
+        for (int i = 0; i < cant_bloques_a_leer; i++) {
 
+            char* cadena_aux = malloc(bytes_en_array[i]);
+            uint32_t* bloque_lectura = (uint32_t*)list_get( fcb_a_leer->bloques, (puntero_proceso + 1 + i) ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO
+            leer_puntero_del_archivo_de_bloques((*bloque_lectura), bytes_en_array[i], fs->block_size, cadena_aux);
 
+            string_append(&cadena_final, cadena_aux);
+            free(cadena_aux);
+        }
+        
+    } else {
 
-    }
+        uint32_t* bloque_lectura = (uint32_t*)list_get( fcb_a_leer->bloques, (puntero_proceso + 1) ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO
 
+        leer_puntero_del_archivo_de_bloques((*bloque_lectura), cant_bytes_a_leer, fs->block_size, cadena_final);   
+    }    
+    
     return 1;
 }
 

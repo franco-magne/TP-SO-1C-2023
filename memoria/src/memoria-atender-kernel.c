@@ -54,8 +54,11 @@ void atender_peticiones_kernel(int socketKernel) {
                 segmento_set_id(unSegmento, id_de_segmento);
                 segmento_set_pid(unSegmento, pid);
                 log_info(memoriaLogger, "\e[1;93mSe crea nuevo segmento con id [%i] y tamanio [%i]\e[0m", id_de_segmento, tamanio_de_segmento);
+                
+                uint32_t retardoInstruccion = memoria_config_get_retardo_memoria(memoriaConfig);
+                intervalo_de_pausa(retardoInstruccion);
+
                 pthread_mutex_lock(&mutexTamMemoriaActual);
-                //tamActualMemoria -= tamanio_de_segmento;
                 administrar_nuevo_segmento(unSegmento);
                 pthread_mutex_unlock(&mutexTamMemoriaActual);
 
@@ -93,7 +96,9 @@ void atender_peticiones_kernel(int socketKernel) {
                 Segmento* segABorrar = crear_segmento(-1);
                 segmento_set_id(segABorrar, id_de_segmento);
                 segmento_set_pid(segABorrar, pid);
-                //sumar_memoriaRecuperada_a_tamMemoriaActual(segABorrar->tamanio); 
+            
+                uint32_t retardoInstruccion = memoria_config_get_retardo_memoria(memoriaConfig);
+                intervalo_de_pausa(retardoInstruccion);
                 eliminar_segmento_memoria(segABorrar);
                 log_info(memoriaLogger, "Borramos el segmento <%i> del proceso <%i>", id_de_segmento, pid);
 

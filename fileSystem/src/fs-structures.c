@@ -208,8 +208,9 @@ void liberar_puntero_del_bloque_de_punteros_en_puntero_indirecto(uint32_t punter
 
 void leer_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32_t bytes_a_leer, uint32_t block_size, char* cadena) {
 
-    
+    uint32_t posicion_puntero_a_leer_en_bytes = puntero_acceder * block_size;
 
+    memcpy(cadena, map_bloques + posicion_puntero_a_leer_en_bytes, bytes_a_leer);
 }
 
 t_list* recuperar_bloque_de_punteros(uint32_t puntero_indirecto, int tamanio_archivo, uint32_t block_size) {
@@ -429,7 +430,7 @@ void crear_directorios(t_filesystem* fs) {
 
     int resultado;
 
-    resultado = mkdir("/home/utnso/fs", 0777);
+    resultado = mkdir("/home/elperee/UTN/SO/utnso/fs", 0777); // /home/utnso/fs
     resultado = mkdir(fs->fcb_path, 0777);
 
     if (!resultado) {
