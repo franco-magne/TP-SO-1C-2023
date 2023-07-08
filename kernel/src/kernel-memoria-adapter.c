@@ -39,10 +39,12 @@ uint8_t memoria_adapter_recibir_create_segment(t_pcb* pcbAActualizar, t_kernel_c
     stream_recv_buffer(kernel_config_get_socket_memoria(kernelConfig), bufferTablaSegmentoActualizada);
     
     if(headerMemoria == HEADER_Compactacion){
-        //stream_send_empty_buffer(kernel_config_get_socket_file_system(kernelConfig), HEADER_Compactacion);
-        //uint8_t fileSystemResponse =stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
-        //stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
-        uint8_t fileSystemResponse = HANDSHAKE_ok_continue;
+
+        stream_send_empty_buffer(kernel_config_get_socket_file_system(kernelConfig), HEADER_Compactacion);
+        log_info(kernelLogger,"TEST 1");
+        uint8_t fileSystemResponse = stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
+        stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
+        log_info(kernelLogger,"TEST 2");
 
         if(fileSystemResponse == HANDSHAKE_ok_continue){
             stream_send_empty_buffer(kernel_config_get_socket_memoria(kernelConfig), HANDSHAKE_ok_continue);

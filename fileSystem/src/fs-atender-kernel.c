@@ -1,6 +1,8 @@
 #include "../include/fs-atender-kernel.h"
 
 t_list* lista_fcbs;
+pthread_mutex_t mutexTest = PTHREAD_MUTEX_INITIALIZER; //extern
+
 
 /*------------------------------------------------------------------------- ATENDER KERNEL ----------------------------------------------------------------------------- */
 
@@ -11,19 +13,27 @@ void atender_kernel(t_filesystem* fs) {
     levantar_fcbs_del_directorio(fs, lista_fcbs);
 
     // PARA PRUEBAS RAPIDAS
-    
+    /*
         crear_archivo("NotasSO", fs);
         abrir_archivo_fs("NotasSO", fs);
-        truncar_archivo("NotasSO", 512, fs);        
+        truncar_archivo("NotasSO", 512, fs);
         escribir_archivo("NotasSO", 4, 32, 2, fs);
-    
+    */    
 
     while (fs->socket_kernel != -1) {
         
         log_info(fs->logger, "Esperando peticion de KERNEL...");
         uint8_t header = stream_recv_header(fs->socket_kernel); // RECIBO LA OPERACION QUE KERNEL QUIERA SOLICITAR        
+        pthread_mutex_lock(&mutexTest);
 
         switch(header) {
+
+            case HEADER_Compactacion:
+
+                log_info(fs->logger, "Recibo operacion COMPACTACION");
+                stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // FALLO EN EL TRUNCATE
+                
+            break;
 
             case HEADER_f_open:                
                                         
@@ -113,7 +123,7 @@ void atender_kernel(t_filesystem* fs) {
                 log_info(fs->logger, "\e[1;93mRecibo operacion F_READ < %s, %d, %d> de KERNEL\e[0m", nombre_archivo_read, direccion_fisica_read, cantidad_bytes_a_leer);
 
                 leer_archivo(nombre_archivo_read, direccion_fisica_read, cantidad_bytes_a_leer, puntero_a_leer, fs);
-                stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE YA SE COMPLETO LA LECTURA
+                //stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE YA SE COMPLETO LA LECTURA
 
                 free(nombre_archivo_read);
                 buffer_destroy(bufferRead);
@@ -136,7 +146,8 @@ void atender_kernel(t_filesystem* fs) {
 
                 log_info(fs->logger, "\e[1;93mRecibo operacion F_WRITE < %s, %d, %d> de KERNEL\e[0m", nombre_archivo_write, direccion_logica_write, cantidad_bytes_a_escribir);
 
-
+                escribir_archivo(nombre_archivo_write, direccion_logica_write, cantidad_bytes_a_escribir, puntero_a_escribir, fs);
+                //stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE YA SE COMPLETO LA ESCRITURA
 
                 free(nombre_archivo_write);
                 buffer_destroy(bufferWrite);
@@ -144,11 +155,11 @@ void atender_kernel(t_filesystem* fs) {
             break;
 
             default:
-                log_error(fs->logger, "Peticion incorrecta.");
+                log_error(fs->logger, "Peticion incorrecta. <%i>", header);
                 exit(1);
             break;
         }
-
+        pthread_mutex_unlock(&mutexTest);
         operacion_OK = 0;
     }
     
@@ -454,11 +465,14 @@ int leer_archivo(char* nombre_archivo_read, uint32_t direccion_fisica, uint32_t 
 int escribir_archivo(char* nombre_archivo_write, uint32_t direccion_fisica, uint32_t cant_bytes_a_escribir, uint32_t puntero_proceso, t_filesystem* fs) {
 
     char* respuesta_memoria = malloc(cant_bytes_a_escribir);
+    //char* respuesta_memoria = malloc(strlen("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz") + 1); 
+    //strcpy(respuesta_memoria, "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
+    //char* respuesta_memoria = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz";
     int cant_bloques_a_escribir = (int)ceil(cant_bytes_a_escribir / fs->block_size);
     int posicion_fcb_a_escribir= devolver_posicion_fcb_en_la_lista(nombre_archivo_write);
     t_fcb* fcb_a_escribir = list_get(lista_fcbs, posicion_fcb_a_escribir);
 
-    pedir_informacion_a_memoria(direccion_fisica, cant_bytes_a_escribir, fs, &respuesta_memoria);
+    respuesta_memoria = filesystem_fwrite_en_memoria(fs->socket_memoria, direccion_fisica);
 
     if (cant_bloques_a_escribir > 1) {
         
@@ -504,7 +518,7 @@ void pedir_informacion_a_memoria(uint32_t direccion_fisica, uint32_t cant_bytes_
     // ENVIO A MEMORIA LA DIRECCION FISICA Y CANTIDAD DE BYTES
 
     buffer_pack(bufferMemoria, &direccion_fisica, sizeof(direccion_fisica));
-    buffer_pack(bufferMemoria, &cant_bytes_necesarios, sizeof(cant_bytes_necesarios));
+    //buffer_pack(bufferMemoria, &cant_bytes_necesarios, sizeof(cant_bytes_necesarios));
     stream_send_buffer(fs->socket_memoria, HEADER_f_write, bufferMemoria);    
     log_info(fs->logger, "Se envia la direccion y cantidad de bytes a MEMORIA");
 
@@ -518,6 +532,34 @@ void pedir_informacion_a_memoria(uint32_t direccion_fisica, uint32_t cant_bytes_
 
     buffer_destroy(buffer_respuesta_memoria);
     buffer_destroy(bufferMemoria);    
+}
+
+
+void filesystem_fread_en_memoria(int toSocket, uint32_t dirFisica, char* contenidoAEscribir) {
+    t_buffer *buffer = buffer_create();
+    buffer_pack(buffer, &dirFisica, sizeof(dirFisica));
+    buffer_pack_string(buffer, contenidoAEscribir);
+    stream_send_buffer(toSocket, HEADER_f_read, buffer);
+    buffer_destroy(buffer);
+
+}
+
+char* filesystem_fwrite_en_memoria( int toSocket, uint32_t dirFisica) {
+
+    t_buffer *requestBuffer = buffer_create();
+
+    buffer_pack(requestBuffer, &dirFisica, sizeof(dirFisica));
+    stream_send_buffer(toSocket, HEADER_f_write, requestBuffer);
+    buffer_destroy(requestBuffer);
+
+    stream_recv_header(toSocket);
+    t_buffer *responseBuffer = buffer_create();
+
+    stream_recv_buffer(toSocket, responseBuffer);
+    char* contenidoLeido = buffer_unpack_string(responseBuffer);
+    buffer_destroy(responseBuffer);
+
+    return contenidoLeido;
 }
 
 /*------------------------------------------------------------------------- ESPERAR KERNEL ----------------------------------------------------------------------------- */

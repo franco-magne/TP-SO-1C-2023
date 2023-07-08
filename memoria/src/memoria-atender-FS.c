@@ -33,20 +33,21 @@ void atender_peticiones_fileSystem(int socketFS) {
             }
             case HEADER_f_write:{
                 uint32_t base_segmento;
-                uint32_t desplazamiento_segmento;
-                
+              //  uint32_t desplazamiento_segmento;
                 buffer_unpack(buffer, &base_segmento, sizeof(base_segmento));
-                buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
+              //  buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
                 
                 Segmento* segmentoLeido = obtener_segmento_por_BASE(base_segmento);
                 char* contenidoAenviar = malloc(strlen(segmentoLeido->contenido) + 1);
                 strcpy(contenidoAenviar, segmentoLeido->contenido);
 
+                log_info(memoriaLogger,BOLD  BLUE UNDERLINE "Escritura en el segmento <%i> - Enviamos "RESET BOLD GREEN" <%s> ", base_segmento, contenidoAenviar) ;
+
                 t_buffer* bufferContenido = buffer_create();        
             
                 buffer_pack_string(bufferContenido, contenidoAenviar);
 
-                stream_send_buffer(socketFS, HEADER_move_in, bufferContenido);
+                stream_send_buffer(socketFS, HEADER_f_write, bufferContenido);
 
                 buffer_destroy(bufferContenido);  
                     break;

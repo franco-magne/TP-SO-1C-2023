@@ -57,6 +57,9 @@
     int escribir_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_escribir, uint32_t puntero_proceso, t_filesystem* fs);
     void pedir_informacion_a_memoria(uint32_t direccion_fisica, uint32_t cant_bytes_necesarios, t_filesystem* fs, char** respuesta_memoria);
 
+    void filesystem_fread_en_memoria(int toSocket, uint32_t dirFisica, char* contenidoAEscribir);
+    char* filesystem_fwrite_en_memoria( int toSocket, uint32_t dirFisica);
+
 
 /*------------------------------------------------------------------------- ESPERAR KERNEL ----------------------------------------------------------------------------- */
 

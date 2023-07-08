@@ -28,7 +28,10 @@ int main() {
       log_destroy(fs->logger);
 
       return -2;
-   }   
+   }  
+
+   stream_send_empty_buffer(fsSocketMemoria,HANDSHAKE_fileSystem);
+
    log_info(fs->logger, "Conexion con MEMORIA establecida");
    fs->socket_memoria = fsSocketMemoria;   
   
