@@ -227,7 +227,7 @@ void escribir_en_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32
     if ( bitarray_test_bit(bitmap, puntero_acceder) == 1 ) {
 
         log_info(fs->logger, "\e[1;92mAcceso a Bitmap - Bloque: <%d> - Estado: <%d>\e[0m", puntero_acceder, 1);
-        memcpy(map_bloques + posicion_byte_a_escribir, cadena_a_escribir, sizeof(uint32_t));
+        memcpy(map_bloques + posicion_byte_a_escribir, cadena_a_escribir, bytes_a_escribir);
     }
 
 }

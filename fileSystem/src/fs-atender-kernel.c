@@ -10,6 +10,14 @@ void atender_kernel(t_filesystem* fs) {
     lista_fcbs = list_create();
     levantar_fcbs_del_directorio(fs, lista_fcbs);
 
+    // PARA PRUEBAS RAPIDAS
+    
+        crear_archivo("NotasSO", fs);
+        abrir_archivo_fs("NotasSO", fs);
+        truncar_archivo("NotasSO", 512, fs);        
+        escribir_archivo("NotasSO", 4, 32, 2, fs);
+    
+
     while (fs->socket_kernel != -1) {
         
         log_info(fs->logger, "Esperando peticion de KERNEL...");
@@ -468,10 +476,21 @@ int escribir_archivo(char* nombre_archivo_write, uint32_t direccion_fisica, uint
             intervalo_de_pausa(fs->retardo_accesos);
         }
 
+        liberar_memoria_array_caracteres(cadena_array);
+
     } else {
 
+        uint32_t* bloque_escritura = (uint32_t*)list_get( fcb_a_escribir->bloques, (puntero_proceso + 1) ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO
+
+        log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo_write, (puntero_proceso + 1), (*bloque_escritura));
+        escribir_en_puntero_del_archivo_de_bloques((*bloque_escritura), cant_bytes_a_escribir, respuesta_memoria, fs);
+
+        intervalo_de_pausa(fs->retardo_accesos);
     }
 
+    log_info(fs->logger, "Escribir Archivo: <%s> - Puntero: <%d> - Memoria: <%d> - Tamaño: <%d>", nombre_archivo_write, puntero_proceso, direccion_fisica, cant_bytes_a_escribir);
+
+    free(respuesta_memoria);
 
     return 1;
 }
@@ -577,7 +596,18 @@ char** convertir_cadena_caracteres_en_array(char* cadena_recibida, uint32_t cant
     return array;
 }
 
-int obtener_longitud(char** array_caracteres) {
+void liberar_memoria_array_caracteres(char** array_caracteres) {
+
+    int longitud = obtener_longitud_array_caracteres(array_caracteres);
+
+    for (int i = 0; i < longitud; i++) {
+        free(array_caracteres[i]);
+    }
+
+    free(array_caracteres);
+}
+
+int obtener_longitud_array_caracteres(char** array_caracteres) {
     int longitud = 0;
 
     while (array_caracteres[longitud] != NULL) {

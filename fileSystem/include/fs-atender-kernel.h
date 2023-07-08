@@ -68,7 +68,8 @@
     int devolver_posicion_fcb_en_la_lista(char* nombre_archivo);
     void convertir_cantidad_bytes_en_array(uint32_t cantidad_bytes, uint32_t* array_bytes, uint32_t block_size);
     char** convertir_cadena_caracteres_en_array(char* cadena_recibida, uint32_t cantidad_bytes, uint32_t block_size);
-    int obtener_longitud(char** array_caracteres);
+    void liberar_memoria_array_caracteres(char** array_caracteres);
+    int obtener_longitud_array_caracteres(char** array_caracteres);
 
 
 #endif
