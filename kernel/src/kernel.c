@@ -129,7 +129,7 @@ void aceptar_conexiones_kernel(const int socketEscucha)
 
 void encolar_en_new_a_nuevo_proceso(int cliente){
 
-    log_info(kernelLogger, "Nuevo proceso en la cola de new \n");
+    log_info(kernelLogger,BOLD UNDERLINE CYAN  "Nuevo proceso en la cola de new \n" RESET);
    
     // RECIBO LAS INSTRUCCIONES DE CONSOLA
     t_buffer* bufferIntrucciones = buffer_create();
@@ -152,7 +152,7 @@ void encolar_en_new_a_nuevo_proceso(int cliente){
         
 
         
-        log_info(kernelLogger, "Creación de nuevo proceso ID %d mediante <socket %d>", pcb_get_pid(newPcb), cliente);
+        log_info(kernelLogger,BOLD UNDERLINE CYAN "Creación de nuevo proceso "RESET UNDERLINE BOLD MAGENTA"ID %d "RESET BOLD UNDERLINE CYAN " mediante <socket %d>", pcb_get_pid(newPcb), cliente);
 
         //////// LE ENVIO A CONSOLA EL PID ///////
         t_buffer* bufferPID = buffer_create();
@@ -268,13 +268,13 @@ void* atender_pcb(void* args)
                 
             case HEADER_proceso_terminado:
                 liberar_segmentos_del_proceso_tabla_global(pcb);
-                memoria_adapter_enviar_finalizar_proceso(pcb,kernelConfig,kernelLogger, "SUCCES");
+                memoria_adapter_enviar_finalizar_proceso(pcb,kernelConfig,kernelLogger,RESET GREEN BOLD "SUCCES" RESET);
                 instruccion_exit(pcb);
                 break;
                 
             case HEADER_Segmentation_fault:
                 liberar_segmentos_del_proceso_tabla_global(pcb);
-                memoria_adapter_enviar_finalizar_proceso(pcb,kernelConfig,kernelLogger, RED "SEG_FAULT");
+                memoria_adapter_enviar_finalizar_proceso(pcb,kernelConfig,kernelLogger,RESET RED BOLD "SEG_FAULT" RESET);
                 instruccion_exit(pcb);
                 break;
 

@@ -17,14 +17,14 @@
  bool victima;
  uint32_t pid;
 
-}t_segmento;
+}t_segmento;*/
 
 
 t_segmento* segmento_kernel_create();
 bool segmentos_del_mismo_pid(Segmento* unSegmento, Segmento* otroSegmento);
 t_segmento* adapter_segmento_memoria_kernel(Segmento* segmentoAAdaptar);
 void buffer_pack_segmento_list(t_buffer* buffer, t_list* lista_segmentos);
-*/
+
 
 #endif
 

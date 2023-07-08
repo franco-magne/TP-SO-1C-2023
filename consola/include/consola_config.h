@@ -21,5 +21,4 @@ void consola_config_destroy(t_consola_config* self);
 
 
 
-
 #endif

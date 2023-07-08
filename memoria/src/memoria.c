@@ -17,7 +17,7 @@ pthread_mutex_t mutexMemoriaData = PTHREAD_MUTEX_INITIALIZER;   //para controlar
 pthread_mutex_t mutexListaDeSegmento = PTHREAD_MUTEX_INITIALIZER;
 
 int main() {
-
+    imprimir_memoria();
     memoriaLogger = log_create(MEMORIA_LOG_UBICACION,MEMORIA_PROCESS_NAME,true,LOG_LEVEL_INFO);
     memoriaConfigInicial = config_create(MEMORIA_CONFIG_UBICACION);
     memoriaConfig = memoria_config_initializer(memoriaConfigInicial);
@@ -59,6 +59,7 @@ void* atender_conexiones_cpu(void* socket_ptr) {
 void* atender_conexiones_kernel(void* socket_ptr) {
     int socketCliente = *(int*)socket_ptr;
     log_info(memoriaLogger, "\e[1;92mSe acepta conexión de Kernel en socket [%d]\e[0m", socketCliente);
+    memoria_config_set_socket_kernel(memoriaConfig,socketCliente);
     atender_peticiones_kernel(socketCliente);
     close(socketCliente); // Cerrar el socket cliente después de atender la conexión
     return NULL;
@@ -80,8 +81,6 @@ void aceptar_conexiones_memoria(const int socketEscucha) {
     while (true) {
         const int clienteAceptado = accept(socketEscucha, &cliente, &len);
         if (clienteAceptado > -1) {
-            log_info(memoriaLogger, "Cliente aceptado en el puerto");
-
             uint8_t handshake = stream_recv_header(clienteAceptado);
             if (handshake == HANDSHAKE_cpu) {
                 pthread_t threadAtencion;
@@ -90,15 +89,16 @@ void aceptar_conexiones_memoria(const int socketEscucha) {
                 cpuSinAtender = false;
             } else if (handshake == HANDSHAKE_kernel) {
                 pthread_t threadAtencion;
-                memoria_config_set_socket_kernel(memoriaConfig,clienteAceptado);
                 pthread_create(&threadAtencion, NULL, atender_conexiones_kernel, &clienteAceptado);
                 pthread_detach(threadAtencion);
                 kernelSinAtender = false;
             } else if (handshake == HANDSHAKE_fileSystem) {
+                
                 pthread_t threadAtencion;
                 pthread_create(&threadAtencion, NULL, atender_conexiones_fileSystem, &clienteAceptado);
                 pthread_detach(threadAtencion);
                 fileSystemSinAtender = false;
+                
             }else {
                 log_error(memoriaLogger, "Error al recibir handshake de cliente en socket [%d]", clienteAceptado);
                 close(clienteAceptado); // Cerrar el socket cliente en caso de error

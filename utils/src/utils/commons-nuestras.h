@@ -66,5 +66,8 @@ void imprimir_file_system();
 #define STRIKETHROUGH "\x1B[9m"
 #define ITALIC "\x1B[3m"
 
+#define BACKGROUND_RED "\033[41m"   // Fondo rojo
+#define BACKGROUND_GREEN "\033[42m" // Fondo verde
+#define BACKGROUND_BLUE "\033[44m"  // Fondo azul
 
 #endif

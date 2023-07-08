@@ -11,7 +11,6 @@ extern t_consola_config *configDeKernel;
 
 
 int main(int argc, char *argv[]) { 
-    
     consolaLogger = log_create(CONSOLA_LOG_UBICACION,CONSOLA_PROCESS_NAME,true,LOG_LEVEL_INFO);
     consolaConfig = config_create(CONSOLA_CONFIG_UBICACION);
     check_arguments(argc, consolaLogger); // chequea que se pasen todo los argumentos
@@ -31,10 +30,11 @@ int main(int argc, char *argv[]) {
 
     char* pathArchivoInstrucciones = string_duplicate(argv[2]);
     consola_enviar_instrucciones_a_kernel(pathArchivoInstrucciones, kernelSocket, consolaLogger);
-    free(pathArchivoInstrucciones);
+   
     
     uint32_t idProceso = receive_pid_kernel(kernelSocket, consolaLogger);
     log_info(consolaLogger, "Se recibio el PID %d", idProceso);
+    imprimir_consola();
 
     //wait_kernel_response(kernelSocket, idProceso, consolaConfig, consolaLogger);
 
