@@ -135,7 +135,7 @@ void administrar_primer_hueco_libre(t_list* huecosLibres, Segmento* nuevoSegment
 }
  
  
-void administrar_nuevo_segmento(Segmento* nuevoSegmento){
+uint8_t administrar_nuevo_segmento(Segmento* nuevoSegmento){
     
     t_list* listaDeHuecosLibres = listaDeSegmentos; 
  
@@ -144,25 +144,14 @@ void administrar_nuevo_segmento(Segmento* nuevoSegmento){
     
 
     if( list_is_empty(listaDeHuecosLibres) ){
-        // Hay que hacer compactacion
-        stream_send_empty_buffer(memoria_config_get_socket_kernel(memoriaConfig),HEADER_Compactacion);
-        
-        uint8_t respuestaDeKernel = stream_recv_header(memoria_config_get_socket_kernel(memoriaConfig));
-                                    stream_recv_empty_buffer(memoria_config_get_socket_kernel(memoriaConfig));
-
-        if(respuestaDeKernel == HANDSHAKE_ok_continue)
-        iniciar_compactacion();
-        log_info(memoriaLogger, "SE INICIA LA COMPACTACION DE LA MEMORIA");
-        
-        stream_send_empty_buffer(memoria_config_get_socket_kernel(memoriaConfig),HEADER_Compactacion_finalizada);
+       return HEADER_Compactacion;
 
     } else {
         
         administrar_primer_hueco_libre(listaDeHuecosLibres, nuevoSegmento);
-    // Aca se elije el algoritmo dependiendo como 
-    // Hagamos uno de test
- 
- 
+
+        return HEADER_create_segment;
+
     }
  
 }
@@ -280,8 +269,8 @@ void iniciar_compactacion(){
     Segmento* segmentoActual;
     Segmento* segmentoAnterior;
 
-    uint32_t retardoInstruccion = memoria_config_get_retardo_compactacion(memoriaConfig);
-    intervalo_de_pausa(retardoInstruccion);
+    //uint32_t retardoInstruccion = memoria_config_get_retardo_compactacion(memoriaConfig);
+    //intervalo_de_pausa(retardoInstruccion);
 
     for(int i = 1; i< list_size(listaDeSegmentos); i++){
         segmentoActual = list_get(listaDeSegmentos,i);

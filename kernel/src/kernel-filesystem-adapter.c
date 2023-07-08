@@ -11,7 +11,7 @@ bool file_system_adapter_chequear_si_ya_existe(t_pcb* pcb, t_kernel_config* kern
 
   char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoAbrir);
 
-  log_info(kernelLogger,"PID: <%i> - Abrir Archivo: <%s>", pcb_get_pid(pcb), nombreArchivo);
+  log_info(kernelLogger,BOLD UNDERLINE CYAN"PID: <%i> - Abrir Archivo:"RESET BOLD YELLOW" <%s>", pcb_get_pid(pcb), nombreArchivo);
 
   int index = 0;
   
@@ -110,7 +110,7 @@ void file_system_adapter_send_f_truncate(t_pcb* pcb, t_kernel_config* kernelConf
   char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoTruncar);
   uint32_t tamanioArchivo = archivo_pcb_get_tamanio_archivo(archivoTruncar);
 
-  log_info(kernelLogger,"PID: <%i> - Archivo: <%s> - Tamaño: <%i>", pcb_get_pid(pcb),nombreArchivo,tamanioArchivo);
+  log_info(kernelLogger,BOLD UNDERLINE CYAN"PID: <%i> - Archivo: "RESET BOLD YELLOW"<%s> "RESET BOLD UNDERLINE CYAN" - Tamaño: <%i>", pcb_get_pid(pcb),nombreArchivo,tamanioArchivo);
 
   t_buffer* bufferTruncate = buffer_create();
 
@@ -135,7 +135,7 @@ void file_system_adapter_recv_f_truncate(t_kernel_config* kernelConfig, t_log* k
     stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
 
     if(fileSystemResponse == HANDSHAKE_ok_continue){
-      log_info(kernelLogger, "EL ARCHIVO FUE MODIFICADO");
+      log_info(kernelLogger,BLUE ITALIC "EL ARCHIVO FUE MODIFICADO");
     }
 }
 
@@ -149,7 +149,7 @@ void atender_f_seek(t_pcb* pcb, t_kernel_config* kernelConfig, t_log* kernelLogg
   char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoFSeek);
   uint32_t punteroArchivo = archivo_pcb_get_puntero_archivo(archivoFSeek);
 
-  log_info(kernelLogger,"PID: <%i> - Actualizar puntero Archivo: <%s> - Puntero <%i>", pcb_get_pid(pcb),nombreArchivo,punteroArchivo);
+  log_info(kernelLogger,BOLD UNDERLINE CYAN "PID: <%i> - Actualizar puntero Archivo: "RESET BOLD YELLOW" <%s> "RESET BOLD UNDERLINE CYAN" - Puntero <%i>", pcb_get_pid(pcb),nombreArchivo,punteroArchivo);
 
   int index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
   archivoFSeek = list_get(pcb_get_lista_de_archivos_abiertos(pcb), index);
@@ -168,7 +168,7 @@ void file_system_adapter_send_f_read(t_pcb* pcb, t_log* kernelLogger, t_kernel_c
     uint32_t direccionFisica = archivo_pcb_get_direccion_fisica(archivoLeer);
     uint32_t cantidadByte = archivo_pcb_get_cantidad_byte(archivoLeer);
     
-    log_info(kernelLogger,"PID: <%i> - Leer Archivo: <%s> - Puntero <%i> - Dirección Memoria <%i> - Tamaño <%i>",pid,nombreArchivo,puntero,direccionFisica,tamanioArchivo);
+    log_info(kernelLogger,BOLD UNDERLINE CYAN "PID: <%i> - Leer Archivo: "RESET BOLD YELLOW"<%s> "RESET BOLD UNDERLINE CYAN" - Puntero <%i> - Dirección Memoria <%i> - Tamaño <%i>",pid,nombreArchivo,puntero,direccionFisica,tamanioArchivo);
 
      t_buffer* bufferFRead = buffer_create();
 
@@ -196,7 +196,7 @@ void file_system_adapter_send_f_write(t_pcb* pcb, t_log* kernelLogger, t_kernel_
     uint32_t direccionFisica = archivo_pcb_get_direccion_fisica(archivoEscribir);
 
   
-    log_info(kernelLogger,"PID: <%i> - Escribir Archivo: <%s> - Puntero <%i> - Dirección Memoria <%i> - Tamaño <%i>",pid,nombreArchivo,puntero,direccionFisica,tamanioArchivo);
+    log_info(kernelLogger,BOLD UNDERLINE CYAN "PID: <%i> - Escribir Archivo: "RESET BOLD YELLOW"<%s> "RESET BOLD UNDERLINE CYAN"- Puntero <%i> - Dirección Memoria <%i> - Tamaño <%i>",pid,nombreArchivo,puntero,direccionFisica,tamanioArchivo);
 
     t_buffer* bufferFWrite = buffer_create();
 

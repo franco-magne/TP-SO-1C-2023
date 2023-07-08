@@ -136,9 +136,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
         buffer_unpack(bufferPcb, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
 
-        t_segmento* unSegmento = segmento_create(id_de_segmento, tamanio_de_segmento);
-        log_info(kernelLogger, "NUEVO SEGMENTO ID <%i> - TAMANIO <%i> ",id_de_segmento, tamanio_de_segmento);
-        
+        t_segmento* unSegmento = segmento_create(id_de_segmento, tamanio_de_segmento);        
         pthread_mutex_lock(&mutexTablaGlobalSegmento);
         list_add(tablaGlobalDeSegmentos,unSegmento);
         pthread_mutex_unlock(&mutexTablaGlobalSegmento);
@@ -150,7 +148,6 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         case HEADER_delete_segment:
         
         buffer_unpack(bufferPcb, &id_de_segmento, sizeof(id_de_segmento));
-        log_info(kernelLogger, "ID <%i> Segmento eliminar ", id_de_segmento);
 
         pthread_mutex_lock(&mutexTablaGlobalSegmento);
         modificar_victima_lista_segmento(tablaGlobalDeSegmentos,id_de_segmento,pcb_get_pid(pcbAActualizar), true);

@@ -19,7 +19,7 @@ int main() {
 
 
    ///////////////////////////////// CONECTARSE A MEMORIA //////////////////////////////
-   /*
+
    int fsSocketMemoria = conectar_a_servidor(fs->ip_memoria, fs->puerto_memoria);
    if (fsSocketMemoria == -1) {
 
@@ -28,9 +28,12 @@ int main() {
 
       return -2;
    }   
+   stream_send_empty_buffer(fsSocketMemoria,HANDSHAKE_fileSystem);
+
    log_info(fs->logger, "Conexion con MEMORIA establecida");
    fs->socket_memoria = fsSocketMemoria;   
-  */
+  
+
    crear_directorios(fs);
    levantar_bitmap(fs);
    crear_superbloque_dat(fs, superbloque_config);
