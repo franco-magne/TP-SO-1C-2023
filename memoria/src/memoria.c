@@ -59,6 +59,7 @@ void* atender_conexiones_cpu(void* socket_ptr) {
 void* atender_conexiones_kernel(void* socket_ptr) {
     int socketCliente = *(int*)socket_ptr;
     log_info(memoriaLogger, "\e[1;92mSe acepta conexión de Kernel en socket [%d]\e[0m", socketCliente);
+    memoria_config_set_socket_kernel(memoriaConfig,socketCliente);
     atender_peticiones_kernel(socketCliente);
     close(socketCliente); // Cerrar el socket cliente después de atender la conexión
     return NULL;
@@ -88,7 +89,6 @@ void aceptar_conexiones_memoria(const int socketEscucha) {
                 cpuSinAtender = false;
             } else if (handshake == HANDSHAKE_kernel) {
                 pthread_t threadAtencion;
-                memoria_config_set_socket_kernel(memoriaConfig,clienteAceptado);
                 pthread_create(&threadAtencion, NULL, atender_conexiones_kernel, &clienteAceptado);
                 pthread_detach(threadAtencion);
                 kernelSinAtender = false;

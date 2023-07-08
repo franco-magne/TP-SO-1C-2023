@@ -36,11 +36,24 @@ uint8_t memoria_adapter_recibir_create_segment(t_pcb* pcbAActualizar, t_kernel_c
     
     uint8_t headerMemoria = stream_recv_header(kernel_config_get_socket_memoria(kernelConfig));
     t_buffer* bufferTablaSegmentoActualizada = buffer_create();
-
     stream_recv_buffer(kernel_config_get_socket_memoria(kernelConfig), bufferTablaSegmentoActualizada);
+    
     if(headerMemoria == HEADER_Compactacion){
-        // CONSULTAR A FILE SYSTEM SI ESTA HACIENDO UN F_WRITE O F_READ
-        
+        //stream_send_empty_buffer(kernel_config_get_socket_file_system(kernelConfig), HEADER_Compactacion);
+        //uint8_t fileSystemResponse =stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
+        //stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
+        uint8_t fileSystemResponse = HANDSHAKE_ok_continue;
+
+        if(fileSystemResponse == HANDSHAKE_ok_continue){
+            stream_send_empty_buffer(kernel_config_get_socket_memoria(kernelConfig), HANDSHAKE_ok_continue);
+            headerMemoria = stream_recv_header(kernel_config_get_socket_memoria(kernelConfig));
+            stream_recv_empty_buffer(kernel_config_get_socket_memoria(kernelConfig));
+            if(headerMemoria == HEADER_Compactacion_finalizada){
+                memoria_adapter_enviar_create_segment(pcbAActualizar,kernelConfig);
+                memoria_adapter_recibir_create_segment(pcbAActualizar,kernelConfig,kernelLogger);
+            }
+        }
+
     }else if(headerMemoria == HANDSHAKE_ok_continue) {
         
         pthread_mutex_lock(&mutexTablaGlobalSegmento); 
@@ -53,8 +66,8 @@ uint8_t memoria_adapter_recibir_create_segment(t_pcb* pcbAActualizar, t_kernel_c
 
         int index = index_posicion_del_segmento_victima(tablaGlobalDeSegmentos, id_de_segmento,pcb_get_pid(pcbAActualizar));
         t_segmento* test = list_get(tablaGlobalDeSegmentos,index);
-        log_info(kernelLogger, "PID <%i> : Segmento ID <%i> : Base <%i> : Tamaño <%i>", test->pid, test->id_de_segmento, test->base_del_segmento, test->tamanio_de_segmento);
-        log_info(kernelLogger, "CANTIDAD DE SEGMENTOS TOTAL EN LA TABLA : <%i>", list_size(tablaGlobalDeSegmentos));
+        log_info(kernelLogger,BOLD UNDERLINE CYAN  "PID <%i> : Segmento ID "RESET BOLD  BLUE "<%i>"BOLD UNDERLINE CYAN" : Base <%i> : Tamaño <%i>", test->pid, test->id_de_segmento, test->base_del_segmento, test->tamanio_de_segmento);
+        log_info(kernelLogger, MAGENTA ITALIC "CANTIDAD DE SEGMENTOS TOTAL EN LA TABLA : <%i>", list_size(tablaGlobalDeSegmentos));
         pthread_mutex_unlock(&mutexTablaGlobalSegmento); 
 
 
@@ -63,7 +76,7 @@ uint8_t memoria_adapter_recibir_create_segment(t_pcb* pcbAActualizar, t_kernel_c
         return HEADER_create_segment;
     
     } else if (headerMemoria == HEADER_memoria_insuficiente) {
-        log_info(kernelLogger, "PID: <%i> No pudo crear el segmento",  pcb_get_pid(pcbAActualizar));
+        log_info(kernelLogger,BACKGROUND_RED GREEN ITALIC "PID: <%i> No pudo crear el segmento",  pcb_get_pid(pcbAActualizar));
         return HEADER_memoria_insuficiente;
 
     } else {
@@ -111,7 +124,7 @@ void memoria_adapter_recibir_delete_segment(t_pcb* pcbAActualizar, t_kernel_conf
     stream_recv_buffer(kernel_config_get_socket_memoria(kernelConfig), bufferTablaSegmentoActualizada);
 
      if (headerMemoria == HANDSHAKE_ok_continue) {
-        log_info(kernelLogger, "PID: <%i> - Eliminar Segmento - Id Segmento: <%i>", pcb_get_pid(pcbAActualizar), id_de_segmento );
+        log_info(kernelLogger,BOLD UNDERLINE CYAN "PID: <%i> - Eliminar Segmento - Id Segmento:"RESET BOLD BLUE" <%i>", pcb_get_pid(pcbAActualizar), id_de_segmento );
         
         pthread_mutex_lock(&mutexTablaGlobalSegmento); 
         tablaGlobalDeSegmentos = buffer_unpack_segmento_list(bufferTablaSegmentoActualizada);
@@ -121,8 +134,9 @@ void memoria_adapter_recibir_delete_segment(t_pcb* pcbAActualizar, t_kernel_conf
         segmento_set_pid(aux, pcb_get_pid(pcbAActualizar));
         pcb_set_lista_de_segmentos(pcbAActualizar, list_filter_ok(tablaGlobalDeSegmentos,es_el_segmento_pid,aux));
         
+        /*
         log_info(kernelLogger, "CANTIDAD DE SEGMENTOS TOTAL EN LA TABLA : <%i>", list_size(tablaGlobalDeSegmentos));
-        //ACA
+        
         printf("\n");
         printf("[");
 
@@ -132,7 +146,7 @@ void memoria_adapter_recibir_delete_segment(t_pcb* pcbAActualizar, t_kernel_conf
         }
         printf("]");
         printf("\n");
-
+        */
         pthread_mutex_unlock(&mutexTablaGlobalSegmento); 
         
         buffer_destroy(bufferTablaSegmentoActualizada);
@@ -165,7 +179,7 @@ stream_recv_empty_buffer(kernel_config_get_socket_memoria(kernelConfig));
 
 if(memoriaResponse == HANDSHAKE_ok_continue){
   
-    log_info(kernelLogger, CYAN ITALIC STRIKETHROUGH BOLD "Finaliza el proceso <%i> - Motivo: <%s>", pid, formaNotificar);
+    log_info(kernelLogger, CYAN ITALIC BOLD "Finaliza el proceso <%i> - Motivo: <%s>" RESET CYAN ITALIC BOLD   , pid, formaNotificar);
 }
 
 
