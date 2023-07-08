@@ -220,6 +220,18 @@ char* leer_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32_t byt
     return cadena;
 }
 
+void escribir_en_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32_t bytes_a_escribir, char* cadena_a_escribir, t_filesystem* fs) {
+
+    uint32_t posicion_byte_a_escribir = puntero_acceder * fs->block_size;
+
+    if ( bitarray_test_bit(bitmap, puntero_acceder) == 1 ) {
+
+        log_info(fs->logger, "\e[1;92mAcceso a Bitmap - Bloque: <%d> - Estado: <%d>\e[0m", puntero_acceder, 1);
+        memcpy(map_bloques + posicion_byte_a_escribir, cadena_a_escribir, sizeof(uint32_t));
+    }
+
+}
+
 t_list* recuperar_bloque_de_punteros(uint32_t puntero_indirecto, int tamanio_archivo, uint32_t block_size) {
     
     t_list* lista_bloques = list_create();

@@ -55,6 +55,7 @@
 /*------------------------------------------------------------------------- F_WRITE ----------------------------------------------------------------------------- */
 
     int escribir_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_escribir, uint32_t puntero_proceso, t_filesystem* fs);
+    void pedir_informacion_a_memoria(uint32_t direccion_fisica, uint32_t cant_bytes_necesarios, t_filesystem* fs, char** respuesta_memoria);
 
 
 /*------------------------------------------------------------------------- ESPERAR KERNEL ----------------------------------------------------------------------------- */
@@ -65,7 +66,9 @@
 /*------------------------------------------------------------------------- OTRAS ----------------------------------------------------------------------------- */
 
     int devolver_posicion_fcb_en_la_lista(char* nombre_archivo);
-    void convertir_bytes_a_leer_en_array(uint32_t cantidad_bytes, uint32_t* array_bytes, uint32_t block_size);
+    void convertir_cantidad_bytes_en_array(uint32_t cantidad_bytes, uint32_t* array_bytes, uint32_t block_size);
+    char** convertir_cadena_caracteres_en_array(char* cadena_recibida, uint32_t cantidad_bytes, uint32_t block_size);
+    int obtener_longitud(char** array_caracteres);
 
 
 #endif

@@ -402,7 +402,7 @@ int leer_archivo(char* nombre_archivo_read, uint32_t direccion_fisica, uint32_t 
     if (cant_bloques_a_leer > 1) {
         
         uint32_t bytes_en_array[cant_bloques_a_leer];
-        convertir_bytes_a_leer_en_array(cant_bytes_a_leer, bytes_en_array, fs->block_size);
+        convertir_cantidad_bytes_en_array(cant_bytes_a_leer, bytes_en_array, fs->block_size);
 
         for (int i = 0; i < cant_bloques_a_leer; i++) {
 
@@ -443,10 +443,62 @@ int leer_archivo(char* nombre_archivo_read, uint32_t direccion_fisica, uint32_t 
 
 /*------------------------------------------------------------------------- F_WRITE ----------------------------------------------------------------------------- */
 
-int escribir_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_escribir, uint32_t puntero_proceso, t_filesystem* fs) {
+int escribir_archivo(char* nombre_archivo_write, uint32_t direccion_fisica, uint32_t cant_bytes_a_escribir, uint32_t puntero_proceso, t_filesystem* fs) {
+
+    char* respuesta_memoria = malloc(cant_bytes_a_escribir);
+    int cant_bloques_a_escribir = (int)ceil(cant_bytes_a_escribir / fs->block_size);
+    int posicion_fcb_a_escribir= devolver_posicion_fcb_en_la_lista(nombre_archivo_write);
+    t_fcb* fcb_a_escribir = list_get(lista_fcbs, posicion_fcb_a_escribir);
+
+    pedir_informacion_a_memoria(direccion_fisica, cant_bytes_a_escribir, fs, &respuesta_memoria);
+
+    if (cant_bloques_a_escribir > 1) {
+        
+        uint32_t bytes_en_array[cant_bloques_a_escribir];
+        char** cadena_array = convertir_cadena_caracteres_en_array(respuesta_memoria, cant_bytes_a_escribir, fs->block_size);
+
+        convertir_cantidad_bytes_en_array(cant_bytes_a_escribir, bytes_en_array, fs->block_size);
+
+        for (int i = 0; i < cant_bloques_a_escribir; i++) {
+            
+            uint32_t* bloque_escritura = (uint32_t*)list_get( fcb_a_escribir->bloques, (puntero_proceso + 1 + i) ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO
+            log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo_write, (puntero_proceso + 1 + i), (*bloque_escritura));
+            escribir_en_puntero_del_archivo_de_bloques((*bloque_escritura), bytes_en_array[i], cadena_array[i], fs);
+
+            intervalo_de_pausa(fs->retardo_accesos);
+        }
+
+    } else {
+
+    }
 
 
     return 1;
+}
+
+void pedir_informacion_a_memoria(uint32_t direccion_fisica, uint32_t cant_bytes_necesarios, t_filesystem* fs, char** respuesta_memoria) {
+
+    t_buffer* bufferMemoria = buffer_create();
+    t_buffer* buffer_respuesta_memoria = buffer_create();
+
+
+    // ENVIO A MEMORIA LA DIRECCION FISICA Y CANTIDAD DE BYTES
+
+    buffer_pack(bufferMemoria, &direccion_fisica, sizeof(direccion_fisica));
+    buffer_pack(bufferMemoria, &cant_bytes_necesarios, sizeof(cant_bytes_necesarios));
+    stream_send_buffer(fs->socket_memoria, HEADER_f_write, bufferMemoria);    
+    log_info(fs->logger, "Se envia la direccion y cantidad de bytes a MEMORIA");
+
+
+    // ESPERO LA RESPUESTA DE MEMORIA CON LO LEIDO
+    
+    log_info(fs->logger, "Esperando respuesta de MEMORIA...");
+    stream_recv_buffer(fs->socket_memoria, buffer_respuesta_memoria);
+    *respuesta_memoria = buffer_unpack_string(buffer_respuesta_memoria);
+    log_info(fs->logger, "Recibo de MEMORIA: %s", (*respuesta_memoria));
+
+    buffer_destroy(buffer_respuesta_memoria);
+    buffer_destroy(bufferMemoria);    
 }
 
 /*------------------------------------------------------------------------- ESPERAR KERNEL ----------------------------------------------------------------------------- */
@@ -490,7 +542,7 @@ int devolver_posicion_fcb_en_la_lista(char* nombre_archivo) {
     return posicion_fcb;
 }
 
-void convertir_bytes_a_leer_en_array(uint32_t cantidad_bytes, uint32_t* array_bytes, uint32_t block_size) {
+void convertir_cantidad_bytes_en_array(uint32_t cantidad_bytes, uint32_t* array_bytes, uint32_t block_size) {
     
     uint32_t bytes_restantes = cantidad_bytes % block_size;
     int cantidad_block_size_repetido = cantidad_bytes / block_size;
@@ -500,4 +552,37 @@ void convertir_bytes_a_leer_en_array(uint32_t cantidad_bytes, uint32_t* array_by
     }
 
     array_bytes[cantidad_block_size_repetido] = bytes_restantes; // LA POSICION FINAL GUARDO EL RESTO DE BYTES QUE QUEDAN
+}
+
+char** convertir_cadena_caracteres_en_array(char* cadena_recibida, uint32_t cantidad_bytes, uint32_t block_size) {
+    
+    uint32_t division_entera = cantidad_bytes / block_size;
+    uint32_t resto = cantidad_bytes % block_size;
+    int tamano_resultado = division_entera + (resto > 0 ? 1 : 0);
+
+    char** array = malloc(tamano_resultado * sizeof(char*));
+
+    for (uint32_t i = 0; i < tamano_resultado; i++) {
+        array[i] = malloc((block_size + 1) * sizeof(char));
+        strncpy(array[i], cadena_recibida + i * block_size, block_size);
+        array[i][block_size] = '\0';
+    }
+
+    if (resto != 0) {
+        array[division_entera] = malloc((resto + 1) * sizeof(char));
+        strncpy(array[division_entera], cadena_recibida + division_entera * block_size, resto);
+        array[division_entera][resto] = '\0';
+    }
+
+    return array;
+}
+
+int obtener_longitud(char** array_caracteres) {
+    int longitud = 0;
+
+    while (array_caracteres[longitud] != NULL) {
+        longitud++;
+    }
+
+    return longitud;
 }

@@ -82,6 +82,7 @@ typedef struct {
     void escribir_bloque_de_punteros_en_puntero_indirecto(uint32_t puntero_indirecto, uint32_t numero_puntero_X, uint32_t* puntero_a_escribir, uint32_t block_size);
     void liberar_puntero_del_bloque_de_punteros_en_puntero_indirecto(uint32_t puntero_indirecto, uint32_t posicion_ultimo_puntero, uint32_t block_size);
     char* leer_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32_t bytes_a_leer, t_filesystem* fs);
+    void escribir_en_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32_t bytes_a_escribir, char* cadena_a_escribir, t_filesystem* fs);
     t_list* recuperar_bloque_de_punteros(uint32_t puntero_indirecto, int tamanio_archivo, uint32_t block_size);
 
 
