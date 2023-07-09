@@ -1,6 +1,8 @@
 #include "../include/fs-atender-kernel.h"
 
 t_list* lista_fcbs;
+pthread_mutex_t mutexTest = PTHREAD_MUTEX_INITIALIZER; //extern
+
 
 /*------------------------------------------------------------------------- ATENDER KERNEL ----------------------------------------------------------------------------- */
 
@@ -8,14 +10,30 @@ void atender_kernel(t_filesystem* fs) {
 
     int operacion_OK = 0;
     lista_fcbs = list_create();
-    levantar_fcbs_del_directorio(fs, lista_fcbs);    
+    levantar_fcbs_del_directorio(fs, lista_fcbs);
+
+    // PARA PRUEBAS RAPIDAS
+    /*
+        crear_archivo("NotasSO", fs);
+        abrir_archivo_fs("NotasSO", fs);
+        truncar_archivo("NotasSO", 512, fs);
+        escribir_archivo("NotasSO", 4, 32, 2, fs);
+    */    
 
     while (fs->socket_kernel != -1) {
         
         log_info(fs->logger, "Esperando peticion de KERNEL...");
         uint8_t header = stream_recv_header(fs->socket_kernel); // RECIBO LA OPERACION QUE KERNEL QUIERA SOLICITAR        
+        pthread_mutex_lock(&mutexTest);
 
         switch(header) {
+
+            case HEADER_Compactacion:
+
+                log_info(fs->logger, "Recibo operacion COMPACTACION");
+                stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // FALLO EN EL TRUNCATE
+                
+            break;
 
             case HEADER_f_open:                
                                         
@@ -27,7 +45,7 @@ void atender_kernel(t_filesystem* fs) {
 
                 log_info(fs->logger, "\e[1;93mRecibo operacion F_OPEN <%s> de KERNEL\e[0m", nombre_archivo_open);
 
-                operacion_OK = abrir_archivo_filesystem(nombre_archivo_open, fs);
+                operacion_OK = abrir_archivo_fs(nombre_archivo_open, fs);
                 if (operacion_OK) {
                     stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO EXISTE Y LO AGREGUE A SU TABLA GLOBAL
                 } else {
@@ -104,7 +122,8 @@ void atender_kernel(t_filesystem* fs) {
 
                 log_info(fs->logger, "\e[1;93mRecibo operacion F_READ < %s, %d, %d> de KERNEL\e[0m", nombre_archivo_read, direccion_fisica_read, cantidad_bytes_a_leer);
 
-
+                leer_archivo(nombre_archivo_read, direccion_fisica_read, cantidad_bytes_a_leer, puntero_a_leer, fs);
+                //stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE YA SE COMPLETO LA LECTURA
 
                 free(nombre_archivo_read);
                 buffer_destroy(bufferRead);
@@ -114,18 +133,21 @@ void atender_kernel(t_filesystem* fs) {
             case HEADER_f_write:
 
                 char* nombre_archivo_write;
-                uint32_t direccion_fisica_write;
+                uint32_t direccion_logica_write;
                 uint32_t cantidad_bytes_a_escribir;
+                uint32_t puntero_a_escribir;
                 t_buffer* bufferWrite = buffer_create();
 
                 stream_recv_buffer(fs->socket_kernel, bufferWrite);
                 nombre_archivo_write = buffer_unpack_string(bufferWrite);
-                buffer_unpack(bufferWrite, &direccion_fisica_write, sizeof(direccion_fisica_write));
+                buffer_unpack(bufferWrite, &direccion_logica_write, sizeof(direccion_logica_write));
                 buffer_unpack(bufferWrite, &cantidad_bytes_a_escribir, sizeof(cantidad_bytes_a_escribir));
+                buffer_unpack(bufferWrite, &puntero_a_escribir, sizeof(puntero_a_escribir));
 
-                log_info(fs->logger, "\e[1;93mRecibo operacion F_WRITE < %s, %d, %d> de KERNEL\e[0m", nombre_archivo_write, direccion_fisica_write, cantidad_bytes_a_escribir);
+                log_info(fs->logger, "\e[1;93mRecibo operacion F_WRITE < %s, %d, %d> de KERNEL\e[0m", nombre_archivo_write, direccion_logica_write, cantidad_bytes_a_escribir);
 
-
+                escribir_archivo(nombre_archivo_write, direccion_logica_write, cantidad_bytes_a_escribir, puntero_a_escribir, fs);
+                //stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE YA SE COMPLETO LA ESCRITURA
 
                 free(nombre_archivo_write);
                 buffer_destroy(bufferWrite);
@@ -133,11 +155,11 @@ void atender_kernel(t_filesystem* fs) {
             break;
 
             default:
-                log_error(fs->logger, "Peticion incorrecta.");
+                log_error(fs->logger, "Peticion incorrecta. <%i>", header);
                 exit(1);
             break;
         }
-
+        pthread_mutex_unlock(&mutexTest);
         operacion_OK = 0;
     }
     
@@ -147,7 +169,7 @@ void atender_kernel(t_filesystem* fs) {
 
 /*------------------------------------------------------------------------- F_OPEN ----------------------------------------------------------------------------- */
 
-int abrir_archivo_filesystem(char* nombre_archivo_open, t_filesystem* fs) {
+int abrir_archivo_fs(char* nombre_archivo_open, t_filesystem* fs) {
 
     int encontrado = 0;
     int size_lista_fcbs = list_size(lista_fcbs);
@@ -388,10 +410,10 @@ t_fcb* reducir_tamanio_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tam
 
 /*------------------------------------------------------------------------- F_READ ----------------------------------------------------------------------------- */
 
-int leer_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_leer, uint32_t puntero_proceso, t_filesystem* fs) {
-    
+int leer_archivo(char* nombre_archivo_read, uint32_t direccion_fisica, uint32_t cant_bytes_a_leer, uint32_t puntero_proceso, t_filesystem* fs) {
+
     int cant_bloques_a_leer = (int)ceil(cant_bytes_a_leer / fs->block_size);
-    int posicion_fcb_a_leer= devolver_posicion_fcb_en_la_lista(nombre_archivo);
+    int posicion_fcb_a_leer= devolver_posicion_fcb_en_la_lista(nombre_archivo_read);
     t_fcb* fcb_a_leer = list_get(lista_fcbs, posicion_fcb_a_leer);
 
     char* cadena_final =  malloc(cant_bytes_a_leer + 1);
@@ -399,34 +421,145 @@ int leer_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_
     if (cant_bloques_a_leer > 1) {
         
         uint32_t bytes_en_array[cant_bloques_a_leer];
-        devolver_cantidad_bytes_en_array(cant_bytes_a_leer, bytes_en_array, fs->block_size);
+        convertir_cantidad_bytes_en_array(cant_bytes_a_leer, bytes_en_array, fs->block_size);
 
         for (int i = 0; i < cant_bloques_a_leer; i++) {
 
             char* cadena_aux = malloc(bytes_en_array[i]);
             uint32_t* bloque_lectura = (uint32_t*)list_get( fcb_a_leer->bloques, (puntero_proceso + 1 + i) ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO
-            leer_puntero_del_archivo_de_bloques((*bloque_lectura), bytes_en_array[i], fs->block_size, cadena_aux);
-
+            
+            log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo_read, (puntero_proceso + 1 + i), (*bloque_lectura));
+            strcpy(cadena_aux, leer_puntero_del_archivo_de_bloques((*bloque_lectura), bytes_en_array[i], fs));
             string_append(&cadena_final, cadena_aux);
+
+            intervalo_de_pausa(fs->retardo_accesos);
             free(cadena_aux);
         }
+
+        // REALIZAR ACA EL ENVIO DE CADENA_FINAL A MEMORIA Y ESPERAR SU RESPUESTA.
+
+
         
     } else {
 
         uint32_t* bloque_lectura = (uint32_t*)list_get( fcb_a_leer->bloques, (puntero_proceso + 1) ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO
 
-        leer_puntero_del_archivo_de_bloques((*bloque_lectura), cant_bytes_a_leer, fs->block_size, cadena_final);   
-    }    
-    
+        log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo_read, (puntero_proceso + 1), (*bloque_lectura));
+        strcpy(cadena_final, leer_puntero_del_archivo_de_bloques((*bloque_lectura), cant_bytes_a_leer, fs));
+        
+        intervalo_de_pausa(fs->retardo_accesos);
+
+        // REALIZAR ACA EL ENVIO DE CADENA_FINAL A MEMORIA Y ESPERAR SU RESPUESTA.
+
+
+
+    }
+
+    log_info(fs->logger, "Leer Archivo: <%s> - Puntero: <%d> - Memoria: <%d> - Tamaño: <%d>", nombre_archivo_read, puntero_proceso, direccion_fisica, cant_bytes_a_leer);
+
     return 1;
 }
 
 /*------------------------------------------------------------------------- F_WRITE ----------------------------------------------------------------------------- */
 
-int escribir_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_escribir, uint32_t puntero_proceso, t_filesystem* fs) {
+int escribir_archivo(char* nombre_archivo_write, uint32_t direccion_fisica, uint32_t cant_bytes_a_escribir, uint32_t puntero_proceso, t_filesystem* fs) {
 
+    char* respuesta_memoria = malloc(cant_bytes_a_escribir);
+    //char* respuesta_memoria = malloc(strlen("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz") + 1); 
+    //strcpy(respuesta_memoria, "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
+    //char* respuesta_memoria = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz";
+    int cant_bloques_a_escribir = (int)ceil(cant_bytes_a_escribir / fs->block_size);
+    int posicion_fcb_a_escribir= devolver_posicion_fcb_en_la_lista(nombre_archivo_write);
+    t_fcb* fcb_a_escribir = list_get(lista_fcbs, posicion_fcb_a_escribir);
+
+    respuesta_memoria = filesystem_fwrite_en_memoria(fs->socket_memoria, direccion_fisica);
+
+    if (cant_bloques_a_escribir > 1) {
+        
+        uint32_t bytes_en_array[cant_bloques_a_escribir];
+        char** cadena_array = convertir_cadena_caracteres_en_array(respuesta_memoria, cant_bytes_a_escribir, fs->block_size);
+
+        convertir_cantidad_bytes_en_array(cant_bytes_a_escribir, bytes_en_array, fs->block_size);
+
+        for (int i = 0; i < cant_bloques_a_escribir; i++) {
+            
+            uint32_t* bloque_escritura = (uint32_t*)list_get( fcb_a_escribir->bloques, (puntero_proceso + 1 + i) ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO
+            log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo_write, (puntero_proceso + 1 + i), (*bloque_escritura));
+            escribir_en_puntero_del_archivo_de_bloques((*bloque_escritura), bytes_en_array[i], cadena_array[i], fs);
+
+            intervalo_de_pausa(fs->retardo_accesos);
+        }
+
+        liberar_memoria_array_caracteres(cadena_array);
+
+    } else {
+
+        uint32_t* bloque_escritura = (uint32_t*)list_get( fcb_a_escribir->bloques, (puntero_proceso + 1) ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO
+
+        log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo_write, (puntero_proceso + 1), (*bloque_escritura));
+        escribir_en_puntero_del_archivo_de_bloques((*bloque_escritura), cant_bytes_a_escribir, respuesta_memoria, fs);
+
+        intervalo_de_pausa(fs->retardo_accesos);
+    }
+
+    log_info(fs->logger, "Escribir Archivo: <%s> - Puntero: <%d> - Memoria: <%d> - Tamaño: <%d>", nombre_archivo_write, puntero_proceso, direccion_fisica, cant_bytes_a_escribir);
+
+    free(respuesta_memoria);
 
     return 1;
+}
+
+void pedir_informacion_a_memoria(uint32_t direccion_fisica, uint32_t cant_bytes_necesarios, t_filesystem* fs, char** respuesta_memoria) {
+
+    t_buffer* bufferMemoria = buffer_create();
+    t_buffer* buffer_respuesta_memoria = buffer_create();
+
+
+    // ENVIO A MEMORIA LA DIRECCION FISICA Y CANTIDAD DE BYTES
+
+    buffer_pack(bufferMemoria, &direccion_fisica, sizeof(direccion_fisica));
+    //buffer_pack(bufferMemoria, &cant_bytes_necesarios, sizeof(cant_bytes_necesarios));
+    stream_send_buffer(fs->socket_memoria, HEADER_f_write, bufferMemoria);    
+    log_info(fs->logger, "Se envia la direccion y cantidad de bytes a MEMORIA");
+
+
+    // ESPERO LA RESPUESTA DE MEMORIA CON LO LEIDO
+    
+    log_info(fs->logger, "Esperando respuesta de MEMORIA...");
+    stream_recv_buffer(fs->socket_memoria, buffer_respuesta_memoria);
+    *respuesta_memoria = buffer_unpack_string(buffer_respuesta_memoria);
+    log_info(fs->logger, "Recibo de MEMORIA: %s", (*respuesta_memoria));
+
+    buffer_destroy(buffer_respuesta_memoria);
+    buffer_destroy(bufferMemoria);    
+}
+
+
+void filesystem_fread_en_memoria(int toSocket, uint32_t dirFisica, char* contenidoAEscribir) {
+    t_buffer *buffer = buffer_create();
+    buffer_pack(buffer, &dirFisica, sizeof(dirFisica));
+    buffer_pack_string(buffer, contenidoAEscribir);
+    stream_send_buffer(toSocket, HEADER_f_read, buffer);
+    buffer_destroy(buffer);
+
+}
+
+char* filesystem_fwrite_en_memoria( int toSocket, uint32_t dirFisica) {
+
+    t_buffer *requestBuffer = buffer_create();
+
+    buffer_pack(requestBuffer, &dirFisica, sizeof(dirFisica));
+    stream_send_buffer(toSocket, HEADER_f_write, requestBuffer);
+    buffer_destroy(requestBuffer);
+
+    stream_recv_header(toSocket);
+    t_buffer *responseBuffer = buffer_create();
+
+    stream_recv_buffer(toSocket, responseBuffer);
+    char* contenidoLeido = buffer_unpack_string(responseBuffer);
+    buffer_destroy(responseBuffer);
+
+    return contenidoLeido;
 }
 
 /*------------------------------------------------------------------------- ESPERAR KERNEL ----------------------------------------------------------------------------- */
@@ -470,7 +603,7 @@ int devolver_posicion_fcb_en_la_lista(char* nombre_archivo) {
     return posicion_fcb;
 }
 
-void devolver_cantidad_bytes_en_array(uint32_t cantidad_bytes, uint32_t* array_bytes, uint32_t block_size) {
+void convertir_cantidad_bytes_en_array(uint32_t cantidad_bytes, uint32_t* array_bytes, uint32_t block_size) {
     
     uint32_t bytes_restantes = cantidad_bytes % block_size;
     int cantidad_block_size_repetido = cantidad_bytes / block_size;
@@ -480,4 +613,48 @@ void devolver_cantidad_bytes_en_array(uint32_t cantidad_bytes, uint32_t* array_b
     }
 
     array_bytes[cantidad_block_size_repetido] = bytes_restantes; // LA POSICION FINAL GUARDO EL RESTO DE BYTES QUE QUEDAN
+}
+
+char** convertir_cadena_caracteres_en_array(char* cadena_recibida, uint32_t cantidad_bytes, uint32_t block_size) {
+    
+    uint32_t division_entera = cantidad_bytes / block_size;
+    uint32_t resto = cantidad_bytes % block_size;
+    int tamano_resultado = division_entera + (resto > 0 ? 1 : 0);
+
+    char** array = malloc(tamano_resultado * sizeof(char*));
+
+    for (uint32_t i = 0; i < tamano_resultado; i++) {
+        array[i] = malloc((block_size + 1) * sizeof(char));
+        strncpy(array[i], cadena_recibida + i * block_size, block_size);
+        array[i][block_size] = '\0';
+    }
+
+    if (resto != 0) {
+        array[division_entera] = malloc((resto + 1) * sizeof(char));
+        strncpy(array[division_entera], cadena_recibida + division_entera * block_size, resto);
+        array[division_entera][resto] = '\0';
+    }
+
+    return array;
+}
+
+void liberar_memoria_array_caracteres(char** array_caracteres) {
+
+    int longitud = obtener_longitud_array_caracteres(array_caracteres);
+
+    for (int i = 0; i < longitud; i++) {
+        free(array_caracteres[i]);
+    }
+
+    free(array_caracteres);
+}
+
+int obtener_longitud_array_caracteres(char** array_caracteres) {
+    int longitud = 0;
+
+    while (array_caracteres[longitud] != NULL) {
+        longitud++;
+    }
+
+    return longitud;
 }

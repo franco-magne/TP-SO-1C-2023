@@ -7,19 +7,20 @@ t_filesystem* fs;
 
 int main() {
    
+   /*------------------------------------------------------------------------- INICIO DE FILESYSTEM ----------------------------------------------------------------------------- */
+
    fs = malloc(sizeof(t_filesystem));
    fs_logger = log_create(FS_LOG_UBICACION, FS_PROCESS_NAME, true, LOG_LEVEL_INFO);
    fs_config = config_create(FS_CONFIG_UBICACION);
    superbloque_config = config_create(FS_SUPERBLOQUE_UBICACION);
 
-   cargar_t_filesystem(fs_config, superbloque_config, fs);
+   cargar_t_filesystem(fs_config, superbloque_config, fs);   
    fs->logger = fs_logger;
-   //log_info(fs->logger, "FILESYSTEM iniciado");
    imprimir_file_system();
 
 
-   ///////////////////////////////// CONECTARSE A MEMORIA //////////////////////////////
-
+   // ------------------------------------------------------------------------ CONECTARSE A MEMORIA ----------------------------------------------------------------------------
+   
    int fsSocketMemoria = conectar_a_servidor(fs->ip_memoria, fs->puerto_memoria);
    if (fsSocketMemoria == -1) {
 
@@ -27,12 +28,15 @@ int main() {
       log_destroy(fs->logger);
 
       return -2;
-   }   
+   }  
+
    stream_send_empty_buffer(fsSocketMemoria,HANDSHAKE_fileSystem);
 
    log_info(fs->logger, "Conexion con MEMORIA establecida");
    fs->socket_memoria = fsSocketMemoria;   
   
+
+   // ---------------------------------------------------------------- INICIO DE ESTRUCTURAS ADMINISTRATIVAS -------------------------------------------------------------------
 
    crear_directorios(fs);
    levantar_bitmap(fs);
@@ -40,13 +44,15 @@ int main() {
    levantar_archivo_de_bloques(fs);
    
 
-   ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////
+   // ---------------------------------------------------------------------- CREA SERVIDOR PARA KERNEL --------------------------------------------------------------------------
    
    int serverFS = iniciar_servidor(fs->ip_memoria, fs->puerto_escucha);
    log_info(fs->logger, "Servidor FILESYSTEM listo para recibir a KERNEL...");
    
    while (fs_escuchando_en(serverFS, fs));
 
+
+   // -------------------------------------------------------------------------- FIN DE FILESYSTEM ------------------------------------------------------------------------------
 
    config_destroy(fs_config);
    config_destroy(superbloque_config);
