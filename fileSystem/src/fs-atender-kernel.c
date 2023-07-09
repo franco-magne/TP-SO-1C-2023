@@ -31,7 +31,8 @@ void atender_kernel(t_filesystem* fs) {
             case HEADER_Compactacion:
 
                 log_info(fs->logger, "Recibo operacion COMPACTACION");
-                stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // FALLO EN EL TRUNCATE
+                stream_recv_empty_buffer(fs->socket_kernel);
+                stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); 
                 
             break;
 
