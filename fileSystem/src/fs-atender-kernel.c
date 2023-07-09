@@ -10,13 +10,7 @@ void atender_kernel(t_filesystem* fs) {
 
     int operacion_OK = 0;
     lista_fcbs = list_create();
-    levantar_fcbs_del_directorio(fs, lista_fcbs);
-
-    // PARA PRUEBAS RAPIDAS
-    
-        crear_archivo("Consoles", fs);
-        abrir_archivo_fs("Consoles", fs);
-        truncar_archivo("Consoles", 512, fs);    
+    levantar_fcbs_del_directorio(fs, lista_fcbs); 
 
     while (fs->socket_kernel != -1) {
         
