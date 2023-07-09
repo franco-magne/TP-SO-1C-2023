@@ -13,12 +13,10 @@ void atender_kernel(t_filesystem* fs) {
     levantar_fcbs_del_directorio(fs, lista_fcbs);
 
     // PARA PRUEBAS RAPIDAS
-    /*
-        crear_archivo("NotasSO", fs);
-        abrir_archivo_fs("NotasSO", fs);
-        truncar_archivo("NotasSO", 512, fs);
-        escribir_archivo("NotasSO", 4, 32, 2, fs);
-    */    
+    
+        crear_archivo("Consoles", fs);
+        abrir_archivo_fs("Consoles", fs);
+        truncar_archivo("Consoles", 512, fs);    
 
     while (fs->socket_kernel != -1) {
         
@@ -26,14 +24,7 @@ void atender_kernel(t_filesystem* fs) {
         uint8_t header = stream_recv_header(fs->socket_kernel); // RECIBO LA OPERACION QUE KERNEL QUIERA SOLICITAR        
         pthread_mutex_lock(&mutexTest);
 
-        switch(header) {
-
-            case HEADER_Compactacion:
-
-                log_info(fs->logger, "Recibo operacion COMPACTACION");
-                stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // FALLO EN EL TRUNCATE
-                
-            break;
+        switch(header) {            
 
             case HEADER_f_open:                
                                         
@@ -152,6 +143,14 @@ void atender_kernel(t_filesystem* fs) {
                 free(nombre_archivo_write);
                 buffer_destroy(bufferWrite);
 
+            break;
+
+            case HEADER_Compactacion:
+
+                log_info(fs->logger, "Recibo operacion COMPACTACION");
+                stream_recv_empty_buffer(fs->socket_kernel);
+                stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); 
+                
             break;
 
             default:
@@ -292,25 +291,29 @@ t_fcb* ampliar_tamanio_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tam
         fcb_a_truncar->puntero_directo = bloque_libre;
         cant_bloques_necesarios--;
 
-        log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <1> - Bloque File System <%d>\e[0m", nombre_archivo_truncate, bloque_libre);
+        log_info(fs->logger, GREEN "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <1> - Bloque File System <%d>", nombre_archivo_truncate, bloque_libre);
     }
+    
+    if (nuevo_tamanio_archivo > fs->block_size) {
 
-    // PUNTERO INDIRECTO Y BLOQUE DE PUNTEROS
-    for (uint32_t i = 0; i < cant_bloques_necesarios; i++) {
+        // PUNTERO INDIRECTO Y BLOQUE DE PUNTEROS
+        for (uint32_t i = 0; i <= cant_bloques_necesarios; i++) {
         
-        buscar_bloque_libre(fs, &bloque_libre);
-        if (fcb_a_truncar->puntero_indirecto == 0) {
-            fcb_a_truncar->puntero_indirecto = bloque_libre;
+            buscar_bloque_libre(fs, &bloque_libre);
+            if (fcb_a_truncar->puntero_indirecto == 0) {
+                fcb_a_truncar->puntero_indirecto = bloque_libre;
+            }
+
+            uint32_t* nuevo_bloque = malloc(sizeof(uint32_t)); // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO -- VALGRIND: 16 BYTES PERDIDOS
+            *nuevo_bloque = bloque_libre; // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO
+            list_add(fcb_a_truncar->bloques, nuevo_bloque);
+            
+            uint32_t puntero_numero_X = list_size(fcb_a_truncar->bloques) - 1; // RESTO UNO PORQUE NO TENGO QUE COPIAR EL PUNTERO INDIRECTO EN EL ARCHIVO DE BLOQUES
+            escribir_bloque_de_punteros_en_puntero_indirecto(fcb_a_truncar->puntero_indirecto, puntero_numero_X, nuevo_bloque, fs->block_size);
+
+            log_info(fs->logger, GREEN "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>", nombre_archivo_truncate, (list_size(fcb_a_truncar->bloques) + 1), bloque_libre);
         }
 
-        uint32_t* nuevo_bloque = malloc(sizeof(uint32_t)); // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO -- VALGRIND: 16 BYTES PERDIDOS
-        *nuevo_bloque = bloque_libre; // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO
-        list_add(fcb_a_truncar->bloques, nuevo_bloque);
-        
-        uint32_t puntero_numero_X = list_size(fcb_a_truncar->bloques) - 1; // RESTO UNO PORQUE NO TENGO QUE COPIAR EL PUNTERO INDIRECTO EN EL ARCHIVO DE BLOQUES
-        escribir_bloque_de_punteros_en_puntero_indirecto(fcb_a_truncar->puntero_indirecto, puntero_numero_X, nuevo_bloque, fs->block_size);
-
-        log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo_truncate, (list_size(fcb_a_truncar->bloques) + 1), bloque_libre);
     }
 
     char* retorno_ampliar = realloc(fcb_a_truncar->tamanio_archivo, (longitud_nueva + 1) * sizeof(char));
@@ -321,12 +324,7 @@ t_fcb* ampliar_tamanio_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tam
         strcpy(fcb_a_truncar->tamanio_archivo, nuevo_tamanio_en_char );
     }
     
-    config_set_value(fcb_a_truncar->fcb_config, "NOMBRE_ARCHIVO", fcb_a_truncar->nombre_archivo);
-    config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", fcb_a_truncar->tamanio_archivo);
-    config_set_value( fcb_a_truncar->fcb_config, "PUNTERO_DIRECTO", string_itoa(fcb_a_truncar->puntero_directo) ); // VALGRIND: 7 BYTES PERDIDOS
-    config_set_value( fcb_a_truncar->fcb_config, "PUNTERO_INDIRECTO", string_itoa(fcb_a_truncar->puntero_indirecto) ); // VALGRIND: 7 BYTES PERDIDOS
-    config_save(fcb_a_truncar->fcb_config);
-
+    persistir_fcb_config(fcb_a_truncar);
     free(nuevo_tamanio_en_char);
 
     return fcb_a_truncar;
@@ -397,169 +395,271 @@ t_fcb* reducir_tamanio_archivo(char* nombre_archivo_truncate, uint32_t nuevo_tam
         fcb_a_truncar->puntero_indirecto = 0;
     }
 
-    config_set_value(fcb_a_truncar->fcb_config, "NOMBRE_ARCHIVO", fcb_a_truncar->nombre_archivo);
-    config_set_value(fcb_a_truncar->fcb_config, "TAMANIO_ARCHIVO", fcb_a_truncar->tamanio_archivo);            
-    config_set_value( fcb_a_truncar->fcb_config, "PUNTERO_DIRECTO", string_itoa(fcb_a_truncar->puntero_directo) ); // VALGRIND: 2 BYTES PERDIDOS
-    config_set_value( fcb_a_truncar->fcb_config, "PUNTERO_INDIRECTO", string_itoa(fcb_a_truncar->puntero_indirecto) ); // VALGRIND: 2 BYTES PERDIDOS
-    config_save(fcb_a_truncar->fcb_config);
+    persistir_fcb_config(fcb_a_truncar);
 
     free(nuevo_tamanio_en_char);
 
     return fcb_a_truncar;
 }
 
+void persistir_fcb_config(t_fcb* fcb_truncado) {
+
+    config_set_value(fcb_truncado->fcb_config, "NOMBRE_ARCHIVO", fcb_truncado->nombre_archivo);
+    config_set_value(fcb_truncado->fcb_config, "TAMANIO_ARCHIVO", fcb_truncado->tamanio_archivo);            
+    config_set_value( fcb_truncado->fcb_config, "PUNTERO_DIRECTO", string_itoa(fcb_truncado->puntero_directo) ); // VALGRIND: BYTES PERDIDOS
+    config_set_value( fcb_truncado->fcb_config, "PUNTERO_INDIRECTO", string_itoa(fcb_truncado->puntero_indirecto) ); // VALGRIND: BYTES PERDIDOS
+    config_save(fcb_truncado->fcb_config);
+}
+
 /*------------------------------------------------------------------------- F_READ ----------------------------------------------------------------------------- */
 
-int leer_archivo(char* nombre_archivo_read, uint32_t direccion_fisica, uint32_t cant_bytes_a_leer, uint32_t puntero_proceso, t_filesystem* fs) {
+void leer_archivo(char* nombre_archivo_read, uint32_t direccion_fisica, uint32_t cant_bytes_a_leer, uint32_t puntero_proceso, t_filesystem* fs) {
 
-    int cant_bloques_a_leer = (int)ceil(cant_bytes_a_leer / fs->block_size);
-    int posicion_fcb_a_leer= devolver_posicion_fcb_en_la_lista(nombre_archivo_read);
-    t_fcb* fcb_a_leer = list_get(lista_fcbs, posicion_fcb_a_leer);
+    char* cadena_leida;
+    int posicion_fcb_a_leer = devolver_posicion_fcb_en_la_lista(nombre_archivo_read);
+    t_fcb* fcb_a_leer = list_get(lista_fcbs, posicion_fcb_a_leer); 
 
-    char* cadena_final =  malloc(cant_bytes_a_leer + 1);
-    
-    if (cant_bloques_a_leer > 1) {
-        
-        uint32_t bytes_en_array[cant_bloques_a_leer];
-        convertir_cantidad_bytes_en_array(cant_bytes_a_leer, bytes_en_array, fs->block_size);
+    if (cant_bytes_a_leer <= fs->block_size) {
 
-        for (int i = 0; i < cant_bloques_a_leer; i++) {
+        cadena_leida = leer_archivo_bytes_menor_a_block_size(cant_bytes_a_leer, puntero_proceso, direccion_fisica, fcb_a_leer, fs);
+        enviar_informacion_a_memoria(direccion_fisica, cadena_leida, fs);
 
-            char* cadena_aux = malloc(bytes_en_array[i]);
-            uint32_t* bloque_lectura = (uint32_t*)list_get( fcb_a_leer->bloques, (puntero_proceso + 1 + i) ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO
-            
-            log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo_read, (puntero_proceso + 1 + i), (*bloque_lectura));
-            strcpy(cadena_aux, leer_puntero_del_archivo_de_bloques((*bloque_lectura), bytes_en_array[i], fs));
-            string_append(&cadena_final, cadena_aux);
-
-            intervalo_de_pausa(fs->retardo_accesos);
-            free(cadena_aux);
-        }
-
-        // REALIZAR ACA EL ENVIO DE CADENA_FINAL A MEMORIA Y ESPERAR SU RESPUESTA.
-
-
-        
     } else {
 
-        uint32_t* bloque_lectura = (uint32_t*)list_get( fcb_a_leer->bloques, (puntero_proceso + 1) ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO
+        cadena_leida = leer_archivo_bytes_mayor_a_block_size(cant_bytes_a_leer, puntero_proceso, direccion_fisica, fcb_a_leer, fs);
+        enviar_informacion_a_memoria(direccion_fisica, cadena_leida, fs);
 
-        log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo_read, (puntero_proceso + 1), (*bloque_lectura));
-        strcpy(cadena_final, leer_puntero_del_archivo_de_bloques((*bloque_lectura), cant_bytes_a_leer, fs));
-        
+    }
+    
+    log_info(fs->logger, "Archivo <%s, %d, %d> leido correctamente", nombre_archivo_read, direccion_fisica, cant_bytes_a_leer); 
+
+    free(cadena_leida);
+}
+
+char* leer_archivo_bytes_menor_a_block_size(uint32_t cant_bytes, uint32_t puntero, uint32_t direccion_fisica, t_fcb* fcb_a_leer, t_filesystem* fs) {
+
+    int posicion_puntero = puntero / fs->block_size;
+    char* cadena_final =  malloc(cant_bytes + 1);
+
+    if (posicion_puntero == 0) {
+
+        uint32_t bloque_lectura = fcb_a_leer->puntero_directo;
+        log_info(fs->logger, GREEN "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>", fcb_a_leer->nombre_archivo, posicion_puntero, bloque_lectura);
+        strcpy(cadena_final, leer_puntero_del_archivo_de_bloques(bloque_lectura, cant_bytes, fs));
+
         intervalo_de_pausa(fs->retardo_accesos);
 
-        // REALIZAR ACA EL ENVIO DE CADENA_FINAL A MEMORIA Y ESPERAR SU RESPUESTA.
+    } else {
 
+        log_info(fs->logger, "Accediendo al bloque de punteros...");
+        intervalo_de_pausa(fs->retardo_accesos);
 
+        uint32_t* bloque_lectura = (uint32_t*)list_get( fcb_a_leer->bloques, posicion_puntero );
+        log_info(fs->logger, GREEN "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>", fcb_a_leer->nombre_archivo, posicion_puntero, (*bloque_lectura));
+        strcpy(cadena_final, leer_puntero_del_archivo_de_bloques((*bloque_lectura), cant_bytes, fs));
+
+        intervalo_de_pausa(fs->retardo_accesos);
 
     }
 
-    log_info(fs->logger, "Leer Archivo: <%s> - Puntero: <%d> - Memoria: <%d> - Tamaño: <%d>", nombre_archivo_read, puntero_proceso, direccion_fisica, cant_bytes_a_leer);
+    log_info(fs->logger, GREEN "Leer Archivo: <%s> - Puntero: <%d> - Memoria: <%d> - Tamaño: <%d>", fcb_a_leer->nombre_archivo, puntero, direccion_fisica, cant_bytes);    
 
-    return 1;
+    return cadena_final;
 }
+
+char* leer_archivo_bytes_mayor_a_block_size(uint32_t cant_bytes, uint32_t puntero, uint32_t direccion_fisica, t_fcb* fcb_a_leer, t_filesystem* fs) {
+
+    int first_time = 1;
+    char* cadena_final =  malloc(cant_bytes + 1);
+    int posicion_puntero = puntero / fs->block_size;
+    int cant_bloques_a_leer = (int)ceil(cant_bytes / fs->block_size);
+
+    uint32_t bytes_en_array[cant_bytes];
+    convertir_cantidad_bytes_en_array(cant_bytes, bytes_en_array, fs->block_size);
+
+    for (int i = 0; i < cant_bloques_a_leer; i++) {
+
+        char* cadena_aux = malloc(bytes_en_array[i]);
+
+        if (posicion_puntero == 0) {
+
+            uint32_t bloque_lectura = fcb_a_leer->puntero_directo;
+            log_info(fs->logger, GREEN "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>", fcb_a_leer->nombre_archivo, posicion_puntero, bloque_lectura);
+            strcpy(cadena_aux, leer_puntero_del_archivo_de_bloques(bloque_lectura, bytes_en_array[i], fs));
+            string_append(&cadena_final, cadena_aux);
+            
+            intervalo_de_pausa(fs->retardo_accesos);
+            log_info(fs->logger, GREEN "Leer Archivo: <%s> - Puntero: <%d> - Memoria: <%d> - Tamaño: <%d>", fcb_a_leer->nombre_archivo, posicion_puntero, direccion_fisica, bytes_en_array[i]);
+
+        } else {
+
+            if (first_time) {
+                log_info(fs->logger, "Accediendo al bloque de punteros...");
+                intervalo_de_pausa(fs->retardo_accesos);
+                first_time = 0;
+            }
+
+            uint32_t* bloque_lectura = (uint32_t*)list_get( fcb_a_leer->bloques, puntero );
+            log_info(fs->logger, GREEN "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>", fcb_a_leer->nombre_archivo, posicion_puntero, (*bloque_lectura));
+            strcpy(cadena_aux, leer_puntero_del_archivo_de_bloques((*bloque_lectura), bytes_en_array[i], fs));
+            string_append(&cadena_final, cadena_aux);
+            
+            intervalo_de_pausa(fs->retardo_accesos);
+            log_info(fs->logger, GREEN "Leer Archivo: <%s> - Puntero: <%d> - Memoria: <%d> - Tamaño: <%d>", fcb_a_leer->nombre_archivo, posicion_puntero, direccion_fisica, bytes_en_array[i]);
+
+        }
+        
+        posicion_puntero++;
+        free(cadena_aux);
+    }
+
+    return cadena_final;
+}
+
+void enviar_informacion_a_memoria(uint32_t direccion_fisica, char* cadena_leida, t_filesystem* fs) {
+
+    t_buffer* bufferMemoria = buffer_create();
+
+    log_info(fs->logger, "Realizando envio de la cadena leida a MEMORIA...");
+    buffer_pack(bufferMemoria, &direccion_fisica, sizeof(direccion_fisica));
+    buffer_pack_string(bufferMemoria, cadena_leida);
+    stream_send_buffer(fs->socket_memoria, HEADER_f_read, bufferMemoria);
+    buffer_destroy(bufferMemoria);
+
+    log_info(fs->logger, "Se envia a MEMORIA la cadena <%s>", cadena_leida);
+    log_info(fs->logger, "Esperando finalizacion de MEMORIA...");
+
+    uint8_t header_respuesta_memoria = stream_recv_header(fs->socket_memoria);
+    
+    if (header_respuesta_memoria == HANDSHAKE_ok_continue) {
+        log_info(fs->logger, "MEMORIA termino la escritura en la direccion fisica <%d>", direccion_fisica);
+    }
+
+}
+
+// xxd -b -l 10 bitmap.dat 
 
 /*------------------------------------------------------------------------- F_WRITE ----------------------------------------------------------------------------- */
 
-int escribir_archivo(char* nombre_archivo_write, uint32_t direccion_fisica, uint32_t cant_bytes_a_escribir, uint32_t puntero_proceso, t_filesystem* fs) {
+void escribir_archivo(char* nombre_archivo_write, uint32_t direccion_fisica, uint32_t cant_bytes_a_escribir, uint32_t puntero_proceso, t_filesystem* fs) {
 
     char* respuesta_memoria = malloc(cant_bytes_a_escribir);
-    //char* respuesta_memoria = malloc(strlen("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz") + 1); 
-    //strcpy(respuesta_memoria, "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
-    //char* respuesta_memoria = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz";
-    int cant_bloques_a_escribir = (int)ceil(cant_bytes_a_escribir / fs->block_size);
-    int posicion_fcb_a_escribir= devolver_posicion_fcb_en_la_lista(nombre_archivo_write);
-    t_fcb* fcb_a_escribir = list_get(lista_fcbs, posicion_fcb_a_escribir);
+    respuesta_memoria = pedir_informacion_a_memoria(fs->socket_memoria, direccion_fisica, fs);
 
-    respuesta_memoria = filesystem_fwrite_en_memoria(fs->socket_memoria, direccion_fisica);
+    int posicion_fcb_a_escribir = devolver_posicion_fcb_en_la_lista(nombre_archivo_write);
+    t_fcb* fcb_a_escribir = list_get(lista_fcbs, posicion_fcb_a_escribir); 
 
-    if (cant_bloques_a_escribir > 1) {
-        
-        uint32_t bytes_en_array[cant_bloques_a_escribir];
-        char** cadena_array = convertir_cadena_caracteres_en_array(respuesta_memoria, cant_bytes_a_escribir, fs->block_size);
+    if (cant_bytes_a_escribir <= fs->block_size) {
 
-        convertir_cantidad_bytes_en_array(cant_bytes_a_escribir, bytes_en_array, fs->block_size);
-
-        for (int i = 0; i < cant_bloques_a_escribir; i++) {
-            
-            uint32_t* bloque_escritura = (uint32_t*)list_get( fcb_a_escribir->bloques, (puntero_proceso + 1 + i) ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO
-            log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo_write, (puntero_proceso + 1 + i), (*bloque_escritura));
-            escribir_en_puntero_del_archivo_de_bloques((*bloque_escritura), bytes_en_array[i], cadena_array[i], fs);
-
-            intervalo_de_pausa(fs->retardo_accesos);
-        }
-
-        liberar_memoria_array_caracteres(cadena_array);
+        escribir_archivo_bytes_menor_a_block_size(cant_bytes_a_escribir, puntero_proceso, direccion_fisica, fcb_a_escribir, fs, respuesta_memoria);
 
     } else {
 
-        uint32_t* bloque_escritura = (uint32_t*)list_get( fcb_a_escribir->bloques, (puntero_proceso + 1) ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO
+        escribir_archivo_bytes_mayor_a_block_size(cant_bytes_a_escribir, puntero_proceso, direccion_fisica, fcb_a_escribir, fs, respuesta_memoria);
 
-        log_info(fs->logger, "\e[1;92mAcceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>\e[0m", nombre_archivo_write, (puntero_proceso + 1), (*bloque_escritura));
-        escribir_en_puntero_del_archivo_de_bloques((*bloque_escritura), cant_bytes_a_escribir, respuesta_memoria, fs);
+    }
+
+    log_info(fs->logger, "Archivo <%s, %d, %d> escrito correctamente", nombre_archivo_write, direccion_fisica, cant_bytes_a_escribir); 
+
+    free(respuesta_memoria);
+}
+
+void escribir_archivo_bytes_menor_a_block_size(uint32_t cant_bytes, uint32_t puntero, uint32_t direccion_fisica, t_fcb* fcb_a_escribir, t_filesystem* fs, char* respuesta_memoria) {
+
+    int posicion_puntero = puntero / fs->block_size;
+
+    if (posicion_puntero == 0) { // ESCRIBO EN EL PUNTERO DIRECTO        
+
+        uint32_t bloque_escritura = fcb_a_escribir->puntero_directo;
+        log_info(fs->logger, GREEN "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>", fcb_a_escribir->nombre_archivo, posicion_puntero, bloque_escritura);
+        escribir_en_puntero_del_archivo_de_bloques(bloque_escritura, cant_bytes, respuesta_memoria, fs);
+
+        intervalo_de_pausa(fs->retardo_accesos);
+
+    } else { // ESCRIBO EN EL PUNTERO PASADO CONTENIDO EN EL PUNTERO INDIRECTO
+
+        log_info(fs->logger, "Accediendo al bloque de punteros...");
+        intervalo_de_pausa(fs->retardo_accesos);
+
+        uint32_t* bloque_escritura = (uint32_t*)list_get( fcb_a_escribir->bloques, posicion_puntero ); // LE SUMO UNO PORQUE EN LA POSICION CERO ESTA EL PUNTERO INDIRECTO ---> (posicion_puntero + 1)
+        log_info(fs->logger, GREEN "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>", fcb_a_escribir->nombre_archivo, posicion_puntero, (*bloque_escritura));
+        escribir_en_puntero_del_archivo_de_bloques((*bloque_escritura), cant_bytes, respuesta_memoria, fs);
 
         intervalo_de_pausa(fs->retardo_accesos);
     }
-
-    log_info(fs->logger, "Escribir Archivo: <%s> - Puntero: <%d> - Memoria: <%d> - Tamaño: <%d>", nombre_archivo_write, puntero_proceso, direccion_fisica, cant_bytes_a_escribir);
-
-    free(respuesta_memoria);
-
-    return 1;
+    
+    log_info(fs->logger, GREEN "Escribir Archivo: <%s> - Puntero: <%d> - Memoria: <%d> - Tamaño: <%d>", fcb_a_escribir->nombre_archivo, posicion_puntero, direccion_fisica, cant_bytes);
 }
 
-void pedir_informacion_a_memoria(uint32_t direccion_fisica, uint32_t cant_bytes_necesarios, t_filesystem* fs, char** respuesta_memoria) {
+void escribir_archivo_bytes_mayor_a_block_size(uint32_t cant_bytes, uint32_t puntero, uint32_t direccion_fisica, t_fcb* fcb_a_escribir, t_filesystem* fs, char* respuesta_memoria) {
 
-    t_buffer* bufferMemoria = buffer_create();
-    t_buffer* buffer_respuesta_memoria = buffer_create();
+    int first_time = 1;
+    int posicion_puntero = puntero / fs->block_size;
+    int cant_bloques_a_escribir = (int)ceil(cant_bytes / fs->block_size);
 
+    uint32_t bytes_en_array[cant_bloques_a_escribir];
+    convertir_cantidad_bytes_en_array(cant_bytes, bytes_en_array, fs->block_size);
+
+    char** cadena_array = convertir_cadena_caracteres_en_array(respuesta_memoria, cant_bytes, fs->block_size); 
+
+    for (int i = 0; i < cant_bloques_a_escribir; i++) {
+
+        if (posicion_puntero == 0) {
+
+            uint32_t bloque_escritura = fcb_a_escribir->puntero_directo;
+            log_info(fs->logger, GREEN "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>", fcb_a_escribir->nombre_archivo, posicion_puntero, bloque_escritura);
+            
+            escribir_en_puntero_del_archivo_de_bloques(bloque_escritura, bytes_en_array[i], cadena_array[i], fs);
+            intervalo_de_pausa(fs->retardo_accesos);
+            log_info(fs->logger, GREEN "Escribir Archivo: <%s> - Puntero: <%d> - Memoria: <%d> - Tamaño: <%d>", fcb_a_escribir->nombre_archivo, posicion_puntero, direccion_fisica, bytes_en_array[i]);
+       
+        } else {
+
+            if (first_time) {
+                log_info(fs->logger, "Accediendo al bloque de punteros...");
+                intervalo_de_pausa(fs->retardo_accesos);
+                first_time = 0;
+            }
+
+            uint32_t* bloque_escritura = (uint32_t*)list_get( fcb_a_escribir->bloques, (posicion_puntero + i) );
+            log_info(fs->logger, GREEN "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%d>", fcb_a_escribir->nombre_archivo, posicion_puntero, (*bloque_escritura));
+            
+            escribir_en_puntero_del_archivo_de_bloques((*bloque_escritura), bytes_en_array[i], cadena_array[i], fs);
+            intervalo_de_pausa(fs->retardo_accesos);
+            log_info(fs->logger, GREEN "Escribir Archivo: <%s> - Puntero: <%d> - Memoria: <%d> - Tamaño: <%d>", fcb_a_escribir->nombre_archivo, posicion_puntero, direccion_fisica, bytes_en_array[i]);
+
+        }
+
+        posicion_puntero++;
+    }
+
+    liberar_memoria_array_caracteres(cadena_array);
+}
+
+char* pedir_informacion_a_memoria(uint32_t direccion_fisica, uint32_t cant_bytes_necesarios, t_filesystem* fs) {    
 
     // ENVIO A MEMORIA LA DIRECCION FISICA Y CANTIDAD DE BYTES
 
+    t_buffer* bufferMemoria = buffer_create();
+
     buffer_pack(bufferMemoria, &direccion_fisica, sizeof(direccion_fisica));
-    //buffer_pack(bufferMemoria, &cant_bytes_necesarios, sizeof(cant_bytes_necesarios));
     stream_send_buffer(fs->socket_memoria, HEADER_f_write, bufferMemoria);    
     log_info(fs->logger, "Se envia la direccion y cantidad de bytes a MEMORIA");
-
+    
+    buffer_destroy(bufferMemoria);    
 
     // ESPERO LA RESPUESTA DE MEMORIA CON LO LEIDO
+
+    t_buffer* buffer_respuesta_memoria = buffer_create();
     
     log_info(fs->logger, "Esperando respuesta de MEMORIA...");
     stream_recv_buffer(fs->socket_memoria, buffer_respuesta_memoria);
-    *respuesta_memoria = buffer_unpack_string(buffer_respuesta_memoria);
-    log_info(fs->logger, "Recibo de MEMORIA: %s", (*respuesta_memoria));
+    char* respuesta_memoria = buffer_unpack_string(buffer_respuesta_memoria);
+    log_info(fs->logger, "Recibo de MEMORIA: %s", respuesta_memoria);
 
     buffer_destroy(buffer_respuesta_memoria);
-    buffer_destroy(bufferMemoria);    
-}
 
-
-void filesystem_fread_en_memoria(int toSocket, uint32_t dirFisica, char* contenidoAEscribir) {
-    t_buffer *buffer = buffer_create();
-    buffer_pack(buffer, &dirFisica, sizeof(dirFisica));
-    buffer_pack_string(buffer, contenidoAEscribir);
-    stream_send_buffer(toSocket, HEADER_f_read, buffer);
-    buffer_destroy(buffer);
-
-}
-
-char* filesystem_fwrite_en_memoria( int toSocket, uint32_t dirFisica) {
-
-    t_buffer *requestBuffer = buffer_create();
-
-    buffer_pack(requestBuffer, &dirFisica, sizeof(dirFisica));
-    stream_send_buffer(toSocket, HEADER_f_write, requestBuffer);
-    buffer_destroy(requestBuffer);
-
-    stream_recv_header(toSocket);
-    t_buffer *responseBuffer = buffer_create();
-
-    stream_recv_buffer(toSocket, responseBuffer);
-    char* contenidoLeido = buffer_unpack_string(responseBuffer);
-    buffer_destroy(responseBuffer);
-
-    return contenidoLeido;
+    return respuesta_memoria;
 }
 
 /*------------------------------------------------------------------------- ESPERAR KERNEL ----------------------------------------------------------------------------- */

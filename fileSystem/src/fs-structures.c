@@ -33,8 +33,6 @@ void levantar_bitmap(t_filesystem* fs) {
         fclose(bitmap_file);
     }
 
-    // void* blq = mmap();
-    // memcpy([bloque], offset: nro bloque + tamanio);    
 }
 
 void crear_bitmap(t_filesystem* fs) {
@@ -213,7 +211,7 @@ char* leer_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32_t byt
 
     if ( bitarray_test_bit(bitmap, puntero_acceder) == 1 ) {
 
-        log_info(fs->logger, "\e[1;92mAcceso a Bitmap - Bloque: <%d> - Estado: <%d>\e[0m", puntero_acceder, 1);
+        log_info(fs->logger, GREEN "Acceso a Bitmap - Bloque: <%d> - Estado: <%d>", puntero_acceder, 1);
         memcpy(cadena, map_bloques + posicion_puntero_a_leer_en_bytes, bytes_a_leer);
     }
 
@@ -226,7 +224,7 @@ void escribir_en_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32
 
     if ( bitarray_test_bit(bitmap, puntero_acceder) == 1 ) {
 
-        log_info(fs->logger, "\e[1;92mAcceso a Bitmap - Bloque: <%d> - Estado: <%d>\e[0m", puntero_acceder, 1);
+        log_info(fs->logger, GREEN "Acceso a Bitmap - Bloque: <%d> - Estado: <%d>", puntero_acceder, 1);
         memcpy(map_bloques + posicion_byte_a_escribir, cadena_a_escribir, bytes_a_escribir);
     }
 
@@ -246,7 +244,7 @@ t_list* recuperar_bloque_de_punteros(uint32_t puntero_indirecto, int tamanio_arc
     }
 
     int posicion_bitmap_a_acceder = puntero_indirecto + 1; // MAS UNO PORQUE QUIERO A PARTIR DEL SIGUIENTE BLOQUE DEL PUNTERO INDIRECTO
-    for (int i = 0; i < cant_bloques_a_recuperar; i++) {
+    for (int i = 0; i <= cant_bloques_a_recuperar; i++) {
 
         if ( bitarray_test_bit(bitmap, posicion_bitmap_a_acceder) == 1 ) {
 

@@ -45,20 +45,23 @@
     t_fcb* ampliar_tamanio_archivo(char* nombre_archivo, uint32_t nuevo_tamanio, t_filesystem* fs, int posicion_fcb);
     int puede_ampliar_tamanio(t_fcb* fcb_a_ampliar, uint32_t block_size, uint32_t nuevo_tamanio, uint32_t fcb_tamanio_actual);
     t_fcb* reducir_tamanio_archivo(char* nombre_archivo, uint32_t nuevo_tamanio, t_filesystem* fs, int posicion_fcb);
+    void persistir_fcb_config(t_fcb* fcb_truncado);
 
 
 /*------------------------------------------------------------------------- F_READ ----------------------------------------------------------------------------- */
 
-    int leer_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_leer, uint32_t puntero_proceso, t_filesystem* fs);
+    void leer_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_leer, uint32_t puntero_proceso, t_filesystem* fs);
+    char* leer_archivo_bytes_menor_a_block_size(uint32_t cant_bytes, uint32_t puntero, uint32_t direccion_fisica, t_fcb* fcb_a_leer, t_filesystem* fs);
+    char* leer_archivo_bytes_mayor_a_block_size(uint32_t cant_bytes, uint32_t puntero, uint32_t direccion_fisica, t_fcb* fcb_a_leer, t_filesystem* fs);
+    void enviar_informacion_a_memoria(uint32_t direccion_fisica, char* cadena_leida, t_filesystem* fs);
 
 
 /*------------------------------------------------------------------------- F_WRITE ----------------------------------------------------------------------------- */
 
-    int escribir_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_escribir, uint32_t puntero_proceso, t_filesystem* fs);
-    void pedir_informacion_a_memoria(uint32_t direccion_fisica, uint32_t cant_bytes_necesarios, t_filesystem* fs, char** respuesta_memoria);
-
-    void filesystem_fread_en_memoria(int toSocket, uint32_t dirFisica, char* contenidoAEscribir);
-    char* filesystem_fwrite_en_memoria( int toSocket, uint32_t dirFisica);
+    void escribir_archivo(char* nombre_archivo, uint32_t direccion_fisica, uint32_t cant_bytes_a_escribir, uint32_t puntero_proceso, t_filesystem* fs);
+    void escribir_archivo_bytes_menor_a_block_size(uint32_t cant_bytes, uint32_t puntero, uint32_t direccion_fisica, t_fcb* fcb_a_escribir, t_filesystem* fs, char* respuesta_memoria);
+    void escribir_archivo_bytes_mayor_a_block_size(uint32_t cant_bytes, uint32_t puntero, uint32_t direccion_fisica, t_fcb* fcb_a_escribir, t_filesystem* fs, char* respuesta_memoria);
+    char* pedir_informacion_a_memoria(uint32_t direccion_fisica, uint32_t cant_bytes_necesarios, t_filesystem* fs);
 
 
 /*------------------------------------------------------------------------- ESPERAR KERNEL ----------------------------------------------------------------------------- */
