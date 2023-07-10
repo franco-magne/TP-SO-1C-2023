@@ -18,7 +18,6 @@ void atender_peticiones_fileSystem(int socketFS) {
                 uint32_t desplazamiento_segmento;
                 
                 buffer_unpack(buffer, &base_segmento, sizeof(base_segmento));
-                buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
                 char* contenidoAEscribir;
                 contenidoAEscribir = buffer_unpack_string(buffer);
                 
@@ -29,6 +28,8 @@ void atender_peticiones_fileSystem(int socketFS) {
                 modificarSegmento(base_segmento, unSegmento);    //es un obtener-segmento con list_replace
                 pthread_mutex_unlock(&mutexListaDeSegmento);
                 log_info(memoriaLogger, "Contenido escrito : <%s> - En el segmento ID : <%i> ", contenidoAEscribir, segmento_get_id(unSegmento));
+                stream_send_empty_buffer(socketFS, HANDSHAKE_ok_continue);
+
                 break;
             }
             case HEADER_f_write:{
