@@ -58,11 +58,13 @@ uint32_t cpu_mmu(int toSocket, uint32_t direccionLogica, t_list* tablaDeSegmento
     int tamanioMaximoSegmento = cpu_config_get_tamanio_maximo_segmento(cpuConfig);
     uint32_t num_segmento  = floor(direccionLogica / tamanioMaximoSegmento);
     uint32_t desplazamiento_segmento = direccionLogica % tamanioMaximoSegmento;
-    
     t_segmento* segmento = obtener_base_segmento_num_segmento(tablaDeSegmento, num_segmento); // MODIFICARLA
+    if(num_segmento == 0){
+    segmento->base_del_segmento = 0;
+    }
     uint32_t baseDelSegmento = cpu_chequeo_base(toSocket, segmento->base_del_segmento, desplazamiento_segmento, HEADER_chequeo_DF);
     
-    if(baseDelSegmento == 0)
+    if(baseDelSegmento == -1)
     log_info(cpuLogger,BACKGROUND_RED BOLD YELLOW "PID: <%i> - Error SEG_FAULT- Segmento: <%i> - Offset: <%i> - Tamaño: <%i>" RESET,pid, num_segmento, desplazamiento_segmento, segmento->tamanio_de_segmento);
     
 

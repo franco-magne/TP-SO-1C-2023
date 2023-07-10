@@ -179,7 +179,7 @@ static char* cpu_fetch_operands(t_instruccion* nextInstruction, t_cpu_pcb* pcb)
     
     uint32_t direccionLogicaOrigen = instruccion_get_operando2(nextInstruction);
     uint32_t dirFisica = cpu_mmu(cpu_config_get_socket_memoria(cpuConfig), direccionLogicaOrigen, cpu_pcb_get_tabla_de_segmento(pcb), cpu_pcb_get_pid(cpu_pcb_create));
-    if(dirFisica == 0){
+    if(dirFisica == -1){
             return NULL;
     } else {
            char* fetchedValue = cpu_leer_en_memoria(cpu_config_get_socket_memoria(cpuConfig), dirFisica, pcb );
@@ -470,7 +470,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t cantidadByte = *((uint32_t*) operando3);
 
         uint32_t direccionFisica = cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),direccionLogica,cpu_pcb_get_tabla_de_segmento(pcb), cpu_pcb_get_pid(pcb));
-        if(direccionFisica != 0){
+        if(direccionFisica != -1){
             log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <F_READ> - <%s> - <%i> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo, cantidadByte, direccionLogica);
             cpu_pcb_set_program_counter(pcb, programCounterActualizado);
             cpu_pcb_set_nombre_archivo(pcb, nombreArchivo);
@@ -491,7 +491,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t cantidadByte = *((uint32_t*) operando3);
 
         uint32_t direccionFisica = cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),direccionLogica,cpu_pcb_get_tabla_de_segmento(pcb), cpu_pcb_get_pid(pcb));
-        if(direccionFisica != 0){
+        if(direccionFisica != -1){
             uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
             log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <F_WRITE> - <%s> - <%i> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo, cantidadByte, direccionLogica);
             intervalo_de_pausa(retardoInstruccion);
@@ -534,7 +534,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         char* contenidoAEnviar = get_registro_segun_tipo(registro, pcb);    
 
         uint32_t dirFisica = cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),dirLogica,cpu_pcb_get_tabla_de_segmento(pcb), cpu_pcb_get_pid(pcb));
-        if(dirFisica != 0){
+        if(dirFisica != -1){
             cpu_escribir_en_memoria(cpu_config_get_socket_memoria(cpuConfig) , dirFisica, contenidoAEnviar, pcb);
             uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
             log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <MOV_OUT> - <%i> - <%s>", cpu_pcb_get_pid(pcb), dirLogica,  t_registro_to_char(registro) );
