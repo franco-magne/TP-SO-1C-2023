@@ -709,6 +709,7 @@ char *pedir_informacion_a_memoria(uint32_t direccion_fisica, uint32_t cant_bytes
     t_buffer *buffer_respuesta_memoria = buffer_create();
 
     log_info(fs->logger, "Esperando respuesta de MEMORIA...");
+    stream_recv_header(fs->socket_memoria);
     stream_recv_buffer(fs->socket_memoria, buffer_respuesta_memoria);
     char *respuesta_memoria = buffer_unpack_string(buffer_respuesta_memoria);
     log_info(fs->logger, "Recibo de MEMORIA: %s", respuesta_memoria);

@@ -42,7 +42,7 @@ bool hueco_mas_pequenio(Segmento* unSegmento, Segmento* otroSegmento){
 bool hay_segmento_libre_de_ese_tamanio(Segmento* unSegmento,Segmento* otroSegmento){
  
  
-        if ( segmento_get_tamanio(unSegmento) > segmento_get_tamanio(otroSegmento) ){
+        if ( segmento_get_tamanio(unSegmento) >= segmento_get_tamanio(otroSegmento) ){
             return true;
         }
         return false;
