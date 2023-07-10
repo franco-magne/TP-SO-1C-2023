@@ -42,7 +42,7 @@ bool hueco_mas_pequenio(Segmento* unSegmento, Segmento* otroSegmento){
 bool hay_segmento_libre_de_ese_tamanio(Segmento* unSegmento,Segmento* otroSegmento){
  
  
-        if ( segmento_get_tamanio(unSegmento) > segmento_get_tamanio(otroSegmento) ){
+        if ( segmento_get_tamanio(unSegmento) >= segmento_get_tamanio(otroSegmento) ){
             return true;
         }
         return false;
@@ -269,8 +269,8 @@ void iniciar_compactacion(){
     Segmento* segmentoActual;
     Segmento* segmentoAnterior;
 
-    //uint32_t retardoInstruccion = memoria_config_get_retardo_compactacion(memoriaConfig);
-    //intervalo_de_pausa(retardoInstruccion);
+    uint32_t retardoInstruccion = memoria_config_get_retardo_compactacion(memoriaConfig);
+    intervalo_de_pausa(retardoInstruccion);
 
     for(int i = 1; i< list_size(listaDeSegmentos); i++){
         segmentoActual = list_get(listaDeSegmentos,i);
