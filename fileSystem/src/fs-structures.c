@@ -154,13 +154,13 @@ void buscar_bloque_libre(t_filesystem* fs, uint32_t* bloque_libre) {
 
     for (uint32_t i = 0; i < cant_bloques; i++) {
 
-        log_info(fs->logger, GREEN BOLD "Acceso a Bitmap - Bloque: <%d> - Estado: <%d>", i, bitarray_test_bit(bitmap, i));
+        log_info(fs->logger, GREEN BOLD "Acceso a Bitmap - Bloque: <%" PRIu32 "> - Estado: <%d>", i, bitarray_test_bit(bitmap, i));
 
         if (bitarray_test_bit(bitmap, i) != 1) { // O SEA SI ES CERO, SI EL BLOQUE ESTA LIBRE
             
             *bloque_libre = i;
             bitarray_set_bit(bitmap, i);
-            log_info(fs->logger, GREEN BOLD "Acceso a Bitmap - Bloque: <%d> - Estado: <%d>", i, bitarray_test_bit(bitmap, i));
+            log_info(fs->logger, GREEN BOLD "Acceso a Bitmap - Bloque: <%" PRIu32 "> - Estado: <%d>", i, bitarray_test_bit(bitmap, i));
 
             break;
         }
@@ -203,7 +203,7 @@ char* leer_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32_t byt
 
     if ( bitarray_test_bit(bitmap, puntero_acceder) == 1 ) {
 
-        log_info(fs->logger, GREEN BOLD "Acceso a Bitmap - Bloque: <%d> - Estado: <%d>", puntero_acceder, 1);
+        log_info(fs->logger, GREEN BOLD "Acceso a Bitmap - Bloque: <%" PRIu32 "> - Estado: <%d>", puntero_acceder, 1);
         memcpy(cadena, map_bloques + posicion_puntero_a_leer_en_bytes, bytes_a_leer);
     }
 
@@ -216,7 +216,7 @@ void escribir_en_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32
 
     if ( bitarray_test_bit(bitmap, puntero_acceder) == 1 ) {
 
-        log_info(fs->logger, GREEN BOLD "Acceso a Bitmap - Bloque: <%d> - Estado: <%d>", puntero_acceder, 1);
+        log_info(fs->logger, GREEN BOLD "Acceso a Bitmap - Bloque: <%" PRIu32 "> - Estado: <%d>", puntero_acceder, 1);
         memcpy(map_bloques + posicion_byte_a_escribir, cadena_a_escribir, bytes_a_escribir);
     }
 }
@@ -297,8 +297,8 @@ void mostrar_info_fcb(t_fcb* fcb_a_mostrar, t_log* logger) {
 
     log_info(logger, " ---> Nombre: %s", fcb_a_mostrar->nombre_archivo);
     log_info(logger, " ---> Tamanio: %s", fcb_a_mostrar->tamanio_archivo);
-    log_info(logger, " ---> Puntero directo: %d", fcb_a_mostrar->puntero_directo);
-    log_info(logger, " ---> Puntero indirecto: %d", fcb_a_mostrar->puntero_indirecto);    
+    log_info(logger, " ---> Puntero directo: %" PRIu32, fcb_a_mostrar->puntero_directo);
+    log_info(logger, " ---> Puntero indirecto: %" PRIu32 , fcb_a_mostrar->puntero_indirecto);    
 }
 
 void mostrar_bloques_fcb(t_list* bloques, t_log* logger, uint32_t puntero_directo) {
@@ -326,7 +326,11 @@ void mostrar_bloques_fcb(t_list* bloques, t_log* logger, uint32_t puntero_direct
 
     } else if (puntero_directo >= 0 && size_bloques == 0) {
 
-        log_info(logger, " ---> Bloques de datos: %s", string_itoa((int)puntero_directo));
+        char* puntero_directo_str = string_itoa(puntero_directo);
+
+        log_info(logger, " ---> Bloques de datos: %s", puntero_directo_str);
+
+        free(puntero_directo_str);
 
     } else {
 
@@ -443,7 +447,7 @@ void crear_directorios(t_filesystem* fs) {
 
     int resultado;
 
-    resultado = mkdir("/home/utnso/fs", 0777); // HARCODEADO. TENGO QUE CAMBIARLO
+    resultado = mkdir("/home/utnso/fs", 0777);      // RUTA PARA LA ENTREGA FINAL:     ./fs
     resultado = mkdir(fs->fcb_path, 0777);
 
     if (!resultado) {
@@ -467,7 +471,6 @@ void cargar_t_filesystem(t_config* config, t_config* sb_config, t_filesystem* fs
 
     fs->block_size = config_get_int_value(sb_config, "BLOCK_SIZE"); // DEL SUPERBLOQUE
     fs->block_count = config_get_int_value(sb_config, "BLOCK_COUNT"); // DEL SUPERBLOQUE
-
 }
 
 char* devolver_fcb_path_config(char* path_fcbs, char* nombre_archivo) {
