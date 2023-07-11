@@ -25,17 +25,28 @@ static double media_exponencial(double estimacionAnterior, double realAnterior) 
 double calcular_siguiente_estimacion(t_pcb* pcb) {
     struct timespec end;
     set_timespec(&end);
-    return responsable_ratio(
+
+    if(pcb_get_rafaga_anterior(pcb) == 0){
+        return responsable_ratio(
             obtener_diferencial_de_tiempo_en_milisegundos(end, pcb_get_tiempo_en_ready(pcb)),
-            media_exponencial( pcb_get_rafaga_actual(pcb), pcb_get_rafaga_anterior(pcb) )
+            pcb_get_estimacion_anterior(pcb)
     );
+    }
+    double valor = responsable_ratio(
+            obtener_diferencial_de_tiempo_en_milisegundos(end, pcb_get_tiempo_en_ready(pcb)),
+            media_exponencial( pcb_get_estimacion_anterior(pcb), pcb_get_rafaga_anterior(pcb) )
+    );
+
+
+    return valor;
+
 
 }
 
 static t_pcb* mayor_ratio(t_pcb* unPcb, t_pcb* otroPcb) {
     double unaRafagaRestante = calcular_siguiente_estimacion(unPcb);
     double otraRafagaRestante = calcular_siguiente_estimacion(otroPcb);
-
+        printf(RED BOLD"PCB <%f> - PCB <%f> \n" RESET,unaRafagaRestante,otraRafagaRestante);
     return unaRafagaRestante >= otraRafagaRestante
                ? unPcb
                : otroPcb;
@@ -48,11 +59,12 @@ t_pcb* elegir_pcb_segun_hhrn(t_estado* estado) {
     int cantidadPcbsEnLista = list_size(estado_get_list(estado));
     if (cantidadPcbsEnLista == 1) {
         pcbElecto = estado_desencolar_primer_pcb(estado);
-        pcb_set_estado_anterior(pcbElecto,pcb_get_rafaga_actual(pcbElecto));
+        pcb_set_estimacion_anterior(pcbElecto,media_exponencial( pcb_get_estimacion_anterior(pcbElecto), pcb_get_rafaga_anterior(pcbElecto)));
     } else if (cantidadPcbsEnLista > 1) {
         pcbElecto = list_get_minimum(estado_get_list(estado), (void*)mayor_ratio);
         estado_remover_pcb_de_cola(estado, pcbElecto);
-        pcb_set_estado_anterior(pcbElecto,pcb_get_rafaga_actual(pcbElecto));
+        pcb_set_estimacion_anterior(pcbElecto,media_exponencial( pcb_get_estimacion_anterior(pcbElecto), pcb_get_rafaga_anterior(pcbElecto)));
+
     }
     pthread_mutex_unlock(estado_get_mutex(estado));
     return pcbElecto;

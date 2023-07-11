@@ -181,7 +181,7 @@ void encolar_segmento_atomic_en_tablaDada(t_list* tablaDada, Segmento* targetSeg
 void sumar_memoriaRecuperada_a_tamMemoriaActual(uint32_t tamMemorRecuperada){
     pthread_mutex_lock(&mutexTamMemoriaActual);
     tamActualMemoria += tamMemorRecuperada;
-    log_info(memoriaLogger,BOLD CYAN  "TAMAÑO ACTUAL MEMORIA "RESET BOLD RED" <%i>", tamActualMemoria);
+    log_info(memoriaLogger,BOLD CYAN  "TAMAÑO ACTUAL MEMORIA "RESET BOLD GREEN" <%i>", tamActualMemoria);
 
     pthread_mutex_unlock(&mutexTamMemoriaActual);
 }
@@ -189,7 +189,7 @@ void sumar_memoriaRecuperada_a_tamMemoriaActual(uint32_t tamMemorRecuperada){
 void restar_a_tamMemoriaActual(uint32_t memoriaARestar){
     pthread_mutex_lock(&mutexTamMemoriaActual);
     tamActualMemoria -= memoriaARestar;
-    log_info(memoriaLogger,BOLD CYAN  "TAMAÑO ACTUAL MEMORIA "RESET BOLD GREEN" <%i>", tamActualMemoria);
+    log_info(memoriaLogger,BOLD CYAN  "TAMAÑO ACTUAL MEMORIA "RESET BOLD RED" <%i>", tamActualMemoria);
     pthread_mutex_unlock(&mutexTamMemoriaActual);
 }
 
