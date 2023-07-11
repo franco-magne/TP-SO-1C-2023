@@ -7,6 +7,7 @@ t_memoria_config* memoriaConfig;
 Segmento* segCompartido;
 t_list* listaDeSegmentos;
 void* memoriaPrincipal;
+uint32_t tamActualMemoria;
 
 static bool cpuSinAtender;
 static bool kernelSinAtender;
@@ -15,26 +16,28 @@ static pthread_t threadAntencionCpu;
 static pthread_t threadAntencionKernel;
 pthread_mutex_t mutexMemoriaData = PTHREAD_MUTEX_INITIALIZER;   //para controlar el flujo de atender-kernel/cpu/FS
 pthread_mutex_t mutexListaDeSegmento = PTHREAD_MUTEX_INITIALIZER;
-
+pthread_mutex_t mutexTamMemoriaActual = PTHREAD_MUTEX_INITIALIZER;
 int main() {
     imprimir_memoria();
     memoriaLogger = log_create(MEMORIA_LOG_UBICACION,MEMORIA_PROCESS_NAME,true,LOG_LEVEL_INFO);
     memoriaConfigInicial = config_create(MEMORIA_CONFIG_UBICACION);
     memoriaConfig = memoria_config_initializer(memoriaConfigInicial);
 
-    int tamanioMP = (int) memoria_config_get_tamanio_memoria(memoriaConfig); 
-    memoriaPrincipal = malloc(tamanioMP);
+    
+    tamActualMemoria = memoria_config_get_tamanio_memoria(memoriaConfig); 
+    memoriaPrincipal = malloc(tamActualMemoria);
     listaDeSegmentos = list_create();
     segCompartido = crear_segmento(memoria_config_get_tamanio_segmento_0(memoriaConfig));
     segmento_set_id(segCompartido,0);
     segmento_set_base(segCompartido,0);
-    segmento_set_limite(segCompartido, memoria_config_get_tamanio_segmento_0(memoriaConfig));
+    uint32_t limiteCompartido = memoria_config_get_tamanio_segmento_0(memoriaConfig) -1;
+    segmento_set_limite(segCompartido, limiteCompartido);
     segmento_set_bit_validez(segCompartido, 1);
     list_add(listaDeSegmentos, segCompartido);
     log_info(memoriaLogger,"Crear Segmento 0: <%i> - Base: <%i> - TAMAÑO: <%i> - LIMITE <%i>", segmento_get_id(segCompartido), segmento_get_base(segCompartido), segmento_get_tamanio(segCompartido), segmento_get_limite(segCompartido));
-    Segmento* segmentoUsuario = crear_segmento(tamanioMP - segmento_get_tamanio(segCompartido));
-    segmento_set_base(segmentoUsuario,  segmento_get_limite(segCompartido) );
-    segmento_set_limite(segmentoUsuario, segmento_get_base(segmentoUsuario) + segmento_get_tamanio(segmentoUsuario));
+    Segmento* segmentoUsuario = crear_segmento(tamActualMemoria - segmento_get_tamanio(segCompartido));
+    segmento_set_base(segmentoUsuario,  segmento_get_limite(segCompartido) + 1 );
+    segmento_set_limite(segmentoUsuario, segmento_get_base(segmentoUsuario) + segmento_get_tamanio(segmentoUsuario) );
     segmento_set_bit_validez(segmentoUsuario, 0);
     list_add_in_index(listaDeSegmentos,1, segmentoUsuario);
     log_info(memoriaLogger,"Crear Hueco Libre: <%i> - Base: <%i> - TAMAÑO: <%i> - LIMITE <%i>", segmento_get_id(segmentoUsuario), segmento_get_base(segmentoUsuario), segmento_get_tamanio(segmentoUsuario), segmento_get_limite(segmentoUsuario));

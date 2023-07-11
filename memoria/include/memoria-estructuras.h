@@ -74,6 +74,10 @@ void modificarSegmento(uint32_t baseSegmento, Segmento* segNuevo);
 Segmento* obtener_segmento_por_BASE(uint32_t base_segmento);
 
 void sumar_memoriaRecuperada_a_tamMemoriaActual(uint32_t tamMemorRecuperada);
+bool puedo_crear_proceso_o_segmento(uint32_t tamanio);
+void restar_a_tamMemoriaActual(uint32_t memoriaARestar);
+
+
 void liberar_tabla_segmentos(int pid);
 
 

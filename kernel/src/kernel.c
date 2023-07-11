@@ -146,8 +146,8 @@ void encolar_en_new_a_nuevo_proceso(int cliente){
         uint32_t newPid = obtener_siguiente_pid();
         t_pcb* newPcb = pcb_create(newPid); // Me rompe pcb_create()
         // LE SETEO LOS VALORES BASICOS
-        pcb_set_rafaga_actual(newPcb, kernel_config_get_estimacion_inicial(kernelConfig));
-        pcb_set_rafaga_anterior(newPcb, kernel_config_get_estimacion_inicial(kernelConfig));
+        pcb_set_estimacion_anterior(newPcb, kernel_config_get_estimacion_inicial(kernelConfig));
+        pcb_set_rafaga_anterior(newPcb, 0);
         pcb_set_instructions_buffer(newPcb, instructionsBufferCopy);
         
 
@@ -250,8 +250,7 @@ void* atender_pcb(void* args)
         
         struct timespec end;
         set_timespec(&end);
-
-        pcb_set_rafaga_actual( pcb,obtener_diferencial_de_tiempo_en_milisegundos(end,start) );
+        pcb_set_rafaga_anterior(pcb, obtener_diferencial_de_tiempo_en_milisegundos(end,start) );
 
         pcb = cpu_adapter_recibir_pcb_actualizado_de_cpu(pcb, cpuResponse, kernelConfig, kernelLogger); 
         
