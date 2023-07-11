@@ -250,6 +250,7 @@ void* atender_pcb(void* args)
         
         struct timespec end;
         set_timespec(&end);
+        
         pcb_set_rafaga_anterior(pcb, obtener_diferencial_de_tiempo_en_milisegundos(end,start) );
 
         pcb = cpu_adapter_recibir_pcb_actualizado_de_cpu(pcb, cpuResponse, kernelConfig, kernelLogger); 
