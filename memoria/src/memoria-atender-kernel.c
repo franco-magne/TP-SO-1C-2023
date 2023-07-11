@@ -62,6 +62,7 @@ void atender_peticiones_kernel(int socketKernel) {
                 pthread_mutex_unlock(&mutexListaDeSegmento);
 
                 if(memoriaRespuesta == HEADER_Compactacion){
+                    sumar_memoriaRecuperada_a_tamMemoriaActual(tamanio_de_segmento);
                     stream_send_empty_buffer(socketKernel,HEADER_Compactacion);
                     uint8_t respuestaDeKernel = stream_recv_header(socketKernel);
                     stream_recv_empty_buffer(socketKernel);

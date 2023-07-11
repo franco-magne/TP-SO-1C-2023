@@ -145,14 +145,13 @@ bool recurso_disponible(int posicion_recurso){
     return ( *(recursoConfig[posicion_recurso].instancias_recurso) > 0);
 }
 
-void devolver_recurso(int posicion_recurso){
 
+void asignar_recurso(int posicion_recurso){
     pthread_mutex_lock(&mutexCantidadRecursos);
-    *(recursoConfig[posicion_recurso].instancias_recurso) += 1;
+    *(recursoConfig[posicion_recurso].instancias_recurso) -= 1;
     pthread_mutex_unlock(&mutexCantidadRecursos);
 
 }
-
 
 bool instruccion_wait(t_pcb* pcb) {
     char* recursoUtilizado = pcb_get_recurso_utilizado(pcb);
@@ -164,6 +163,9 @@ bool instruccion_wait(t_pcb* pcb) {
             asignar_recurso(posicion_recurso);
             log_info(kernelLogger,BOLD UNDERLINE CYAN "PID: <%i> - Wait:"RESET BOLD GREEN" <%s> "RESET BOLD UNDERLINE CYAN"- Instancias: <%i> ",pcb_get_pid(pcb),  recursoConfig[posicion_recurso].recurso , *recursoConfig[posicion_recurso].instancias_recurso );    
         } else {
+            asignar_recurso(posicion_recurso);
+            log_info(kernelLogger, "RECURSO QUE SE BLOQUEA <%s> PCB <%i> ",recursoUtilizado,pcb->pid );
+            pcb_set_recurso_utilizado(pcb,recursoUtilizado);
             proceso_pasa_a_bloqueado(pcb,recursoConfig[posicion_recurso].recurso);
             return true;
         }
@@ -178,44 +180,46 @@ bool instruccion_wait(t_pcb* pcb) {
 
 ///////////////////////////////// INSTRUCCION SIGNAL //////////////////////////////
 
-bool pcb_esta_bloqueado_por_recurso(void* pcb){
-return (strcmp(pcb_get_recurso_utilizado(pcb), nombre_recurso) == 0);
+bool pcb_esta_bloqueado_por_recurso(void* pcb, void* pcb_aux){
+return (strcmp(pcb_get_recurso_utilizado(pcb),pcb_get_recurso_utilizado(pcb_aux)) == 0);
 }
 
 
-void asignar_recurso(int posicion_recurso){
+void devolver_recurso(int posicion_recurso){
+
     pthread_mutex_lock(&mutexCantidadRecursos);
-    *(recursoConfig[posicion_recurso].instancias_recurso) -= 1;
+    *(recursoConfig[posicion_recurso].instancias_recurso) += 1;
     pthread_mutex_unlock(&mutexCantidadRecursos);
 
 }
 
-
-t_pcb* primer_elemento_bloqueado_por_recurso(t_list* listaBloqueado, char* nombreRecurso){
-    
+t_pcb* primer_elemento_bloqueado_por_recurso(char* nombreRecurso) {
     t_pcb* pcb;
-    t_list* listAux = list_create();
-    listAux = listaBloqueado;
-    
+
     pthread_mutex_lock(&mutexNombreRecurso);
-    nombre_recurso = nombreRecurso;
+    t_pcb* pcb_aux = pcb_create(-1);
+    pcb_aux->recursoUtilizado = strdup(nombreRecurso); // Utilizar strdup para crear una copia de la cadena
+    log_info(kernelLogger, "RECURSO A LIBERAR "RED BOLD" <%s>", nombreRecurso);
+    t_list* listAux = list_filter_ok(estado_get_list(estadoBlocked), pcb_esta_bloqueado_por_recurso, pcb_aux);
     pthread_mutex_unlock(&mutexNombreRecurso);
-    listAux = list_filter(listAux, pcb_esta_bloqueado_por_recurso);
-    int cantidadPcbsEnLista = list_size(listAux);
-    if(cantidadPcbsEnLista == 1){
-         pcb = estado_desencolar_primer_pcb(estadoBlocked);
-         return pcb;
-    } else if(cantidadPcbsEnLista > 1){
+
+    int cantidadPcbsEnLista = list_size(estado_get_list(estadoBlocked));
+    if (cantidadPcbsEnLista == 1) {
+        pcb = estado_desencolar_primer_pcb(estadoBlocked);
+        list_destroy(listAux);
+        return pcb;
+    } else if (cantidadPcbsEnLista > 1) {
+        pthread_mutex_lock(&mutexNombreRecurso);
         pcb = list_get(listAux, 0);
-        pcb = estado_remover_pcb_de_cola_atomic(estadoBlocked,pcb);
+        pthread_mutex_unlock(&mutexNombreRecurso);
+        pcb = estado_remover_pcb_de_cola_atomic(estadoBlocked, pcb);
+        list_destroy(listAux);
         return pcb;
     }
 
-    
+    list_destroy(listAux);
     return NULL;
-            
 }
-
 
 void instruccion_signal(t_pcb* pcb){
     
@@ -224,7 +228,7 @@ void instruccion_signal(t_pcb* pcb){
             int posicion_recurso = position_in_list(kernel_config_get_recurso(kernelConfig) , pcb_get_recurso_utilizado(pcb));
             devolver_recurso(posicion_recurso);
             log_info(kernelLogger,BOLD UNDERLINE CYAN "PID: <%i> - Signal: "RESET BOLD GREEN" <%s> "BOLD UNDERLINE CYAN" - Instancias: <%i> ",pcb_get_pid(pcb), recursoConfig[posicion_recurso].recurso , *recursoConfig[posicion_recurso].instancias_recurso );    
-            t_pcb* pcbPasaReady = primer_elemento_bloqueado_por_recurso(estado_get_list(estadoBlocked), pcb_get_recurso_utilizado(pcb));
+            t_pcb* pcbPasaReady = primer_elemento_bloqueado_por_recurso(pcb_get_recurso_utilizado(pcb));
             if(pcbPasaReady != NULL){
                 proceso_pasa_a_ready(pcbPasaReady,"BLOCK");
             }

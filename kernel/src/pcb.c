@@ -4,7 +4,6 @@
 
 t_pcb* pcb_create(uint32_t pid) 
 {
-   printf("Creando nuevo PCB con PID %d\n", pid); 
     t_pcb* this = malloc(sizeof(*this));
    if (this == NULL) {
       printf("Error al asignar memoria para el PCB\n");
