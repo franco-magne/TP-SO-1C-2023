@@ -18,7 +18,6 @@ void atender_peticiones_fileSystem(int socketFS) {
                 uint32_t desplazamiento_segmento;
                 
                 buffer_unpack(buffer, &base_segmento, sizeof(base_segmento));
-                buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
                 char* contenidoAEscribir;
                 contenidoAEscribir = buffer_unpack_string(buffer);
                 
@@ -29,24 +28,31 @@ void atender_peticiones_fileSystem(int socketFS) {
                 modificarSegmento(base_segmento, unSegmento);    //es un obtener-segmento con list_replace
                 pthread_mutex_unlock(&mutexListaDeSegmento);
                 log_info(memoriaLogger, "Contenido escrito : <%s> - En el segmento ID : <%i> ", contenidoAEscribir, segmento_get_id(unSegmento));
+                stream_send_empty_buffer(socketFS, HANDSHAKE_ok_continue);
+
                 break;
             }
             case HEADER_f_write:{
                 uint32_t base_segmento;
-                uint32_t desplazamiento_segmento;
-                
+              //  uint32_t desplazamiento_segmento;
                 buffer_unpack(buffer, &base_segmento, sizeof(base_segmento));
-                buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
-                
+              //  buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
+                char* contenidoAenviar;
                 Segmento* segmentoLeido = obtener_segmento_por_BASE(base_segmento);
-                char* contenidoAenviar = malloc(strlen(segmentoLeido->contenido) + 1);
+              if (segmentoLeido->contenido != NULL) {
+                contenidoAenviar = malloc(strlen(segmentoLeido->contenido) + 1);
                 strcpy(contenidoAenviar, segmentoLeido->contenido);
+                } else {
+                contenidoAenviar = malloc(strlen(" ") + 1);
+                strcpy(contenidoAenviar, " ");
+                }
+                log_info(memoriaLogger,BOLD  BLUE UNDERLINE "Escritura en el segmento <%i> - Enviamos "RESET BOLD GREEN" <%s> ", base_segmento, contenidoAenviar) ;
 
                 t_buffer* bufferContenido = buffer_create();        
             
                 buffer_pack_string(bufferContenido, contenidoAenviar);
 
-                stream_send_buffer(socketFS, HEADER_move_in, bufferContenido);
+                stream_send_buffer(socketFS, HEADER_f_write, bufferContenido);
 
                 buffer_destroy(bufferContenido);  
                     break;
@@ -54,6 +60,5 @@ void atender_peticiones_fileSystem(int socketFS) {
             default:
                 break;
         }
-        buffer_destroy(buffer);
     }
 }

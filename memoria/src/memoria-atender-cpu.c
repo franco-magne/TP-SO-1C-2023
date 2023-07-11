@@ -37,7 +37,7 @@ void atender_peticiones_cpu(int socketCpu) {
                 t_buffer* respuestaBuffer = buffer_create();
                 //Logica de desplazamiento ...          desplazamiento <= limite todo ok, si es > entonces hay segmentation fault
                 if(desplazamiento_segmento > segmento_get_tamanio(segementoSolic)){
-                    uint32_t baseSegFault = 0;
+                    uint32_t baseSegFault = -1;
                     buffer_pack(respuestaBuffer, &baseSegFault, sizeof(baseSegFault));
                     stream_send_buffer(socketCpu, HEADER_chequeo_DF,respuestaBuffer);   //seria el HEADER_SegFault
 
@@ -117,6 +117,6 @@ void atender_peticiones_cpu(int socketCpu) {
             default:
             break;
         }
-    buffer_destroy(buffer);
+        buffer_destroy(buffer);
     }
 }

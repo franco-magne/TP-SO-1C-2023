@@ -3,11 +3,10 @@
 extern t_log *memoriaLogger;
 extern t_memoria_config* memoriaConfig;
 
-uint32_t tamActualMemoria;
 extern Segmento* segCompartido; // tipo lista enlazada (obligatorio)
 
 extern t_list* listaDeSegmentos;
-
+extern uint32_t tamActualMemoria;
 extern pthread_mutex_t* mutexTamMemoriaActual;
 pthread_mutex_t* mutexMemoriaEstruct; //seria mutexMemoriaData
 
@@ -182,7 +181,23 @@ void encolar_segmento_atomic_en_tablaDada(t_list* tablaDada, Segmento* targetSeg
 void sumar_memoriaRecuperada_a_tamMemoriaActual(uint32_t tamMemorRecuperada){
     pthread_mutex_lock(&mutexTamMemoriaActual);
     tamActualMemoria += tamMemorRecuperada;
+    log_info(memoriaLogger,BOLD CYAN  "TAMAÑO ACTUAL MEMORIA "RESET BOLD GREEN" <%i>", tamActualMemoria);
+
     pthread_mutex_unlock(&mutexTamMemoriaActual);
+}
+
+void restar_a_tamMemoriaActual(uint32_t memoriaARestar){
+    pthread_mutex_lock(&mutexTamMemoriaActual);
+    tamActualMemoria -= memoriaARestar;
+    log_info(memoriaLogger,BOLD CYAN  "TAMAÑO ACTUAL MEMORIA "RESET BOLD RED" <%i>", tamActualMemoria);
+    pthread_mutex_unlock(&mutexTamMemoriaActual);
+}
+
+bool puedo_crear_proceso_o_segmento(uint32_t tamanio){
+    pthread_mutex_lock(&mutexTamMemoriaActual);
+    bool condicion = (tamanio <= tamActualMemoria);
+    pthread_mutex_unlock(&mutexTamMemoriaActual);
+    return condicion;
 }
 
 

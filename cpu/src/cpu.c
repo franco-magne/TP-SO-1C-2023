@@ -18,7 +18,7 @@ int main() {
 
     ///////////////////////////////// CONECTARSE A MEMORIA //////////////////////////////
     
-     int cpuSocketMemoria = conectar_a_servidor("127.0.0.1", "8002");
+     int cpuSocketMemoria = conectar_a_servidor(cpu_config_get_ip_memoria(cpuConfig), cpu_config_get_puerto_memoria(cpuConfig));
       if (cpuSocketMemoria == -1) {
         log_error(cpuLogger, "Error al intentar establecer conexión inicial con módulo Memoria");
 
