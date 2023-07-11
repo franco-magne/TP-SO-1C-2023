@@ -2,8 +2,8 @@
 
 int fd_bitmap;
 int fd_bloques;
-void* map_bloques;
 void* map_bitmap;
+void* map_bloques;
 t_bitarray* bitmap;
 
 /*------------------------------------------------------------------------- SUPERBLOQUE ----------------------------------------------------------------------------- */
@@ -17,7 +17,6 @@ void crear_superbloque_dat(t_filesystem* fs, t_config* superbloque) {
     } else {
         log_info(fs->logger, "Superbloque creado correctamente");
     }
-
 }
 
 /*------------------------------------------------------------------------- BITMAP/BITARRAY ----------------------------------------------------------------------------- */
@@ -32,7 +31,6 @@ void levantar_bitmap(t_filesystem* fs) {
         abrir_bitmap(fs);
         fclose(bitmap_file);
     }
-
 }
 
 void crear_bitmap(t_filesystem* fs) {
@@ -70,7 +68,6 @@ void crear_bitmap(t_filesystem* fs) {
     for (int i = 0; i < fs->block_count; i++) {
         bitarray_clean_bit(bitmap, i); // LLENO EL BITARRAY CON CEROS
     }
-
 }
 
 void abrir_bitmap(t_filesystem* fs) {
@@ -92,7 +89,6 @@ void abrir_bitmap(t_filesystem* fs) {
     }
 
     bitmap = bitarray_create(map_bitmap, size_bitarray);
-
 }
 
 /*------------------------------------------------------------------------- ARCHIVO DE BLOQUES ----------------------------------------------------------------------------- */
@@ -107,7 +103,6 @@ void levantar_archivo_de_bloques(t_filesystem* fs) {
         abrir_archivo_de_bloques(fs);
         fclose(bloques_file);
     }
-
 }
 
 void crear_archivo_de_bloques(t_filesystem* fs) {
@@ -132,7 +127,6 @@ void crear_archivo_de_bloques(t_filesystem* fs) {
     } else {
         log_info(fs->logger, "Archivo de bloques creado correctamente");
     }
-
 }
 
 void abrir_archivo_de_bloques(t_filesystem* fs) {
@@ -152,7 +146,6 @@ void abrir_archivo_de_bloques(t_filesystem* fs) {
     } else {
         log_info(fs->logger, "Abrimos el archivo de bloques ya creado");
     }
-
 }
 
 void buscar_bloque_libre(t_filesystem* fs, uint32_t* bloque_libre) {
@@ -161,24 +154,24 @@ void buscar_bloque_libre(t_filesystem* fs, uint32_t* bloque_libre) {
 
     for (uint32_t i = 0; i < cant_bloques; i++) {
 
+        log_info(fs->logger, GREEN BOLD "Acceso a Bitmap - Bloque: <%d> - Estado: <%d>", i, bitarray_test_bit(bitmap, i));
+
         if (bitarray_test_bit(bitmap, i) != 1) { // O SEA SI ES CERO, SI EL BLOQUE ESTA LIBRE
-            log_info(fs->logger, "\e[1;92mAcceso a Bitmap - Bloque: <%d> - Estado: <%d>\e[0m", i, bitarray_test_bit(bitmap, i));
+            
             *bloque_libre = i;
             bitarray_set_bit(bitmap, i);
-            log_info(fs->logger, "\e[1;92mAcceso a Bitmap - Bloque: <%d> - Estado: <%d>\e[0m", i, bitarray_test_bit(bitmap, i));
+            log_info(fs->logger, GREEN BOLD "Acceso a Bitmap - Bloque: <%d> - Estado: <%d>", i, bitarray_test_bit(bitmap, i));
 
             break;
         }
-
     }
-
 }
 
 void liberar_bloque(t_filesystem* fs, uint32_t* bloque_a_liberar) {
 
-    log_info( fs->logger, "\e[1;92mAcceso a Bitmap - Bloque: <%ld> - Estado: <%d>\e[0m", (off_t)(*bloque_a_liberar), bitarray_test_bit( bitmap, (off_t)(*bloque_a_liberar) ) );
+    log_info( fs->logger, GREEN BOLD "Acceso a Bitmap - Bloque: <%ld> - Estado: <%d>", (off_t)(*bloque_a_liberar), bitarray_test_bit( bitmap, (off_t)(*bloque_a_liberar) ) );
     bitarray_clean_bit(bitmap, (off_t)(*bloque_a_liberar));
-    log_info( fs->logger, "\e[1;92mAcceso a Bitmap - Bloque: <%ld> - Estado: <%d>\e[0m", (off_t)(*bloque_a_liberar), bitarray_test_bit( bitmap, (off_t)(*bloque_a_liberar) ) );
+    log_info( fs->logger, GREEN BOLD "Acceso a Bitmap - Bloque: <%ld> - Estado: <%d>", (off_t)(*bloque_a_liberar), bitarray_test_bit( bitmap, (off_t)(*bloque_a_liberar) ) );
 
 }
 
@@ -191,8 +184,7 @@ void escribir_bloque_de_punteros_en_puntero_indirecto(uint32_t puntero_indirecto
         void* posicion_byte_a_escribir = map_bloques + posicion_puntero_indirecto_en_bytes;
 
         memcpy(posicion_byte_a_escribir, puntero_a_escribir, sizeof(uint32_t));
-    }
-    
+    }   
 }
 
 void liberar_puntero_del_bloque_de_punteros_en_puntero_indirecto(uint32_t puntero_indirecto, uint32_t posicion_ultimo_puntero, uint32_t block_size) {
@@ -211,7 +203,7 @@ char* leer_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32_t byt
 
     if ( bitarray_test_bit(bitmap, puntero_acceder) == 1 ) {
 
-        log_info(fs->logger, GREEN "Acceso a Bitmap - Bloque: <%d> - Estado: <%d>", puntero_acceder, 1);
+        log_info(fs->logger, GREEN BOLD "Acceso a Bitmap - Bloque: <%d> - Estado: <%d>", puntero_acceder, 1);
         memcpy(cadena, map_bloques + posicion_puntero_a_leer_en_bytes, bytes_a_leer);
     }
 
@@ -224,10 +216,9 @@ void escribir_en_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32
 
     if ( bitarray_test_bit(bitmap, puntero_acceder) == 1 ) {
 
-        log_info(fs->logger, GREEN "Acceso a Bitmap - Bloque: <%d> - Estado: <%d>", puntero_acceder, 1);
+        log_info(fs->logger, GREEN BOLD "Acceso a Bitmap - Bloque: <%d> - Estado: <%d>", puntero_acceder, 1);
         memcpy(map_bloques + posicion_byte_a_escribir, cadena_a_escribir, bytes_a_escribir);
     }
-
 }
 
 t_list* recuperar_bloque_de_punteros(uint32_t puntero_indirecto, int tamanio_archivo, uint32_t block_size) {
@@ -308,7 +299,6 @@ void mostrar_info_fcb(t_fcb* fcb_a_mostrar, t_log* logger) {
     log_info(logger, " ---> Tamanio: %s", fcb_a_mostrar->tamanio_archivo);
     log_info(logger, " ---> Puntero directo: %d", fcb_a_mostrar->puntero_directo);
     log_info(logger, " ---> Puntero indirecto: %d", fcb_a_mostrar->puntero_indirecto);    
-
 }
 
 void mostrar_bloques_fcb(t_list* bloques, t_log* logger, uint32_t puntero_directo) {
@@ -333,7 +323,13 @@ void mostrar_bloques_fcb(t_list* bloques, t_log* logger, uint32_t puntero_direct
         log_info(logger, " ---> Bloques de datos: %s", cadena_bloques);
 
         free(cadena_bloques);
+
+    } else if (puntero_directo >= 0 && size_bloques == 0) {
+
+        log_info(logger, " ---> Bloques de datos: %s", string_itoa((int)puntero_directo));
+
     } else {
+
         log_info(logger, " ---> Cant. bloques: %d", size_bloques);
     }
 }
@@ -343,9 +339,9 @@ void mostrar_bloques_fcb(t_list* bloques, t_log* logger, uint32_t puntero_direct
 void levantar_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs) {
 
     if (el_directorio_fcb_esta_vacio(fs)) {
-        log_info(fs->logger, "El directorio de FCBs esta vacio. No hay FCBs para levantar");
+        log_info(fs->logger, "No hay FCBs en el directorio para levantar");
     } else {
-        log_info(fs->logger, "Procedemos a levantar los FCBs del directorio");
+        log_info(fs->logger, "Procedemos a levantar los FCBs del directorio...");
         crear_fcbs_del_directorio(fs, lista_fcbs);
     }
 
@@ -447,7 +443,7 @@ void crear_directorios(t_filesystem* fs) {
 
     int resultado;
 
-    resultado = mkdir("/home/utnso/fs", 0777);
+    resultado = mkdir("/home/utnso/fs", 0777); // HARCODEADO. TENGO QUE CAMBIARLO
     resultado = mkdir(fs->fcb_path, 0777);
 
     if (!resultado) {
