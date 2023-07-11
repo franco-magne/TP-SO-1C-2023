@@ -54,5 +54,6 @@ void atender_peticiones_fileSystem(int socketFS) {
             default:
                 break;
         }
+        buffer_destroy(buffer);
     }
 }
