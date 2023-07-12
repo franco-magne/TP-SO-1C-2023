@@ -158,3 +158,11 @@ void atender_peticiones_kernel(int socketKernel) {
     }
 }
 
+// llenamos la informacion
+// [[S 0] [S 1] [S 2 "INFORMACION"] [S 3] [VACIO]]
+// leer la informacion
+// [[S 0]   vacio   [S 2 "INFORMACION"] [S 3] [VACIO]] --> [S4]
+// COMPACTAR
+//  [[S 0][S 2 "INFORMACION"] [S 3] [S4]]
+// leer la informacion
+

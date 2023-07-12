@@ -33,8 +33,8 @@ void atender_peticiones_fileSystem(int socketFS) {
                 modificarSegmento(base_segmento, unSegmento);    //es un obtener-segmento con list_replace
                 pthread_mutex_unlock(&mutexListaDeSegmento);
 
-                memset(contenidoAEscribir, 0, cantidadByte + 1); // Inicializar el buffer con ceros
-                memcpy(contenidoAEscribir, memoriaPrincipal + desplazamiento_segmento, cantidadByte);
+                memset(contenidoAEscribir, 0, (size_t)cantidadByte + 1); // Inicializar el buffer con ceros
+                memcpy(memoriaPrincipal + (size_t)base_segmento + (size_t)desplazamiento_segmento, contenidoAEscribir, (size_t)cantidadByte);
 
                 log_info(memoriaLogger, "Contenido escrito : <%s> - En el segmento ID : <%i> ", contenidoAEscribir, segmento_get_id(unSegmento));
                 stream_send_empty_buffer(socketFS, HANDSHAKE_ok_continue);
@@ -50,22 +50,16 @@ void atender_peticiones_fileSystem(int socketFS) {
                 buffer_unpack(buffer, &base_segmento, sizeof(base_segmento));
                 buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
                 buffer_unpack(buffer, &cantidadByte, sizeof(cantidadByte));
+                
+                log_info(memoriaLogger, RED UNDERLINE BOLD"Base <%i> - Desplazamiento <%i> - Cantidad de byte <%i> " RESET, base_segmento, desplazamiento_segmento, cantidadByte);
 
-                char* contenidoAenviarAUX = malloc(cantidadByte + 1);
-                char* contenidoAenviar;
                 Segmento* segmentoLeido = obtener_segmento_por_BASE(base_segmento);
-                memcpy(contenidoAenviarAUX, memoriaPrincipal + desplazamiento_segmento, cantidadByte);
 
-                if (contenidoAenviarAUX != NULL) {
-                  contenidoAenviar = malloc(cantidadByte + 1);
-                  //strcpy(contenidoAenviar, segmentoLeido->contenido);
-                  memcpy(contenidoAenviar, memoriaPrincipal + desplazamiento_segmento, cantidadByte);
-                } else {
-                  contenidoAenviar = malloc(strlen(" ") + 1);
-                  memcpy(contenidoAenviar, memoriaPrincipal + desplazamiento_segmento, strlen(" ") + 1);
-                }
-                free(contenidoAenviarAUX);
-                log_info(memoriaLogger,BOLD  BLUE UNDERLINE "Escritura en el segmento <%i> - Enviamos "RESET BOLD GREEN" <%s> ", base_segmento, contenidoAenviar) ;
+                char* contenidoAenviar = malloc(cantidadByte + 1); // Buffer de destino para almacenar los datos leídos, se reserva un espacio adicional para el carácter nulo
+                memset(contenidoAenviar, 0, cantidadByte + 1); // Inicializar el buffer con ceros
+                memcpy(contenidoAenviar, memoriaPrincipal + (size_t)base_segmento +(size_t)desplazamiento_segmento, (size_t)cantidadByte);
+
+                log_info(memoriaLogger,BOLD  BLUE UNDERLINE "Escritura en el segmento con base <%i> - Enviamos "RESET BOLD GREEN" <%s> ", base_segmento, contenidoAenviar) ;
 
                 t_buffer* bufferContenido = buffer_create();        
             

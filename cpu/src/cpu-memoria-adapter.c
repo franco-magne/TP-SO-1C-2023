@@ -64,7 +64,7 @@ void cpu_mmu(int toSocket, uint32_t direccionLogica, t_list* tablaDeSegmento, t_
     uint32_t desplazamiento_segmento = direccionLogica % tamanioMaximoSegmento;
     t_segmento* segmento = obtener_base_segmento_num_segmento(tablaDeSegmento, num_segmento); // MODIFICARLA
     
-    uint32_t baseDelSegmento = cpu_chequeo_base(toSocket, num_segmento , desplazamiento_segmento, HEADER_chequeo_DF, cantidadByte);
+    uint32_t baseDelSegmento = cpu_chequeo_base(toSocket, segmento->base_del_segmento , desplazamiento_segmento, HEADER_chequeo_DF, cantidadByte);
     
     if(baseDelSegmento == -1)
     log_info(cpuLogger,BACKGROUND_RED BOLD YELLOW "PID: <%i> - Error SEG_FAULT- Segmento: <%i> - Offset: <%i> - Tamaño: <%i>" RESET, cpu_pcb_get_pid(pcb), num_segmento, desplazamiento_segmento, segmento->tamanio_de_segmento);

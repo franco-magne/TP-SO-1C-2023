@@ -294,21 +294,22 @@ void iniciar_compactacion() {
 
         if (es_el_ultimo_segmento_lista(i) && segmentoActual->validez == 0) {
             // Actualizar el contenido en el void*
-            memcpy(memoriaPrincipal + segmento_get_base(segmentoActual),
-                   memoriaPrincipal + segmento_get_base(segmentoAnterior),
-                   segmento_get_tamanio(segmentoActual));
-
-            segmento_set_tamanio(segmentoActual, segmento_get_tamanio(segmentoActual) + (segmento_get_base(segmentoActual) - segmento_get_limite(segmentoAnterior)));
-            segmento_set_base(segmentoActual, segmento_get_limite(segmentoAnterior));
+              memmove(memoriaPrincipal + (size_t)segmento_get_base(segmentoActual),
+                   memoriaPrincipal + (size_t)segmento_get_base(segmentoAnterior),
+                   (size_t)segmento_get_tamanio(segmentoActual));
+         
+            segmento_set_tamanio(segmentoActual, segmento_get_tamanio(segmentoActual) + (segmento_get_base(segmentoActual) - segmento_get_limite(segmentoAnterior) - 1));
+            segmento_set_base(segmentoActual, segmento_get_limite(segmentoAnterior)+1);
             list_replace(listaDeSegmentos, i, segmentoActual);
+          
             log_info(memoriaLogger, "Entre UCA");
         } else {
             if (segmento_anterior_esta_libre(i) == 0) {
                 if (es_el_ultimo_segmento_lista(i)) {
                     // Actualizar el contenido en el void*
-                    memcpy(memoriaPrincipal + segmento_get_base(segmentoAnterior),
-                           memoriaPrincipal + segmento_get_base(segmentoActual),
-                           segmento_get_tamanio(segmentoActual));
+                    memmove(memoriaPrincipal + (size_t)segmento_get_base(segmentoAnterior),
+                           memoriaPrincipal + (size_t)segmento_get_base(segmentoActual),
+                           (size_t)segmento_get_tamanio(segmentoActual));
 
                     segmento_set_limite(segmentoAnterior, segmento_get_base(segmentoAnterior) + segmento_get_tamanio(segmentoActual));
                     segmento_set_tamanio(segmentoAnterior, segmento_get_tamanio(segmentoActual));
@@ -321,9 +322,9 @@ void iniciar_compactacion() {
                     segmento_set_bit_validez(segmentoActual, 0);
                 } else {
                     // Actualizar el contenido en el void*
-                    memcpy(memoriaPrincipal + segmento_get_base(segmentoAnterior),
-                           memoriaPrincipal + segmento_get_base(segmentoActual),
-                           segmento_get_tamanio(segmentoActual));
+                      memmove(memoriaPrincipal + (size_t)segmento_get_base(segmentoAnterior),
+                           (size_t)memoriaPrincipal + segmento_get_base(segmentoActual),
+                           (size_t)segmento_get_tamanio(segmentoActual));
 
                     segmento_set_base(segmentoActual, segmento_get_base(segmentoAnterior));
                     segmento_set_limite(segmentoActual, segmento_get_limite(segmentoActual) - segmento_get_tamanio(segmentoAnterior));
@@ -331,17 +332,21 @@ void iniciar_compactacion() {
                     list_remove(listaDeSegmentos, i);
                     log_info(memoriaLogger, "Entre OCA");
                     i = i - 1;
+
+                  
                 }
             } else if (!el_limite_del_segmento_anterior_es_igual_base_segmento_actual(segmentoActual, segmentoAnterior)) {
                 // Actualizar el contenido en el void*
-                memcpy(memoriaPrincipal + segmento_get_base(segmentoActual),
-                       memoriaPrincipal + segmento_get_base(segmentoAnterior),
-                       segmento_get_tamanio(segmentoActual));
+
+                memmove(memoriaPrincipal + (size_t)segmento_get_base(segmentoActual),
+                       (size_t)memoriaPrincipal + segmento_get_base(segmentoAnterior),
+                       (size_t)segmento_get_tamanio(segmentoActual));
 
                 segmento_set_limite(segmentoActual, segmento_get_limite(segmentoActual) - (segmento_get_base(segmentoActual) - segmento_get_limite(segmentoAnterior)));
                 segmento_set_base(segmentoActual, segmento_get_limite(segmentoAnterior) + 1);
                 list_replace(listaDeSegmentos, i, segmentoActual);
                 log_info(memoriaLogger, "Entre ACA");
+
             }
         }
     }

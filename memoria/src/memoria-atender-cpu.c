@@ -52,7 +52,7 @@ void atender_peticiones_cpu(int socketCpu) {
             } else {
                 buffer_pack(respuestaBuffer, &base_segmento, sizeof(base_segmento));
                 stream_send_buffer(socketCpu, HEADER_chequeo_DF,respuestaBuffer);
-                log_info(memoriaLogger, "Se enviá la base del segmento[%i]", base_segmento);
+                log_info(memoriaLogger, "Se enviá la base del segmento[%i]", segementoSolic->segmento_id);
             
             }
             
@@ -85,7 +85,7 @@ void atender_peticiones_cpu(int socketCpu) {
 
             char* contenidoAenviarAux = malloc(cantidadByte + 1); // Buffer de destino para almacenar los datos leídos, se reserva un espacio adicional para el carácter nulo
             memset(contenidoAenviarAux, 0, cantidadByte + 1); // Inicializar el buffer con ceros
-            memcpy(contenidoAenviarAux, memoriaPrincipal + desplazamiento_segmento, cantidadByte);
+            memcpy(contenidoAenviarAux, memoriaPrincipal + (size_t)base_segmento +(size_t)desplazamiento_segmento, (size_t)cantidadByte);
 
             t_buffer* bufferContenido = buffer_create();        
         
@@ -122,8 +122,10 @@ void atender_peticiones_cpu(int socketCpu) {
 
             //cada vez que hago un obtener segmento hago un list_replace
             if (contenidoAEscribir != NULL) {
-                memcpy(memoriaPrincipal + (size_t)desplazamiento_segmento, contenidoAEscribir, cantidadByte);
+                memcpy(memoriaPrincipal + (size_t)base_segmento + (size_t)desplazamiento_segmento, contenidoAEscribir, (size_t)cantidadByte);
                 //segmento_set_contenido(unSegmento, contenidoAEscribir);
+            } else {
+                memset(contenidoAEscribir, 0, (size_t)cantidadByte + 1); // Inicializar el buffer con ceros
             }
             /*pthread_mutex_lock(&mutexListaDeSegmento);
             modificarSegmento(base_segmento, unSegmento);    //es un obtener-segmento con list_replace
