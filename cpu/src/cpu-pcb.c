@@ -17,6 +17,8 @@ t_cpu_pcb* cpu_pcb_create (uint32_t pid, uint32_t programCounter, t_registros_cp
     this->direccionFisicaArchivo = -1;
     this->tablaDeSegmento = list_create();
     this->cantidadDeByte = -1;
+    this->desplazamientoFisico = -1;
+
     return this;
 }
 
@@ -142,12 +144,12 @@ uint32_t cpu_pcb_get_puntero_archivo(t_cpu_pcb* this){
     return this->punteroArchivo;
 }
 
-void cpu_pcb_set_direccion_fisica_archivo(t_cpu_pcb* this, uint32_t direccionFisica){
+void cpu_pcb_set_base_direccion_fisica(t_cpu_pcb* this, uint32_t direccionFisica){
     this->direccionFisicaArchivo = direccionFisica;
 }
 
 
-uint32_t cpu_pcb_get_direccion_fisica_archivo(t_cpu_pcb* this){
+uint32_t cpu_pcb_get_base_direccion_fisica(t_cpu_pcb* this){
     return this->direccionFisicaArchivo;
 }
 
@@ -159,12 +161,20 @@ t_list* cpu_pcb_get_tabla_de_segmento(t_cpu_pcb* this){
     return this->tablaDeSegmento;
 }
 
-void cpu_pcb_set_cantidad_byte_archivo(t_cpu_pcb* this, uint32_t cantidadByte){
+void cpu_pcb_set_cantidad_byte(t_cpu_pcb* this, uint32_t cantidadByte){
     this->cantidadDeByte = cantidadByte;
 }
 
-uint32_t cpu_pcb_get_cantidad_byte_archivo(t_cpu_pcb* this){
+uint32_t cpu_pcb_get_cantidad_byte(t_cpu_pcb* this){
     return this->cantidadDeByte;
+}
+
+void cpu_pcb_set_desplazamiento_segmento(t_cpu_pcb* this, uint32_t desplazamiento){
+    this->desplazamientoFisico = desplazamiento;
+}
+
+uint32_t cpu_pcb_get_desplazamiento_segmento(t_cpu_pcb* this){
+    return this->desplazamientoFisico;
 }
 ////////////////////////////  Registros 4bits  /////////////////////////////////////////
 char*  cpu_pcb_get_registro_ax(t_cpu_pcb* this)

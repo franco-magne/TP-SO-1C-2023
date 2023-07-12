@@ -6,7 +6,7 @@ extern pthread_mutex_t mutexListaDeSegmento;
 extern t_log *memoriaLogger;
 extern t_memoria_config* memoriaConfig;
 extern Segmento* segCompartido;
-
+extern void* memoriaPrincipal;
 
 extern t_list* listaDeSegmentos; //la VERDADERA
 
@@ -67,8 +67,9 @@ void atender_peticiones_kernel(int socketKernel) {
                     uint8_t respuestaDeKernel = stream_recv_header(socketKernel);
                     stream_recv_empty_buffer(socketKernel);
                     if(respuestaDeKernel == HANDSHAKE_ok_continue){
-                        iniciar_compactacion();
                         log_info(memoriaLogger, MAGENTA ITALIC "SE INICIA LA COMPACTACION DE LA MEMORIA");
+                        iniciar_compactacion();
+                        log_info(memoriaLogger, MAGENTA ITALIC "SE FINALIZA LA COMPACTACION DE LA MEMORIA");
                         stream_send_empty_buffer(socketKernel, HEADER_Compactacion_finalizada);
                     }
                 } 
@@ -156,4 +157,12 @@ void atender_peticiones_kernel(int socketKernel) {
         buffer_destroy(buffer);
     }
 }
+
+// llenamos la informacion
+// [[S 0] [S 1] [S 2 "INFORMACION"] [S 3] [VACIO]]
+// leer la informacion
+// [[S 0]   vacio   [S 2 "INFORMACION"] [S 3] [VACIO]] --> [S4]
+// COMPACTAR
+//  [[S 0][S 2 "INFORMACION"] [S 3] [S4]]
+// leer la informacion
 
