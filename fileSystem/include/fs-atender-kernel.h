@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 //////////////////////// BIBLOTECAS COMMONS /////////////////
 #include <commons/log.h>

@@ -13,6 +13,7 @@
 #include <math.h>
 #include <dirent.h>
 #include <errno.h>
+#include <inttypes.h>
 
 //////////////////////// BIBLOTECAS COMMONS /////////////////
 #include <commons/log.h>
