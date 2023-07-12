@@ -167,7 +167,7 @@ void file_system_adapter_send_f_read(t_pcb* pcb, t_log* kernelLogger, t_kernel_c
     uint32_t tamanioArchivo = archivo_pcb_get_tamanio_archivo(archivoLeer);
     uint32_t direccionFisica = archivo_pcb_get_direccion_fisica(archivoLeer);
     uint32_t cantidadByte = archivo_pcb_get_cantidad_byte(archivoLeer);
-    
+    uint32_t desplazamientoFisico = archivo_pcb_get_desplazamiento_fisico(archivoLeer);
     log_info(kernelLogger,BOLD UNDERLINE CYAN "PID: <%i> - Leer Archivo: "RESET BOLD YELLOW"<%s> "RESET BOLD UNDERLINE CYAN" - Puntero <%i> - Dirección Memoria <%i> - Tamaño <%i>",pid,nombreArchivo,puntero,direccionFisica,tamanioArchivo);
 
      t_buffer* bufferFRead = buffer_create();
@@ -176,6 +176,7 @@ void file_system_adapter_send_f_read(t_pcb* pcb, t_log* kernelLogger, t_kernel_c
     buffer_pack(bufferFRead, &direccionFisica, sizeof(direccionFisica));
     buffer_pack(bufferFRead, &cantidadByte, sizeof(cantidadByte));
     buffer_pack(bufferFRead, &puntero, sizeof(puntero));
+    buffer_pack(bufferFRead,&desplazamientoFisico, sizeof(desplazamientoFisico));
 
     
     stream_send_buffer(kernel_config_get_socket_file_system(kernelConfig),HEADER_f_read,bufferFRead);
@@ -194,6 +195,7 @@ void file_system_adapter_send_f_write(t_pcb* pcb, t_log* kernelLogger, t_kernel_
     uint32_t puntero = archivo_pcb_get_puntero_archivo(archivoEscribir);
     uint32_t tamanioArchivo = archivo_pcb_get_tamanio_archivo(archivoEscribir);
     uint32_t direccionFisica = archivo_pcb_get_direccion_fisica(archivoEscribir);
+    uint32_t desplazamientoFisico = archivo_pcb_get_desplazamiento_fisico(archivoEscribir);
 
   
     log_info(kernelLogger,BOLD UNDERLINE CYAN "PID: <%i> - Escribir Archivo: "RESET BOLD YELLOW"<%s> "RESET BOLD UNDERLINE CYAN"- Puntero <%i> - Dirección Memoria <%i> - Tamaño <%i>",pid,nombreArchivo,puntero,direccionFisica,tamanioArchivo);
@@ -204,6 +206,7 @@ void file_system_adapter_send_f_write(t_pcb* pcb, t_log* kernelLogger, t_kernel_
     buffer_pack(bufferFWrite, &direccionFisica, sizeof(direccionFisica));
     buffer_pack(bufferFWrite, &cantidadByte, sizeof(cantidadByte));
     buffer_pack(bufferFWrite, &puntero, sizeof(puntero));
+    buffer_pack(bufferFWrite, &desplazamientoFisico, sizeof(desplazamientoFisico));
 
     
     stream_send_buffer(kernel_config_get_socket_file_system(kernelConfig),HEADER_f_write,bufferFWrite);

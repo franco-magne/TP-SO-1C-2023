@@ -89,7 +89,7 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
     uint32_t punteroArchivo;
     uint32_t direccionFisicaArchivo;
     uint32_t cantidadByte;
-
+    uint32_t desplazamientoFisico;
     t_buffer* bufferPcb = buffer_create();
 
     stream_recv_buffer(kernel_config_get_socket_dispatch_cpu(kernelConfig), bufferPcb);
@@ -201,12 +201,14 @@ t_pcb* cpu_adapter_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t
         nombreArchivo = buffer_unpack_string(bufferPcb);
         buffer_unpack(bufferPcb, &cantidadByte, sizeof(cantidadByte));
         buffer_unpack(bufferPcb, &direccionFisicaArchivo, sizeof(direccionFisicaArchivo));
+        buffer_unpack(bufferPcb, &desplazamientoFisico, sizeof(desplazamientoFisico));
 
         index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),nombreArchivo);
         t_pcb_archivo* archivoFRW = list_get(pcb_get_lista_de_archivos_abiertos(pcbAActualizar), index);
         archivo_pcb_set_victima(archivoFRW,true);
         archivo_pcb_set_direccion_fisica(archivoFRW,direccionFisicaArchivo);
         archivo_pcb_set_cantidad_byte(archivoFRW,cantidadByte);
+        archivo_pcb_set_desplazamiento_fisico(archivoFRW, desplazamientoFisico);
         list_replace(pcb_get_lista_de_archivos_abiertos(pcbAActualizar),index,archivoFRW);
         break;
     }

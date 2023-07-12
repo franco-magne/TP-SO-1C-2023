@@ -4,6 +4,7 @@ extern pthread_mutex_t mutexMemoriaData; //extern
 extern pthread_mutex_t mutexListaDeSegmento;
 extern t_log *memoriaLogger;
 extern t_list* listaDeSegmentos;
+extern void* memoriaPrincipal;
 
 void atender_peticiones_fileSystem(int socketFS) {
     uint8_t header;
@@ -16,9 +17,13 @@ void atender_peticiones_fileSystem(int socketFS) {
             case HEADER_f_read:{        //Lee del archivo y escribe en memoria
                 uint32_t base_segmento;
                 uint32_t desplazamiento_segmento;
+                uint32_t cantidadByte;
                 
                 buffer_unpack(buffer, &base_segmento, sizeof(base_segmento));
-                char* contenidoAEscribir;
+                buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
+                buffer_unpack(buffer, &cantidadByte, sizeof(cantidadByte));
+
+                char* contenidoAEscribir = malloc(cantidadByte + 1);
                 contenidoAEscribir = buffer_unpack_string(buffer);
                 
                 Segmento* unSegmento = obtener_segmento_por_BASE(base_segmento);
@@ -27,25 +32,39 @@ void atender_peticiones_fileSystem(int socketFS) {
                 pthread_mutex_lock(&mutexListaDeSegmento);
                 modificarSegmento(base_segmento, unSegmento);    //es un obtener-segmento con list_replace
                 pthread_mutex_unlock(&mutexListaDeSegmento);
+
+                memset(contenidoAEscribir, 0, cantidadByte + 1); // Inicializar el buffer con ceros
+                memcpy(contenidoAEscribir, memoriaPrincipal + desplazamiento_segmento, cantidadByte);
+
                 log_info(memoriaLogger, "Contenido escrito : <%s> - En el segmento ID : <%i> ", contenidoAEscribir, segmento_get_id(unSegmento));
                 stream_send_empty_buffer(socketFS, HANDSHAKE_ok_continue);
 
+                free(contenidoAEscribir);
                 break;
             }
-            case HEADER_f_write:{
+            case HEADER_f_write:{   //Lee de memoria y lo escribe en el archivo
                 uint32_t base_segmento;
-              //  uint32_t desplazamiento_segmento;
+                uint32_t desplazamiento_segmento;
+                uint32_t cantidadByte;
+                
                 buffer_unpack(buffer, &base_segmento, sizeof(base_segmento));
-              //  buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
+                buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
+                buffer_unpack(buffer, &cantidadByte, sizeof(cantidadByte));
+
+                char* contenidoAenviarAUX = malloc(cantidadByte + 1);
                 char* contenidoAenviar;
                 Segmento* segmentoLeido = obtener_segmento_por_BASE(base_segmento);
-              if (segmentoLeido->contenido != NULL) {
-                contenidoAenviar = malloc(strlen(segmentoLeido->contenido) + 1);
-                strcpy(contenidoAenviar, segmentoLeido->contenido);
+                memcpy(contenidoAenviarAUX, memoriaPrincipal + desplazamiento_segmento, cantidadByte);
+
+                if (contenidoAenviarAUX != NULL) {
+                  contenidoAenviar = malloc(cantidadByte + 1);
+                  //strcpy(contenidoAenviar, segmentoLeido->contenido);
+                  memcpy(contenidoAenviar, memoriaPrincipal + desplazamiento_segmento, cantidadByte);
                 } else {
-                contenidoAenviar = malloc(strlen(" ") + 1);
-                strcpy(contenidoAenviar, " ");
+                  contenidoAenviar = malloc(strlen(" ") + 1);
+                  memcpy(contenidoAenviar, memoriaPrincipal + desplazamiento_segmento, strlen(" ") + 1);
                 }
+                free(contenidoAenviarAUX);
                 log_info(memoriaLogger,BOLD  BLUE UNDERLINE "Escritura en el segmento <%i> - Enviamos "RESET BOLD GREEN" <%s> ", base_segmento, contenidoAenviar) ;
 
                 t_buffer* bufferContenido = buffer_create();        
@@ -54,11 +73,13 @@ void atender_peticiones_fileSystem(int socketFS) {
 
                 stream_send_buffer(socketFS, HEADER_f_write, bufferContenido);
 
+                free(contenidoAenviar);
                 buffer_destroy(bufferContenido);  
-                    break;
+                break;
             }
             default:
                 break;
         }
+        buffer_destroy(buffer);
     }
 }

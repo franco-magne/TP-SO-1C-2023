@@ -33,11 +33,14 @@ t_segmento* obtener_base_segmento_num_segmento(t_list* listaDeSegmento, uint32_t
 
 
 //seria la implementacion segmentation
-static uint32_t cpu_chequeo_base(int toSocket, uint32_t base, uint32_t desplazamiento_segmento ,  t_header requestHeader) {
+static uint32_t cpu_chequeo_base(int toSocket, uint32_t base, uint32_t desplazamiento_segmento ,  t_header requestHeader, uint32_t cantidadByte) {
     t_buffer *requestBuffer = buffer_create();
     
+
     buffer_pack(requestBuffer, &base, sizeof(base));
     buffer_pack(requestBuffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
+    buffer_pack(requestBuffer, &cantidadByte, sizeof(cantidadByte));
+
 
     stream_send_buffer(toSocket, requestHeader, requestBuffer); 
     buffer_destroy(requestBuffer);
@@ -51,32 +54,37 @@ static uint32_t cpu_chequeo_base(int toSocket, uint32_t base, uint32_t desplazam
     buffer_unpack(responseBuffer, &requestRetVal, sizeof(requestRetVal));
     buffer_destroy(responseBuffer);
     return requestRetVal;
+
 }
 
 //MMU
-uint32_t cpu_mmu(int toSocket, uint32_t direccionLogica, t_list* tablaDeSegmento, uint32_t pid) {
+void cpu_mmu(int toSocket, uint32_t direccionLogica, t_list* tablaDeSegmento, t_cpu_pcb* pcb , uint32_t cantidadByte) {
     int tamanioMaximoSegmento = cpu_config_get_tamanio_maximo_segmento(cpuConfig);
     uint32_t num_segmento  = floor(direccionLogica / tamanioMaximoSegmento);
     uint32_t desplazamiento_segmento = direccionLogica % tamanioMaximoSegmento;
     t_segmento* segmento = obtener_base_segmento_num_segmento(tablaDeSegmento, num_segmento); // MODIFICARLA
-    if(num_segmento == 0){
-    segmento->base_del_segmento = 0;
-    }
-    uint32_t baseDelSegmento = cpu_chequeo_base(toSocket, segmento->base_del_segmento, desplazamiento_segmento, HEADER_chequeo_DF);
+    
+    uint32_t baseDelSegmento = cpu_chequeo_base(toSocket, num_segmento , desplazamiento_segmento, HEADER_chequeo_DF, cantidadByte);
     
     if(baseDelSegmento == -1)
-    log_info(cpuLogger,BACKGROUND_RED BOLD YELLOW "PID: <%i> - Error SEG_FAULT- Segmento: <%i> - Offset: <%i> - Tamaño: <%i>" RESET,pid, num_segmento, desplazamiento_segmento, segmento->tamanio_de_segmento);
+    log_info(cpuLogger,BACKGROUND_RED BOLD YELLOW "PID: <%i> - Error SEG_FAULT- Segmento: <%i> - Offset: <%i> - Tamaño: <%i>" RESET, cpu_pcb_get_pid(pcb), num_segmento, desplazamiento_segmento, segmento->tamanio_de_segmento);
     
-
-    return baseDelSegmento;
-    
+    cpu_pcb_set_cantidad_byte(pcb,cantidadByte); // cantidad_byte
+    cpu_pcb_set_base_direccion_fisica(pcb,baseDelSegmento); //base_direccion_fisica
+    cpu_pcb_set_desplazamiento_segmento(pcb,desplazamiento_segmento); //oka
 }
 
 // Write
-void cpu_escribir_en_memoria(int toSocket, uint32_t dirFisica, char* contenidoAEscribir, t_cpu_pcb* pcb) {
-    uint32_t baseDelSegmentoAEnviar = dirFisica;
+void cpu_escribir_en_memoria(int toSocket,char* contenidoAEscribir, t_cpu_pcb* pcb) {
+    uint32_t baseDireccionFisica = cpu_pcb_get_base_direccion_fisica(pcb);
+    uint32_t desplazamientoSegmento = cpu_pcb_get_desplazamiento_segmento(pcb);
+    uint32_t cantidadByte = cpu_pcb_get_cantidad_byte(pcb);
     t_buffer *buffer = buffer_create();
-    buffer_pack(buffer, &baseDelSegmentoAEnviar, sizeof(baseDelSegmentoAEnviar)); //  BASE 
+
+    buffer_pack(buffer, &baseDireccionFisica, sizeof(baseDireccionFisica)); 
+    buffer_pack(buffer, &desplazamientoSegmento, sizeof(desplazamientoSegmento));
+    buffer_pack(buffer, &cantidadByte, sizeof(cantidadByte));
+
     buffer_pack_string(buffer, contenidoAEscribir);
     stream_send_buffer(toSocket, HEADER_move_out, buffer);
     buffer_destroy(buffer);
@@ -84,10 +92,18 @@ void cpu_escribir_en_memoria(int toSocket, uint32_t dirFisica, char* contenidoAE
 }
 
 // Read
-char* cpu_leer_en_memoria( int toSocket, uint32_t dirFisica, t_cpu_pcb* pcb) {
-    uint32_t baseDelSegmentoAEnviar = dirFisica;
+char* cpu_leer_en_memoria( int toSocket,t_cpu_pcb* pcb) {
+    
     t_buffer *requestBuffer = buffer_create();
-    buffer_pack(requestBuffer, &baseDelSegmentoAEnviar, sizeof(baseDelSegmentoAEnviar));
+
+    uint32_t baseDireccionFisica = cpu_pcb_get_base_direccion_fisica(pcb);
+    uint32_t desplazamientoSegmento = cpu_pcb_get_desplazamiento_segmento(pcb);
+    uint32_t cantidadByte = cpu_pcb_get_cantidad_byte(pcb);
+    
+    buffer_pack(requestBuffer, &baseDireccionFisica, sizeof(baseDireccionFisica)); 
+    buffer_pack(requestBuffer, &desplazamientoSegmento, sizeof(desplazamientoSegmento));
+    buffer_pack(requestBuffer, &cantidadByte, sizeof(cantidadByte));
+
     stream_send_buffer(toSocket, HEADER_move_in, requestBuffer);
     buffer_destroy(requestBuffer);
     uint32_t responseHeader = stream_recv_header(toSocket);

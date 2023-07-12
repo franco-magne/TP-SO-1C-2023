@@ -17,24 +17,28 @@ static pthread_t threadAntencionKernel;
 pthread_mutex_t mutexMemoriaData = PTHREAD_MUTEX_INITIALIZER;   //para controlar el flujo de atender-kernel/cpu/FS
 pthread_mutex_t mutexListaDeSegmento = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutexTamMemoriaActual = PTHREAD_MUTEX_INITIALIZER;
+
 int main() {
+
     imprimir_memoria();
     memoriaLogger = log_create(MEMORIA_LOG_UBICACION,MEMORIA_PROCESS_NAME,true,LOG_LEVEL_INFO);
     memoriaConfigInicial = config_create(MEMORIA_CONFIG_UBICACION);
     memoriaConfig = memoria_config_initializer(memoriaConfigInicial);
-
     
     tamActualMemoria = memoria_config_get_tamanio_memoria(memoriaConfig); 
-    memoriaPrincipal = malloc(tamActualMemoria);
+    memoriaPrincipal = malloc((size_t)tamActualMemoria);
     listaDeSegmentos = list_create();
+
     segCompartido = crear_segmento(memoria_config_get_tamanio_segmento_0(memoriaConfig));
     segmento_set_id(segCompartido,0);
     segmento_set_base(segCompartido,0);
+
     uint32_t limiteCompartido = memoria_config_get_tamanio_segmento_0(memoriaConfig) -1;
     segmento_set_limite(segCompartido, limiteCompartido);
     segmento_set_bit_validez(segCompartido, 1);
-    list_add(listaDeSegmentos, segCompartido);
+    list_add(listaDeSegmentos, segCompartido);    
     log_info(memoriaLogger,"Crear Segmento 0: <%i> - Base: <%i> - TAMAÑO: <%i> - LIMITE <%i>", segmento_get_id(segCompartido), segmento_get_base(segCompartido), segmento_get_tamanio(segCompartido), segmento_get_limite(segCompartido));
+    
     Segmento* segmentoUsuario = crear_segmento(tamActualMemoria - segmento_get_tamanio(segCompartido));
     segmento_set_base(segmentoUsuario,  segmento_get_limite(segCompartido) + 1 );
     segmento_set_limite(segmentoUsuario, segmento_get_base(segmentoUsuario) + segmento_get_tamanio(segmentoUsuario) );
