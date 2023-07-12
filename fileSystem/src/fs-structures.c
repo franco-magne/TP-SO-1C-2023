@@ -372,12 +372,7 @@ int el_directorio_fcb_esta_vacio(t_filesystem* fs) {
 
     closedir(dir);
 
-    if (contador == 0) {
-        return 1;
-    } else {
-        return 0;
-    }
-
+    return (contador == 0) ? 1 : 0;
 }
 
 void crear_fcbs_del_directorio(t_filesystem* fs, t_list* lista_fcbs) {
@@ -453,7 +448,6 @@ void crear_directorios(t_filesystem* fs) {
     if (!resultado) {
         log_info(fs->logger, "Directorios creados");
     }
-
 }
 
 /*------------------------------------------------------------------------- OTRAS ----------------------------------------------------------------------------- */
@@ -484,6 +478,7 @@ char* devolver_fcb_path_config(char* path_fcbs, char* nombre_archivo) {
 }
 
 void cerrar_archivos() {
+    
     close(fd_bloques);
     close(fd_bitmap);
 }

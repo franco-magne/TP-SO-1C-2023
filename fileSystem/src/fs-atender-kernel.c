@@ -93,7 +93,7 @@ void atender_kernel(t_filesystem *fs)
             }
             else
             {
-                log_info(fs->logger, "Error al truncar. No puede pedir mas bloques");
+                log_info(fs->logger, "Error al truncar");
                 stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // FALLO EN EL TRUNCATE
             }
 
@@ -517,7 +517,7 @@ char *leer_archivo_bytes_menor_a_block_size(uint32_t cant_bytes, uint32_t punter
 
     log_info(fs->logger, "Cadena: %s con length %ld", cadena_aux, strlen(cadena_aux));
 
-    strcpy(cadena_final, cadena_aux);
+    strncpy(cadena_final, cadena_aux, cant_bytes);
     log_info(fs->logger, "Cadena final: %s con length %ld", cadena_final, strlen(cadena_final));
     free(cadena_aux);
 
@@ -547,7 +547,7 @@ char *leer_archivo_bytes_mayor_a_block_size(uint32_t cant_bytes, uint32_t punter
 
             uint32_t bloque_lectura = fcb_a_leer->puntero_directo;
             log_info(fs->logger, GREEN BOLD "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%" PRIu32 ">", fcb_a_leer->nombre_archivo, posicion_puntero, bloque_lectura);
-            strcpy(cadena_aux, leer_puntero_del_archivo_de_bloques(bloque_lectura, bytes_en_array[i], fs));
+            strncpy(cadena_aux, leer_puntero_del_archivo_de_bloques(bloque_lectura, bytes_en_array[i], fs), cant_bytes);
             string_append(&cadena_final, cadena_aux);
 
             log_info(fs->logger, "Saliendo del puntero directo...");
@@ -565,7 +565,7 @@ char *leer_archivo_bytes_mayor_a_block_size(uint32_t cant_bytes, uint32_t punter
 
             uint32_t *bloque_lectura = (uint32_t *)list_get(fcb_a_leer->bloques, puntero);
             log_info(fs->logger, GREEN BOLD "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%" PRIu32 ">", fcb_a_leer->nombre_archivo, posicion_puntero, (*bloque_lectura));
-            strcpy(cadena_aux, leer_puntero_del_archivo_de_bloques((*bloque_lectura), bytes_en_array[i], fs));
+            strncpy(cadena_aux, leer_puntero_del_archivo_de_bloques((*bloque_lectura), bytes_en_array[i], fs), cant_bytes);
             string_append(&cadena_final, cadena_aux);
 
             intervalo_de_pausa(fs->retardo_accesos);
@@ -611,7 +611,7 @@ void escribir_archivo(char *nombre_archivo_write, uint32_t base_fisica, uint32_t
 {
 
     char *respuesta_memoria; // malloc(cant_bytes_a_escribir);
-    respuesta_memoria = pedir_informacion_a_memoria(base_fisica, desplazamiento_segmento,cant_bytes_a_escribir, fs);
+    respuesta_memoria = pedir_informacion_a_memoria(base_fisica, desplazamiento_segmento, cant_bytes_a_escribir, fs);
 
     int posicion_fcb_a_escribir = devolver_posicion_fcb_en_la_lista(nombre_archivo_write);
     t_fcb *fcb_a_escribir = list_get(lista_fcbs, posicion_fcb_a_escribir);
@@ -831,6 +831,11 @@ char **convertir_cadena_caracteres_en_array(char *cadena_recibida, uint32_t cant
         array[division_entera] = malloc((resto + 1) * sizeof(char));
         strncpy(array[division_entera], cadena_recibida + division_entera * block_size, resto);
         array[division_entera][resto] = '\0';
+    }
+
+    for (uint32_t i = 0; i < tamano_resultado; i++)
+    {
+        printf("Elemento %u: %s\n", i, array[i]);
     }
 
     return array;
