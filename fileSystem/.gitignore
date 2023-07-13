@@ -2,7 +2,6 @@
 bin/
 obj/
 logs/
-fs/
 
 # Eclipse files
 RemoteSystemsTempFiles/

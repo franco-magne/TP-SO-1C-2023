@@ -17,15 +17,7 @@ int main() {
    cargar_t_filesystem(fs_config, superbloque_config, fs);   
    fs->logger = fs_logger;
    imprimir_file_system();
-   
-/*
-   RUTAS DEL CONFIG PARA LA ENTREGA FINAL
 
-   PATH_SUPERBLOQUE=./fs/superbloque.dat
-   PATH_BITMAP=./fs/bitmap.dat
-   PATH_BLOQUES=./fs/bloques.dat
-   PATH_FCB=./fs/fcb
-*/   
 
    // ------------------------------------------------------------------------ CONECTARSE A MEMORIA ----------------------------------------------------------------------------
    
@@ -38,7 +30,7 @@ int main() {
       return -2;
    }  
 
-   stream_send_empty_buffer(fsSocketMemoria, HANDSHAKE_fileSystem);
+   stream_send_empty_buffer(fsSocketMemoria,HANDSHAKE_fileSystem);
 
    log_info(fs->logger, "Conexion con MEMORIA establecida");
    fs->socket_memoria = fsSocketMemoria;   
