@@ -293,10 +293,7 @@ void iniciar_compactacion() {
         log_info(memoriaLogger, "<%i>", i);
 
         if (es_el_ultimo_segmento_lista(i) && segmentoActual->validez == 0) {
-            // Actualizar el contenido en el void*
-              memmove(memoriaPrincipal + (size_t)segmento_get_base(segmentoActual),
-                   memoriaPrincipal + (size_t)segmento_get_base(segmentoAnterior),
-                   (size_t)segmento_get_tamanio(segmentoActual));
+             
          
             segmento_set_tamanio(segmentoActual, segmento_get_tamanio(segmentoActual) + (segmento_get_base(segmentoActual) - segmento_get_limite(segmentoAnterior) - 1));
             segmento_set_base(segmentoActual, segmento_get_limite(segmentoAnterior)+1);
@@ -306,10 +303,9 @@ void iniciar_compactacion() {
         } else {
             if (segmento_anterior_esta_libre(i) == 0) {
                 if (es_el_ultimo_segmento_lista(i)) {
-                    // Actualizar el contenido en el void*
-                    memmove(memoriaPrincipal + (size_t)segmento_get_base(segmentoAnterior),
-                           memoriaPrincipal + (size_t)segmento_get_base(segmentoActual),
-                           (size_t)segmento_get_tamanio(segmentoActual));
+                     memmove(memoriaPrincipal + (size_t)segmento_get_base(segmentoAnterior),
+                     memoriaPrincipal + (size_t)segmento_get_base(segmentoActual),
+                     (size_t)segmento_get_tamanio(segmentoActual));
 
                     segmento_set_limite(segmentoAnterior, segmento_get_base(segmentoAnterior) + segmento_get_tamanio(segmentoActual));
                     segmento_set_tamanio(segmentoAnterior, segmento_get_tamanio(segmentoActual));
@@ -321,10 +317,10 @@ void iniciar_compactacion() {
                     segmento_set_bit_validez(segmentoAnterior, 1);
                     segmento_set_bit_validez(segmentoActual, 0);
                 } else {
-                    // Actualizar el contenido en el void*
-                      memmove(memoriaPrincipal + (size_t)segmento_get_base(segmentoAnterior),
-                           (size_t)memoriaPrincipal + (size_t)segmento_get_base(segmentoActual),
-                           (size_t)segmento_get_tamanio(segmentoActual));
+                   
+                    memmove(memoriaPrincipal + (size_t)segmento_get_base(segmentoAnterior),
+                    memoriaPrincipal + (size_t)segmento_get_base(segmentoActual),
+                    (size_t)segmento_get_tamanio(segmentoActual));
 
                     segmento_set_base(segmentoActual, segmento_get_base(segmentoAnterior));
                     segmento_set_limite(segmentoActual, segmento_get_limite(segmentoActual) - segmento_get_tamanio(segmentoAnterior));
@@ -337,9 +333,8 @@ void iniciar_compactacion() {
                 }
             } else if (!el_limite_del_segmento_anterior_es_igual_base_segmento_actual(segmentoActual, segmentoAnterior)) {
                 // Actualizar el contenido en el void*
-
-                memmove(memoriaPrincipal + (size_t)segmento_get_base(segmentoActual),
-                       (size_t)memoriaPrincipal + (size_t)segmento_get_base(segmentoAnterior),
+                memmove(memoriaPrincipal + (size_t)segmento_get_limite(segmentoAnterior) + 1,
+                       (size_t)memoriaPrincipal + (size_t)segmento_get_base(segmentoActual),
                        (size_t)segmento_get_tamanio(segmentoActual));
 
                 segmento_set_limite(segmentoActual, segmento_get_limite(segmentoActual) - (segmento_get_base(segmentoActual) - segmento_get_limite(segmentoAnterior)));
@@ -348,7 +343,7 @@ void iniciar_compactacion() {
                 log_info(memoriaLogger, "Entre ACA");
 
             }
-            
+          
         }
     }
 }
