@@ -77,7 +77,7 @@ void file_system_adapter_recv_f_open(t_pcb* pcb, t_kernel_config* kernelConfig){
 }
 
 
-t_pcb* atender_f_close(char* nombreArchivo){
+t_pcb* atender_f_close(char* nombreArchivo, t_log* kernelLogger){
 
   pthread_mutex_lock(&mutexTablaGlobal);
   int index = archivo_kernel_index(tablaGlobalDeArchivosAbiertos,nombreArchivo);
@@ -88,6 +88,7 @@ t_pcb* atender_f_close(char* nombreArchivo){
   if( queue_is_empty (kernel_archivo_get_cola_procesos_bloqueados(archivo)) ){
         pthread_mutex_lock(&mutexTablaGlobal);
         list_remove(tablaGlobalDeArchivosAbiertos,index);
+        log_info(kernelLogger, GREEN BOLD  "ARCHIVO "RESET YELLOW BOLD  " <%s> "RESET GREEN BOLD " ELIMINADO DE LA TABLA GLOBAL ",nombreArchivo);
         pthread_mutex_unlock(&mutexTablaGlobal);
         return NULL;
   } 
@@ -183,8 +184,25 @@ void file_system_adapter_send_f_read(t_pcb* pcb, t_log* kernelLogger, t_kernel_c
 
     buffer_destroy(bufferFRead);
 
+    // ESPERANDO EL OK DE FILE SYSTEM
+    
+
+
 
 }
+
+void file_system_adapter_recv_f_read(t_kernel_config* kernelConfig, t_log* kernelLogger){
+
+  uint8_t fileSystemResponse = stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
+    stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
+  if(fileSystemResponse == HANDSHAKE_ok_continue){
+
+      log_info(kernelLogger,BLUE ITALIC "EL ARCHIVO FUE LEIDO");
+  }
+
+}
+
+
 
 void file_system_adapter_send_f_write(t_pcb* pcb, t_log* kernelLogger, t_kernel_config* kernelConfig){
 
@@ -213,5 +231,20 @@ void file_system_adapter_send_f_write(t_pcb* pcb, t_log* kernelLogger, t_kernel_
 
     buffer_destroy(bufferFWrite);
 
+
+    // ESPERANDO EL OK DE FILE SYSTEM
+    stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
+    stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
+}
+
+
+void file_system_adapter_recv_f_write(t_kernel_config* kernelConfig, t_log* kernelLogger){
+
+  uint8_t fileSystemResponse = stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
+    stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
+  if(fileSystemResponse == HANDSHAKE_ok_continue){
+    
+      log_info(kernelLogger,BLUE ITALIC "EL ARCHIVO FUE ESCRITO");
+  }
 
 }

@@ -323,7 +323,7 @@ void iniciar_compactacion() {
                 } else {
                     // Actualizar el contenido en el void*
                       memmove(memoriaPrincipal + (size_t)segmento_get_base(segmentoAnterior),
-                           (size_t)memoriaPrincipal + segmento_get_base(segmentoActual),
+                           (size_t)memoriaPrincipal + (size_t)segmento_get_base(segmentoActual),
                            (size_t)segmento_get_tamanio(segmentoActual));
 
                     segmento_set_base(segmentoActual, segmento_get_base(segmentoAnterior));
@@ -339,7 +339,7 @@ void iniciar_compactacion() {
                 // Actualizar el contenido en el void*
 
                 memmove(memoriaPrincipal + (size_t)segmento_get_base(segmentoActual),
-                       (size_t)memoriaPrincipal + segmento_get_base(segmentoAnterior),
+                       (size_t)memoriaPrincipal + (size_t)segmento_get_base(segmentoAnterior),
                        (size_t)segmento_get_tamanio(segmentoActual));
 
                 segmento_set_limite(segmentoActual, segmento_get_limite(segmentoActual) - (segmento_get_base(segmentoActual) - segmento_get_limite(segmentoAnterior)));
@@ -348,6 +348,7 @@ void iniciar_compactacion() {
                 log_info(memoriaLogger, "Entre ACA");
 
             }
+            
         }
     }
 }

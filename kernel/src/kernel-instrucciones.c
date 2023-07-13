@@ -295,7 +295,7 @@ void instruccion_f_close(t_pcb* pcb){
 
     log_info(kernelLogger,BOLD UNDERLINE CYAN "PID: <%i> - Cerrar Archivo: "RESET BOLD YELLOW"<%s>", pcb_get_pid(pcb), nombreArchivo);
 
-    t_pcb* pcbBloqueado = atender_f_close(nombreArchivo);
+    t_pcb* pcbBloqueado = atender_f_close(nombreArchivo, kernelLogger);
 
     eliminar_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
 
@@ -340,8 +340,12 @@ void instruccion_f_write(t_pcb* pcb){
    
     t_pcb_archivo* archivoEscribir = list_find(pcb_get_lista_de_archivos_abiertos(pcb), es_el_archivo_victima);
     char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoEscribir);
-
     file_system_adapter_send_f_write(pcb, kernelLogger,kernelConfig);
+    proceso_pasa_a_bloqueado(pcb, BOLD YELLOW "ARCHIVO F_WRITE");
+    file_system_adapter_recv_f_write(kernelConfig, kernelLogger);
+    pcb = estado_remover_pcb_de_cola_atomic(estadoBlocked,pcb);
+    proceso_pasa_a_ready(pcb, "BLOCK");
+
 
     int index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
     archivo_pcb_set_victima(archivoEscribir,false);
@@ -357,6 +361,11 @@ void instruccion_f_read(t_pcb* pcb){
     char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoLeer);
 
     file_system_adapter_send_f_read(pcb,kernelLogger,kernelConfig);
+    proceso_pasa_a_bloqueado(pcb, BOLD YELLOW "ARCHIVO F_READ");
+    file_system_adapter_recv_f_read(kernelConfig, kernelLogger);
+    pcb = estado_remover_pcb_de_cola_atomic(estadoBlocked,pcb);
+    proceso_pasa_a_ready(pcb, "BLOCK");
+
     
     int index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
     archivo_pcb_set_victima(archivoLeer,false);
