@@ -198,7 +198,7 @@ void liberar_puntero_del_bloque_de_punteros_en_puntero_indirecto(uint32_t punter
 
 char* leer_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32_t bytes_a_leer, t_filesystem* fs) {
 
-    char* cadena = malloc(bytes_a_leer);
+    char* cadena = malloc(bytes_a_leer + 1);
     uint32_t posicion_puntero_a_leer_en_bytes = puntero_acceder * fs->block_size;
 
     if ( bitarray_test_bit(bitmap, puntero_acceder) == 1 ) {
@@ -206,6 +206,8 @@ char* leer_puntero_del_archivo_de_bloques(uint32_t puntero_acceder, uint32_t byt
         log_info(fs->logger, GREEN BOLD "Acceso a Bitmap - Bloque: <%" PRIu32 "> - Estado: <%d>", puntero_acceder, 1);
         memcpy(cadena, map_bloques + posicion_puntero_a_leer_en_bytes, bytes_a_leer);
     }
+
+    cadena[bytes_a_leer] = '\0'; // DELIMITADOR PARA EVITAR DATOS INCONCISOS AL ENVIAR EL BUFFER STRING
 
     return cadena;
 }

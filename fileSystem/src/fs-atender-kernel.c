@@ -478,8 +478,8 @@ void leer_archivo(char *nombre_archivo_read, uint32_t base_fisica, uint32_t desp
 
 char *leer_archivo_bytes_menor_a_block_size(uint32_t cant_bytes, uint32_t puntero, uint32_t base_fisica, uint32_t desplazamiento_fisico, t_fcb *fcb_a_leer, t_filesystem *fs)
 {
-    char* cadena_aux;
-    char *cadena_final = malloc(cant_bytes + 1);
+    
+    char *cadena_final;
     int posicion_puntero = puntero / fs->block_size;
 
     if (posicion_puntero == 0)
@@ -487,13 +487,13 @@ char *leer_archivo_bytes_menor_a_block_size(uint32_t cant_bytes, uint32_t punter
         log_info(fs->logger, "Accediendo al puntero directo...");
         intervalo_de_pausa(fs->retardo_accesos);
 
-        uint32_t bloque_lectura = fcb_a_leer->puntero_directo;
-        log_info(fs->logger, GREEN BOLD "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%" PRIu32 ">", fcb_a_leer->nombre_archivo, posicion_puntero, bloque_lectura);
+        uint32_t bloque_lectura = fcb_a_leer->puntero_directo;        
 
-        cadena_aux = leer_puntero_del_archivo_de_bloques(bloque_lectura, cant_bytes, fs);        
-
+        cadena_final = leer_puntero_del_archivo_de_bloques(bloque_lectura, cant_bytes, fs);        
+        log_info(fs->logger, GREEN BOLD "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%" PRIu32 ">", fcb_a_leer->nombre_archivo, 1, bloque_lectura);
+        
+        log_info(fs->logger, GREEN BOLD "Leer Archivo: <%s> - Puntero: <%" PRIu32 "> - Memoria: <%" PRIu32 "> - Tamaño: <%" PRIu32 ">", fcb_a_leer->nombre_archivo, puntero, desplazamiento_fisico, cant_bytes);
         log_info(fs->logger, "Saliendo del puntero directo...");
-        log_info(fs->logger, GREEN BOLD "Leer Archivo: <%s> - Puntero: <%" PRIu32 "> - Memoria: <%" PRIu32 "> - Tamaño: <%" PRIu32 ">", fcb_a_leer->nombre_archivo, puntero, base_fisica, cant_bytes);
     }
     else
     {
@@ -501,20 +501,14 @@ char *leer_archivo_bytes_menor_a_block_size(uint32_t cant_bytes, uint32_t punter
         log_info(fs->logger, "Accediendo al bloque de punteros...");
         intervalo_de_pausa(fs->retardo_accesos);
 
-        uint32_t *bloque_lectura = (uint32_t *)list_get(fcb_a_leer->bloques, posicion_puntero);
+        uint32_t *bloque_lectura = (uint32_t *)list_get(fcb_a_leer->bloques, posicion_puntero);        
+        
+        cadena_final = leer_puntero_del_archivo_de_bloques((*bloque_lectura), cant_bytes, fs);
         log_info(fs->logger, GREEN BOLD "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%" PRIu32 ">", fcb_a_leer->nombre_archivo, posicion_puntero, (*bloque_lectura));
         
-        cadena_aux = leer_puntero_del_archivo_de_bloques((*bloque_lectura), cant_bytes, fs);
-
+        log_info(fs->logger, GREEN BOLD "Leer Archivo: <%s> - Puntero: <%" PRIu32 "> - Memoria: <%" PRIu32 "> - Tamaño: <%" PRIu32 ">", fcb_a_leer->nombre_archivo, puntero, desplazamiento_fisico, cant_bytes);
         log_info(fs->logger, "Saliendo del bloque de punteros...");
-        log_info(fs->logger, GREEN BOLD "Leer Archivo: <%s> - Puntero: <%" PRIu32 "> - Memoria: <%" PRIu32 "> - Tamaño: <%" PRIu32 ">", fcb_a_leer->nombre_archivo, puntero, base_fisica, cant_bytes);
     }
-
-    log_info(fs->logger, "Cadena aux: %s con length %ld", cadena_aux, strlen(cadena_aux));
-
-    strncpy(cadena_final, cadena_aux, cant_bytes);
-    log_info(fs->logger, "Cadena final: %s con length %ld", cadena_final, strlen(cadena_final));
-    free(cadena_aux);
 
     return cadena_final;
 }
@@ -523,7 +517,7 @@ char *leer_archivo_bytes_mayor_a_block_size(uint32_t cant_bytes, uint32_t punter
 {
 
     int first_time = 1;
-    char *cadena_final = malloc(cant_bytes + 1);
+    char *cadena_final = malloc(cant_bytes); // malloc(cant_bytes + 1);
     int posicion_puntero = puntero / fs->block_size;
     int cant_bloques_a_leer = (int)ceil(cant_bytes / fs->block_size);
 
@@ -580,6 +574,7 @@ void enviar_informacion_a_memoria(uint32_t base_fisica, uint32_t desplazamiento_
     t_buffer *bufferMemoria = buffer_create();
 
     log_info(fs->logger, "Enviando la cadena <%s> a MEMORIA", cadena_leida);
+
     buffer_pack(bufferMemoria, &base_fisica, sizeof(base_fisica));
     buffer_pack(bufferMemoria, &desplazamiento_fisico, sizeof(desplazamiento_fisico));
     buffer_pack(bufferMemoria, &cant_bytes_a_leer, sizeof(cant_bytes_a_leer));
@@ -594,7 +589,7 @@ void enviar_informacion_a_memoria(uint32_t base_fisica, uint32_t desplazamiento_
 
     if (header_respuesta_memoria == HANDSHAKE_ok_continue)
     {
-        log_info(fs->logger, "MEMORIA termino la escritura en la direccion fisica <%" PRIu32 ">", base_fisica);
+        log_info(fs->logger, "MEMORIA termina la escritura en la direccion fisica <%" PRIu32 ">", desplazamiento_fisico);
     }
 }
 
