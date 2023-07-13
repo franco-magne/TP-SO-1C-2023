@@ -329,7 +329,7 @@ t_fcb *ampliar_tamanio_archivo(char *nombre_archivo_truncate, uint32_t nuevo_tam
                 fcb_a_truncar->puntero_indirecto = bloque_libre;
             }
 
-            uint32_t *nuevo_bloque = malloc(sizeof(uint32_t)); // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO -- VALGRIND: 16 BYTES PERDIDOS
+            uint32_t *nuevo_bloque = malloc(sizeof(uint32_t)); // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO
             *nuevo_bloque = bloque_libre;                      // IMPORTANTE: PARA NO APUNTAR SIEMPRE AL MISMO PUNTERO
             list_add(fcb_a_truncar->bloques, nuevo_bloque);
 
@@ -573,7 +573,7 @@ void enviar_informacion_a_memoria(uint32_t base_fisica, uint32_t desplazamiento_
 
     t_buffer *bufferMemoria = buffer_create();
 
-    log_info(fs->logger, "Enviando la cadena <%s> a MEMORIA", cadena_leida);
+    log_info(fs->logger, MAGENTA BOLD "Enviando la cadena <%s> a MEMORIA", cadena_leida);
 
     buffer_pack(bufferMemoria, &base_fisica, sizeof(base_fisica));
     buffer_pack(bufferMemoria, &desplazamiento_fisico, sizeof(desplazamiento_fisico));
@@ -582,14 +582,14 @@ void enviar_informacion_a_memoria(uint32_t base_fisica, uint32_t desplazamiento_
     stream_send_buffer(fs->socket_memoria, HEADER_f_read, bufferMemoria);
     buffer_destroy(bufferMemoria);
 
-    log_info(fs->logger, "Esperando finalizacion de MEMORIA...");
+    log_info(fs->logger, MAGENTA BOLD "Esperando finalizacion de MEMORIA...");
 
     uint8_t header_respuesta_memoria = stream_recv_header(fs->socket_memoria);
     stream_recv_empty_buffer(fs->socket_memoria);
 
     if (header_respuesta_memoria == HANDSHAKE_ok_continue)
     {
-        log_info(fs->logger, "MEMORIA termina la escritura en la direccion fisica <%" PRIu32 ">", desplazamiento_fisico);
+        log_info(fs->logger, MAGENTA BOLD "MEMORIA termina la escritura en la direccion fisica <%" PRIu32 ">", desplazamiento_fisico);
     }
 }
 
@@ -723,7 +723,7 @@ char *pedir_informacion_a_memoria(uint32_t base_segmento, uint32_t desplazamient
 
     t_buffer *bufferMemoria = buffer_create();
 
-    log_info(fs->logger, "Solicito a MEMORIA la informacion de la direccion fisica %" PRIu32 "", desplazamiento_segmento);
+    log_info(fs->logger, MAGENTA BOLD "Solicito a MEMORIA la informacion de la direccion fisica %" PRIu32 "", desplazamiento_segmento);
     buffer_pack(bufferMemoria, &base_segmento, sizeof(base_segmento));
     buffer_pack(bufferMemoria, &desplazamiento_segmento, sizeof(desplazamiento_segmento) );
     buffer_pack(bufferMemoria, &cant_bytes_necesarios, sizeof(cant_bytes_necesarios) );
@@ -735,11 +735,11 @@ char *pedir_informacion_a_memoria(uint32_t base_segmento, uint32_t desplazamient
 
     t_buffer *buffer_respuesta_memoria = buffer_create();
 
-    log_info(fs->logger, "Esperando respuesta de MEMORIA...");
+    log_info(fs->logger, MAGENTA BOLD "Esperando respuesta de MEMORIA...");
     stream_recv_header(fs->socket_memoria);
     stream_recv_buffer(fs->socket_memoria, buffer_respuesta_memoria);
     char *respuesta_memoria = buffer_unpack_string(buffer_respuesta_memoria);
-    log_info(fs->logger, "Recibo de MEMORIA: %s", respuesta_memoria);
+    log_info(fs->logger, MAGENTA BOLD "Recibo de MEMORIA: %s", respuesta_memoria);
 
     buffer_destroy(buffer_respuesta_memoria);
 
@@ -755,7 +755,7 @@ int fs_escuchando_en(int server_fs, t_filesystem *fs)
     int socket_kernel = esperar_cliente(server_fs);
 
     fs->socket_kernel = socket_kernel;
-    log_info(fs->logger, "Cliente KERNEL conectado");
+    log_info(fs->logger, CYAN BOLD "Cliente KERNEL conectado");
 
     if (socket_kernel != -1)
     {
