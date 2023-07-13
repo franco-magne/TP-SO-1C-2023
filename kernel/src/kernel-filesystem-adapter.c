@@ -184,7 +184,6 @@ void file_system_adapter_send_f_read(t_pcb* pcb, t_log* kernelLogger, t_kernel_c
 
     buffer_destroy(bufferFRead);
 
-    // ESPERANDO EL OK DE FILE SYSTEM
     
 
 
@@ -232,9 +231,7 @@ void file_system_adapter_send_f_write(t_pcb* pcb, t_log* kernelLogger, t_kernel_
     buffer_destroy(bufferFWrite);
 
 
-    // ESPERANDO EL OK DE FILE SYSTEM
-    stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
-    stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
+
 }
 
 

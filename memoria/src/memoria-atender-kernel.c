@@ -150,7 +150,7 @@ void atender_peticiones_kernel(int socketKernel) {
 
             }
             default:
-                //exit(-1);
+               // exit(-1);
                 break;
         }
         pthread_mutex_unlock(&mutexMemoriaData);

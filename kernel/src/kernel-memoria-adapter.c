@@ -79,7 +79,7 @@ uint8_t memoria_adapter_recibir_create_segment(t_pcb* pcbAActualizar, t_kernel_c
         return HEADER_create_segment;
     
     } else if (headerMemoria == HEADER_memoria_insuficiente) {
-        log_info(kernelLogger,BACKGROUND_RED GREEN ITALIC "PID: <%i> No pudo crear el segmento",  pcb_get_pid(pcbAActualizar));
+        log_info(kernelLogger,BACKGROUND_RED GREEN ITALIC "PID: <%i> No pudo crear el segmento" RESET,  pcb_get_pid(pcbAActualizar));
         return HEADER_memoria_insuficiente;
 
     } else {

@@ -9,9 +9,9 @@ t_list* listaDeSegmentos;
 void* memoriaPrincipal;
 uint32_t tamActualMemoria;
 
-static bool cpuSinAtender;
-static bool kernelSinAtender;
-static bool fileSystemSinAtender;
+static bool cpuSinAtender = false;
+static bool kernelSinAtender = false;
+static bool fileSystemSinAtender = false;
 static pthread_t threadAntencionCpu;
 static pthread_t threadAntencionKernel;
 pthread_mutex_t mutexMemoriaData = PTHREAD_MUTEX_INITIALIZER;   //para controlar el flujo de atender-kernel/cpu/FS
@@ -38,7 +38,7 @@ int main() {
     segmento_set_bit_validez(segCompartido, 1);
     list_add(listaDeSegmentos, segCompartido);    
     log_info(memoriaLogger,"Crear Segmento 0: <%i> - Base: <%i> - TAMAÑO: <%i> - LIMITE <%i>", segmento_get_id(segCompartido), segmento_get_base(segCompartido), segmento_get_tamanio(segCompartido), segmento_get_limite(segCompartido));
-    
+    restar_a_tamMemoriaActual(memoria_config_get_tamanio_segmento_0(memoriaConfig));
     Segmento* segmentoUsuario = crear_segmento(tamActualMemoria - segmento_get_tamanio(segCompartido));
     segmento_set_base(segmentoUsuario,  segmento_get_limite(segCompartido) + 1 );
     segmento_set_limite(segmentoUsuario, segmento_get_base(segmentoUsuario) + segmento_get_tamanio(segmentoUsuario) );
@@ -93,23 +93,23 @@ void aceptar_conexiones_memoria(const int socketEscucha) {
                 pthread_t threadAtencion;
                 pthread_create(&threadAtencion, NULL, atender_conexiones_cpu, &clienteAceptado);
                 pthread_detach(threadAtencion);
-                cpuSinAtender = false;
+                cpuSinAtender = true;
             } else if (handshake == HANDSHAKE_kernel) {
                 pthread_t threadAtencion;
                 pthread_create(&threadAtencion, NULL, atender_conexiones_kernel, &clienteAceptado);
                 pthread_detach(threadAtencion);
-                kernelSinAtender = false;
+                kernelSinAtender = true;
             } else if (handshake == HANDSHAKE_fileSystem) {
                 
                 pthread_t threadAtencion;
                 pthread_create(&threadAtencion, NULL, atender_conexiones_fileSystem, &clienteAceptado);
                 pthread_detach(threadAtencion);
-                fileSystemSinAtender = false;
-                
-            }else {
+                fileSystemSinAtender = true;
+            } else {
                 log_error(memoriaLogger, "Error al recibir handshake de cliente en socket [%d]", clienteAceptado);
                 close(clienteAceptado); // Cerrar el socket cliente en caso de error
             }
+
         } else {
             log_error(memoriaLogger, "Error al aceptar conexión: %s", strerror(errno));
         }
