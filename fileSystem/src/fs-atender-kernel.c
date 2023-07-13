@@ -808,6 +808,8 @@ void convertir_cantidad_bytes_en_array(uint32_t cantidad_bytes, uint32_t *array_
     }
 
     array_bytes[cantidad_block_size_repetido] = bytes_restantes; // LA POSICION FINAL GUARDO EL RESTO DE BYTES QUE QUEDAN
+
+    printf("La ult posicion de bytes en array es: %" PRIu32 , array_bytes[cantidad_block_size_repetido]);
 }
 
 char **convertir_cadena_caracteres_en_array(char *cadena_recibida, uint32_t cantidad_bytes, uint32_t block_size)
@@ -865,3 +867,69 @@ int obtener_longitud_array_caracteres(char **array_caracteres)
 
     return longitud;
 }
+
+
+// -------------------------------- SOLO DE PRUEBA SI LA FUNCION DE ARRAY DE CARACTERES FUNCIONAN MUY MAL   ----->   escribir_archivo_bytes_mayor_a_block_size
+
+void por_si_array_de_caracteres_rompe(uint32_t cant_bytes, uint32_t puntero, uint32_t direccion_fisica, t_fcb *fcb_a_escribir, t_filesystem *fs, char *respuesta_memoria)
+{
+
+    int first_time = 1;
+    int posicion_puntero = puntero / fs->block_size;
+    int cant_bloques_a_escribir = (int)ceil(cant_bytes / fs->block_size);
+
+    uint32_t bytes_en_array[cant_bloques_a_escribir];
+    convertir_cantidad_bytes_en_array(cant_bytes, bytes_en_array, fs->block_size);
+
+    for (int i = 0; i < cant_bloques_a_escribir; i++)
+    {
+
+        if (posicion_puntero == 0)
+        {
+            char* cadena_temporal =  malloc(bytes_en_array[i]);
+
+            log_info(fs->logger, "Accediendo al puntero directo...");
+            intervalo_de_pausa(fs->retardo_accesos);
+
+            uint32_t bloque_escritura = fcb_a_escribir->puntero_directo;
+            log_info(fs->logger, GREEN BOLD "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%" PRIu32 ">", fcb_a_escribir->nombre_archivo, posicion_puntero, bloque_escritura);
+
+            memcpy(cadena_temporal, respuesta_memoria, bytes_en_array[i]);
+            escribir_en_puntero_del_archivo_de_bloques(bloque_escritura, bytes_en_array[i], cadena_temporal, fs);
+
+            log_info(fs->logger, GREEN BOLD "Escribir Archivo: <%s> - Puntero: <%d> - Memoria: <%" PRIu32 "> - Tamaño: <%" PRIu32 ">", fcb_a_escribir->nombre_archivo, posicion_puntero, direccion_fisica, bytes_en_array[i]);
+            log_info(fs->logger, "Saliendo del puntero directo...");
+
+            free(cadena_temporal);
+        }
+        else
+        {
+
+            if (first_time)
+            {
+                log_info(fs->logger, "Accediendo al bloque de punteros...");
+                intervalo_de_pausa(fs->retardo_accesos);
+                first_time = 0;
+            }
+
+            uint32_t *bloque_escritura = (uint32_t *)list_get(fcb_a_escribir->bloques, (posicion_puntero -1 + i));
+            log_info(fs->logger, GREEN BOLD "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%" PRIu32 ">", fcb_a_escribir->nombre_archivo, posicion_puntero, (*bloque_escritura));
+
+            char* otra_cadena = malloc(bytes_en_array[i]);
+
+            memcpy(otra_cadena, respuesta_memoria + (i * fs->block_size) , bytes_en_array[i]);
+            escribir_en_puntero_del_archivo_de_bloques(bloque_escritura, bytes_en_array[i], otra_cadena, fs);
+
+            free(otra_cadena);
+
+            intervalo_de_pausa(fs->retardo_accesos);
+            log_info(fs->logger, GREEN BOLD "Escribir Archivo: <%s> - Puntero: <%d> - Memoria: <%" PRIu32 "> - Tamaño: <%" PRIu32 ">", fcb_a_escribir->nombre_archivo, posicion_puntero, direccion_fisica, bytes_en_array[i]);
+        }
+
+        posicion_puntero++;
+    }
+
+    log_info(fs->logger, "Saliendo del bloque de punteros...");
+}
+
+
