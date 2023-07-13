@@ -242,7 +242,7 @@ void instruccion_signal(t_pcb* pcb){
 
 ///////////////////////////////// INSTRUCCION CREATE_SEGMENT //////////////////////////////
 
-void instruccion_create_segment(t_pcb* pcb){
+bool instruccion_create_segment(t_pcb* pcb){
 
     memoria_adapter_enviar_create_segment(pcb,kernelConfig);
 
@@ -250,10 +250,11 @@ void instruccion_create_segment(t_pcb* pcb){
 
     if(memoriaResponse == HEADER_memoria_insuficiente){
         liberar_segmentos_del_proceso_tabla_global(pcb);
-        memoria_adapter_enviar_finalizar_proceso(pcb,kernelConfig,kernelLogger,BOLD BLUE "OUT_OF_MEMORY");
+        memoria_adapter_enviar_finalizar_proceso(pcb,kernelConfig,kernelLogger,BOLD BLUE "OUT_OF_MEMORY" RESET);
         proceso_pasa_a_exit(pcb);
+        return true;
     }
-
+    return false;
 }
 
 ///////////////////////////////// INSTRUCCION DELETE_SEGMENT //////////////////////////////

@@ -226,6 +226,7 @@ void* atender_pcb(void* args)
 {
     for (;;) {
         bool procesoFueBloqueado = false;
+        bool procesoTuvoOutOfMemory = false;
         sem_wait(estado_get_sem(estadoExec));
 
         pthread_mutex_lock(estado_get_mutex(estadoExec));
@@ -299,7 +300,7 @@ void* atender_pcb(void* args)
 
             case HEADER_create_segment:
 
-                instruccion_create_segment(pcb);
+                procesoTuvoOutOfMemory = instruccion_create_segment(pcb);
 
                 break;
             
@@ -340,8 +341,8 @@ void* atender_pcb(void* args)
         ( 
            (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado && pcb_get_estado_actual(pcb) != EXIT) 
         || (cpuResponse == HEADER_proceso_devolver_recurso && pcb_get_estado_actual(pcb) == EXEC) 
-        || (cpuResponse == HEADER_create_segment)
-        || (cpuResponse == HEADER_delete_segment)
+        || (cpuResponse == HEADER_create_segment) && !procesoTuvoOutOfMemory
+        || (cpuResponse == HEADER_delete_segment) 
         || (cpuResponse == HEADER_f_open) && !procesoFueBloqueado
         || (cpuResponse == HEADER_f_close)
         || (cpuResponse == HEADER_f_seek)
