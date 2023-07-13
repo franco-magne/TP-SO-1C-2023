@@ -63,11 +63,6 @@ void atender_kernel(t_filesystem *fs)
             {
                 stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue);
             }
-            else
-            {
-                log_info(fs->logger, "Error al crear el nuevo archivo");
-                stream_send_empty_buffer(fs->socket_kernel, HEADER_error);
-            }
 
             free(nombre_archivo_create);
             buffer_destroy(bufferCreate);
@@ -170,6 +165,7 @@ void atender_kernel(t_filesystem *fs)
             exit(1);
             break;
         }
+
         pthread_mutex_unlock(&mutexTest);
         operacion_OK = 0;
     }
@@ -618,12 +614,12 @@ void escribir_archivo(char *nombre_archivo_write, uint32_t base_fisica, uint32_t
     if (cant_bytes_a_escribir <= fs->block_size)
     {
 
-        escribir_archivo_bytes_menor_a_block_size(cant_bytes_a_escribir, puntero_proceso, base_fisica, fcb_a_escribir, fs, respuesta_memoria);
+        escribir_archivo_bytes_menor_a_block_size(cant_bytes_a_escribir, puntero_proceso, desplazamiento_segmento, fcb_a_escribir, fs, respuesta_memoria);
     }
     else
     {
 
-        escribir_archivo_bytes_mayor_a_block_size(cant_bytes_a_escribir, puntero_proceso, base_fisica, fcb_a_escribir, fs, respuesta_memoria);
+        escribir_archivo_bytes_mayor_a_block_size(cant_bytes_a_escribir, puntero_proceso, desplazamiento_segmento, fcb_a_escribir, fs, respuesta_memoria);
     }
 
     log_info(fs->logger, "<Archivo: %s, D.F.: %" PRIu32 ", %" PRIu32 " bytes> escrito correctamente", nombre_archivo_write, base_fisica, cant_bytes_a_escribir);
@@ -670,12 +666,12 @@ void escribir_archivo_bytes_mayor_a_block_size(uint32_t cant_bytes, uint32_t pun
 
     int first_time = 1;
     int posicion_puntero = puntero / fs->block_size;
-    int cant_bloques_a_escribir = (int)ceil(cant_bytes / fs->block_size);
+    int cant_bloques_a_escribir = cant_bytes / fs->block_size;
 
     uint32_t bytes_en_array[cant_bloques_a_escribir];
     convertir_cantidad_bytes_en_array(cant_bytes, bytes_en_array, fs->block_size);
 
-    for (int i = 0; i < cant_bloques_a_escribir; i++)
+    for (int i = 0; i <= cant_bloques_a_escribir; i++)
     {
 
         if (posicion_puntero == 0)
@@ -706,7 +702,7 @@ void escribir_archivo_bytes_mayor_a_block_size(uint32_t cant_bytes, uint32_t pun
                 first_time = 0;
             }
 
-            uint32_t *bloque_escritura = (uint32_t *)list_get(fcb_a_escribir->bloques, (posicion_puntero -1 + i));
+            uint32_t *bloque_escritura = (uint32_t *)list_get(fcb_a_escribir->bloques, (posicion_puntero -1));
             log_info(fs->logger, GREEN BOLD "Acceso Bloque - Archivo: <%s> - Bloque Archivo: <%d> - Bloque File System <%" PRIu32 ">", fcb_a_escribir->nombre_archivo, posicion_puntero, (*bloque_escritura));
 
             char* otra_cadena = malloc(bytes_en_array[i]);
