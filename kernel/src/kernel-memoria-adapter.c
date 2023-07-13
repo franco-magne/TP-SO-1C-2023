@@ -51,6 +51,7 @@ uint8_t memoria_adapter_recibir_create_segment(t_pcb* pcbAActualizar, t_kernel_c
             headerMemoria = stream_recv_header(kernel_config_get_socket_memoria(kernelConfig));
             stream_recv_empty_buffer(kernel_config_get_socket_memoria(kernelConfig));
             if(headerMemoria == HEADER_Compactacion_finalizada){
+                // recibir la tabla de segmento
                 memoria_adapter_enviar_create_segment(pcbAActualizar,kernelConfig);
                 memoria_adapter_recibir_create_segment(pcbAActualizar,kernelConfig,kernelLogger);
             }

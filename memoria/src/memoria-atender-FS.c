@@ -33,9 +33,12 @@ void atender_peticiones_fileSystem(int socketFS) {
                 modificarSegmento(base_segmento, unSegmento);    //es un obtener-segmento con list_replace
                 pthread_mutex_unlock(&mutexListaDeSegmento);
 
-                memset(contenidoAEscribir, 0, (size_t)cantidadByte + 1); // Inicializar el buffer con ceros
+                  if (contenidoAEscribir != NULL) {
                 memcpy(memoriaPrincipal + (size_t)base_segmento + (size_t)desplazamiento_segmento, contenidoAEscribir, (size_t)cantidadByte);
-
+                //segmento_set_contenido(unSegmento, contenidoAEscribir);
+                } else {
+                memset(contenidoAEscribir, 0, (size_t)cantidadByte + 1); // Inicializar el buffer con ceros
+                }
                 log_info(memoriaLogger, "Contenido escrito : <%s> - En el segmento ID : <%i> ", contenidoAEscribir, segmento_get_id(unSegmento));
                 stream_send_empty_buffer(socketFS, HANDSHAKE_ok_continue);
 

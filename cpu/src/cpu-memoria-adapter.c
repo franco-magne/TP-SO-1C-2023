@@ -23,6 +23,7 @@ t_segmento* obtener_base_segmento_num_segmento(t_list* listaDeSegmento, uint32_t
         free(aux);
         return segmentoVictima;
     } else {
+        aux->base_del_segmento = 0;
         return aux;
     }
 
@@ -63,7 +64,7 @@ void cpu_mmu(int toSocket, uint32_t direccionLogica, t_list* tablaDeSegmento, t_
     uint32_t num_segmento  = floor(direccionLogica / tamanioMaximoSegmento);
     uint32_t desplazamiento_segmento = direccionLogica % tamanioMaximoSegmento;
     t_segmento* segmento = obtener_base_segmento_num_segmento(tablaDeSegmento, num_segmento); // MODIFICARLA
-    
+   
     uint32_t baseDelSegmento = cpu_chequeo_base(toSocket, segmento->base_del_segmento , desplazamiento_segmento, HEADER_chequeo_DF, cantidadByte);
     
     if(baseDelSegmento == -1)
