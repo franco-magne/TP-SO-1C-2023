@@ -17,7 +17,6 @@
 #include "memoria.h"
 
 
-#define MEMORIA_CONFIG_UBICACION "config/memoria.config"
 #define MEMORIA_LOG_UBICACION "logs/memoria.log"
 #define MEMORIA_PROCESS_NAME "Memoria"
 

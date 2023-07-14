@@ -49,7 +49,7 @@ void atender_peticiones_cpu(int socketCpu) {
             } else {
                 buffer_pack(respuestaBuffer, &base_segmento, sizeof(base_segmento));
                 stream_send_buffer(socketCpu, HEADER_chequeo_DF,respuestaBuffer);
-                log_info(memoriaLogger, "SE ENVIA EL OK A LA CPU PARA PID : [%i]", segmento_get_pid(segementoSolic));
+                log_info(memoriaLogger, "SE ENVIA EL OK A LA CPU");
             
             }
             

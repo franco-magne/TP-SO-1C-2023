@@ -45,7 +45,7 @@ int main() {
     list_add_in_index(listaDeSegmentos,1, segmentoUsuario);
     log_info(memoriaLogger,GREEN BOLD UNDERLINE "SE CREA EL ESPACIO DE USUARIO: BASE: "RESET UNDERLINE YELLOW BOLD"<%i>"RESET GREEN BOLD UNDERLINE" - TAMAÑO: "RESET YELLOW UNDERLINE BOLD"<%i>"RESET GREEN BOLD UNDERLINE" - LIMITE: "RESET YELLOW UNDERLINE BOLD"<%i>", segmento_get_base(segmentoUsuario), segmento_get_tamanio(segmentoUsuario), segmento_get_limite(segmentoUsuario));
     restar_a_tamMemoriaActual(memoria_config_get_tamanio_segmento_0(memoriaConfig));
-
+    log_info(memoriaLogger,BOLDRED "ALGORITMO DE ASIGNACION "RESET BOLDGREEN "<%s>", memoria_config_get_algoritmo_asignacion(memoriaConfig));
    //tabla_segmentos = estado_create();
 
     int serverMemoria = iniciar_servidor(memoria_config_get_ip_escucha(memoriaConfig), memoria_config_get_puerto_escucha(memoriaConfig) );

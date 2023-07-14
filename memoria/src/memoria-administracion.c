@@ -31,7 +31,7 @@ void mostrar_lista_segmentos(t_list* lista) {
 
 void mostrar_lista_segmentos_actualizados_por_compactacion(){
 
-    for(int i = 0; i<list_size; i++){
+    for(int i = 0; i<list_size(listaDeSegmentos); i++){
         Segmento* segmento = list_get(listaDeSegmentos, i);
         log_info(memoriaLogger, BOLDBLUE"PID: "RESET BOLDYELLOW"<%i>"RESET BOLDBLUE" - Segmento: "RESET BOLDYELLOW"<%i>"RESET BOLDBLUE" - Base: "RESET BOLDYELLOW"<%i>"RESET BOLDBLUE" - Tamaño "RESET BOLDYELLOW"<%i>", segmento_get_pid(segmento), segmento_get_id(segmento), segmento_get_base(segmento), segmento_get_tamanio(segmento));
     }
@@ -297,13 +297,11 @@ void iniciar_compactacion() {
         segmentoActual = list_get(listaDeSegmentos, i);
         segmentoAnterior = list_get(listaDeSegmentos, i - 1);
 
-        log_info(memoriaLogger, "<%i>", i);
 
         if (es_el_ultimo_segmento_lista(i) && segmentoActual->validez == 0) {
              
-         
-            segmento_set_tamanio(segmentoActual, segmento_get_tamanio(segmentoActual) + (segmento_get_base(segmentoActual) - segmento_get_limite(segmentoAnterior) - 1));
             segmento_set_base(segmentoActual, segmento_get_limite(segmentoAnterior)+1);
+            segmento_set_tamanio(segmentoActual, segmento_get_limite(segmentoActual) - segmento_get_base(segmentoActual));
             list_replace(listaDeSegmentos, i, segmentoActual);
           
         } else {
@@ -321,6 +319,7 @@ void iniciar_compactacion() {
                     segmento_set_id(segmentoActual, -1);
                     segmento_set_pid(segmentoActual, -1);
                     segmento_set_bit_validez(segmentoAnterior, 1);
+                    segmento_set_tamanio(segmentoActual, segmento_get_limite(segmentoActual)- segmento_get_base(segmentoActual));
                     segmento_set_bit_validez(segmentoActual, 0);
                 } else {
                    
@@ -329,7 +328,7 @@ void iniciar_compactacion() {
                     (size_t)segmento_get_tamanio(segmentoActual));
 
                     segmento_set_base(segmentoActual, segmento_get_base(segmentoAnterior));
-                    segmento_set_limite(segmentoActual, segmento_get_limite(segmentoActual) - segmento_get_tamanio(segmentoAnterior));
+                    segmento_set_limite(segmentoActual, segmento_get_base(segmentoActual) +  segmento_get_tamanio(segmentoActual)  );
                     list_replace(listaDeSegmentos, i - 1, segmentoActual);
                     list_remove(listaDeSegmentos, i);
                     i = i - 1;
@@ -342,8 +341,8 @@ void iniciar_compactacion() {
                        (size_t)memoriaPrincipal + (size_t)segmento_get_base(segmentoActual),
                        (size_t)segmento_get_tamanio(segmentoActual));
 
-                segmento_set_limite(segmentoActual, segmento_get_limite(segmentoActual) - (segmento_get_base(segmentoActual) - segmento_get_limite(segmentoAnterior)));
                 segmento_set_base(segmentoActual, segmento_get_limite(segmentoAnterior) + 1);
+                segmento_set_limite(segmentoActual, segmento_get_base(segmentoActual) +  segmento_get_tamanio(segmentoActual) );
                 list_replace(listaDeSegmentos, i, segmentoActual);
 
             }

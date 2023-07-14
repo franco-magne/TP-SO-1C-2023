@@ -75,14 +75,15 @@ void liberar_segmentos_del_proceso_tabla_global(t_pcb* pcb){
 int main(int argc, char* argv[]) {
     kernelLogger = log_create(KERNEL_LOG_UBICACION,KERNEL_PROCESS_NAME,true,LOG_LEVEL_INFO);
     t_config* kernelConfigPath = config_create(KERNEL_CONFIG_UBICACION);
+
     tablaGlobalDeArchivosAbiertos = list_create();
     tablaGlobalDeSegmentos = list_create();
     nextPid++;
     pthread_mutex_init(&nextPidMutex, NULL);
-   inicio_kernel();
-   kernelConfig = kernel_config_initializer(kernelConfigPath);
-   cantidad_de_recursos = size_recurso_list(kernel_config_get_recurso(kernelConfig));
-   recursoConfig = iniciar_estructuras_de_recursos(cantidad_de_recursos, kernel_config_get_instancias(kernelConfig), kernel_config_get_recurso(kernelConfig));
+    inicio_kernel();
+    kernelConfig = kernel_config_initializer(kernelConfigPath);
+    cantidad_de_recursos = size_recurso_list(kernel_config_get_recurso(kernelConfig));
+    recursoConfig = iniciar_estructuras_de_recursos(cantidad_de_recursos, kernel_config_get_instancias(kernelConfig), kernel_config_get_recurso(kernelConfig));
     
    /////////////////////////////// CONEXION CON CPU /////////////////////////////
     conectar_a_servidor_cpu_dispatch(kernelConfig,kernelLogger);

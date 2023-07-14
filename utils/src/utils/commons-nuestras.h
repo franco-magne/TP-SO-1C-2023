@@ -16,11 +16,11 @@
 
 // MACROS DE UBICACION DE LAS CONFIG DE LOS PROCESOS
 
-#define KERNEL_CONFIG_UBICACION "config/kernel.config"
+#define KERNEL_CONFIG_UBICACION "config/kernelmemoria.config"
 #define FILESYSTEM_CONFIG_UBICACION "config/fileSystem.config"
 #define SUPERBLOQUE_CONFIG_UBICACION "config/superbloque.config"
-#define MEMORIA_CONFIG_UBICACION "config/memoria.config"
-#define CPU_CONFIG_UBICACION "config/cpu.config"
+#define MEMORIA_CONFIG_UBICACION "config/memoriabase.config"
+#define CPU_CONFIG_UBICACION "config/cpumemoria.config"
 
 
 typedef struct {
