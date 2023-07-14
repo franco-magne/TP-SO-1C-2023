@@ -146,8 +146,6 @@ void encolar_en_new_a_nuevo_proceso(int cliente){
         uint32_t newPid = obtener_siguiente_pid();
         t_pcb* newPcb = pcb_create(newPid); // Me rompe pcb_create()
         // LE SETEO LOS VALORES BASICOS
-        pcb_set_estimacion_anterior(newPcb, kernel_config_get_estimacion_inicial(kernelConfig));
-        pcb_set_rafaga_anterior(newPcb, 0);
         pcb_set_instructions_buffer(newPcb, instructionsBufferCopy);
         
 
@@ -226,7 +224,6 @@ void* atender_pcb(void* args)
 {
     for (;;) {
         bool procesoFueBloqueado = false;
-        bool procesoTuvoOutOfMemory = false;
         sem_wait(estado_get_sem(estadoExec));
 
         pthread_mutex_lock(estado_get_mutex(estadoExec));
@@ -300,7 +297,7 @@ void* atender_pcb(void* args)
 
             case HEADER_create_segment:
 
-                procesoTuvoOutOfMemory = instruccion_create_segment(pcb);
+                instruccion_create_segment(pcb);
 
                 break;
             
@@ -341,8 +338,8 @@ void* atender_pcb(void* args)
         ( 
            (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado && pcb_get_estado_actual(pcb) != EXIT) 
         || (cpuResponse == HEADER_proceso_devolver_recurso && pcb_get_estado_actual(pcb) == EXEC) 
-        || (cpuResponse == HEADER_create_segment) && !procesoTuvoOutOfMemory
-        || (cpuResponse == HEADER_delete_segment) 
+        || (cpuResponse == HEADER_create_segment)
+        || (cpuResponse == HEADER_delete_segment)
         || (cpuResponse == HEADER_f_open) && !procesoFueBloqueado
         || (cpuResponse == HEADER_f_close)
         || (cpuResponse == HEADER_f_seek)

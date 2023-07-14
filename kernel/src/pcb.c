@@ -19,7 +19,7 @@ t_pcb* pcb_create(uint32_t pid)
    this->recursoUtilizado = NULL;
    this->rafaga_actual = -1;
    this->rafaga_anterior = -1;
-   this->estimacionActual = -1;
+   this->estimacionActual = 0;
    this->listaDeSegmento = list_create();
    this->listaArchivosAbiertos = list_create();
    return this;

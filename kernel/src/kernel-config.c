@@ -14,7 +14,7 @@ t_kernel_config* kernel_config_initializer(t_config* tempCfg)
     kernelConfig->PUERTO_ESCUCHA = strdup(config_get_string_value(tempCfg, "PUERTO_ESCUCHA"));
     kernelConfig->ALGORITMO_PLANIFICACION = strdup(config_get_string_value(tempCfg, "ALGORITMO_PLANIFICACION"));
     kernelConfig->ESTIMACION_INICIAL = config_get_int_value(tempCfg, "ESTIMACION_INICIAL");
-    kernelConfig->HRRN_ALFA =  config_get_int_value(tempCfg, "HRRN_ALFA");
+    kernelConfig->HRRN_ALFA =  config_get_double_value(tempCfg, "HRRN_ALFA");
     kernelConfig->SOCKET_MEMORIA = -1;
     kernelConfig->SOCKET_DISPATCH_CPU = -1;
     kernelConfig->SOCKET_FILE_SYSTEM = -1;
