@@ -75,7 +75,6 @@ void liberar_segmentos_del_proceso_tabla_global(t_pcb* pcb){
 int main(int argc, char* argv[]) {
     kernelLogger = log_create(KERNEL_LOG_UBICACION,KERNEL_PROCESS_NAME,true,LOG_LEVEL_INFO);
     t_config* kernelConfigPath = config_create(KERNEL_CONFIG_UBICACION);
-
     tablaGlobalDeArchivosAbiertos = list_create();
     tablaGlobalDeSegmentos = list_create();
     nextPid++;
@@ -145,8 +144,9 @@ void encolar_en_new_a_nuevo_proceso(int cliente){
 
     
         uint32_t newPid = obtener_siguiente_pid();
-        t_pcb* newPcb = pcb_create(newPid); // Me rompe pcb_create()
+        t_pcb* newPcb = pcb_create(newPid); 
         // LE SETEO LOS VALORES BASICOS
+        pcb_set_socket_consola(newPcb, cliente);
         pcb_set_estimacion_anterior(newPcb, kernel_config_get_estimacion_inicial(kernelConfig));
         pcb_set_rafaga_anterior(newPcb, 0);
         pcb_set_instructions_buffer(newPcb, instructionsBufferCopy);
@@ -191,12 +191,11 @@ void* hilo_que_libera_pcbs_en_exit(void* args)
     for (;;) {
         
         sem_wait(estado_get_sem(estadoExit));
-        t_pcb* pcbALiberar = malloc(sizeof(pcbALiberar));
-        pcbALiberar = estado_desencolar_primer_pcb_atomic(estadoExit);
+        t_pcb* pcbALiberar = estado_desencolar_primer_pcb_atomic(estadoExit);
         log_info(kernelLogger, "\e[0;32mSe finaliza PCB <ID %d>", pcb_get_pid(pcbALiberar));
-        //pcb_destroy(pcbALiberar);
+        stream_send_empty_buffer(pcb_get_socket_consola(pcbALiberar),HEADER_proceso_terminado);
+        pcb_destroy(pcbALiberar);
         sem_post(&gradoMultiprog);
-        free(pcbALiberar);
     }
 }
 

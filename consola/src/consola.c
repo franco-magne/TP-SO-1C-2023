@@ -29,12 +29,13 @@ int main(int argc, char *argv[]) {
     consola_enviar_instrucciones_a_kernel(pathArchivoInstrucciones, kernelSocket, consolaLogger);
        
     uint32_t idProceso = receive_pid_kernel(kernelSocket, consolaLogger);
-    log_info(consolaLogger, "Se recibio el PID %d", idProceso);
+    log_info(consolaLogger, "Se recibio el PID <%d>", idProceso);
     imprimir_consola();
 
-    //wait_kernel_response(kernelSocket, idProceso, consolaConfig, consolaLogger);
-
-    //consola_destroy(consolaConfig, consolaLogger);
+    uint8_t kernelResponse = stream_recv_header(kernelSocket);
+    if(kernelResponse == HEADER_proceso_terminado)
+        log_info(consolaLogger, BOLDRED UNDERLINE "PROCESO "RESET UNDERLINE BOLDYELLOW"<%i>"RESET  BOLDRED UNDERLINE" TERMINADO", idProceso);
+    
 
     return 0;
 }
