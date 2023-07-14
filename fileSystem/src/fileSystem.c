@@ -10,8 +10,8 @@ int main() {
    /*------------------------------------------------------------------------- INICIO DE FILESYSTEM ----------------------------------------------------------------------------- */
 
    fs = malloc(sizeof(t_filesystem));   
-   fs_config = config_create(FS_CONFIG_UBICACION);
-   superbloque_config = config_create(FS_SUPERBLOQUE_UBICACION);
+   fs_config = config_create(FILESYSTEM_CONFIG_UBICACION);
+   superbloque_config = config_create(FILESYSTEM_CONFIG_UBICACION);
    fs_logger = log_create(FS_LOG_UBICACION, FS_PROCESS_NAME, true, LOG_LEVEL_INFO);
 
    cargar_t_filesystem(fs_config, superbloque_config, fs);   
