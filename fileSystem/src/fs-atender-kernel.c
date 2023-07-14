@@ -1,20 +1,22 @@
 #include "../include/fs-atender-kernel.h"
 
 t_list *lista_fcbs;
+int conexion_kernel = 1;
 pthread_mutex_t mutexTest = PTHREAD_MUTEX_INITIALIZER;
 
 /*------------------------------------------------------------------------- ATENDER KERNEL ----------------------------------------------------------------------------- */
 
-void atender_kernel(t_filesystem *fs)
+int atender_kernel(t_filesystem *fs)
 {
 
-    int operacion_OK = 0;
+    conexion_kernel = 1;
+    int operacion_OK = 0;    
     lista_fcbs = list_create();
     levantar_fcbs_del_directorio(fs, lista_fcbs);
 
-    while (fs->socket_kernel != -1)
+    while (conexion_kernel)
     {
-
+        
         log_info(fs->logger, CYAN BOLD "Esperando peticion de KERNEL...");
         uint8_t header = stream_recv_header(fs->socket_kernel); // RECIBO LA OPERACION QUE KERNEL QUIERA SOLICITAR
         pthread_mutex_lock(&mutexTest);
@@ -22,156 +24,158 @@ void atender_kernel(t_filesystem *fs)
         switch (header)
         {
 
-        case HEADER_f_open:
+            case HEADER_f_open:
 
-            char *nombre_archivo_open;
-            t_buffer *bufferOpen = buffer_create();
+                char *nombre_archivo_open;
+                t_buffer *bufferOpen = buffer_create();
 
-            stream_recv_buffer(fs->socket_kernel, bufferOpen);      // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
-            nombre_archivo_open = buffer_unpack_string(bufferOpen); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
+                stream_recv_buffer(fs->socket_kernel, bufferOpen);      // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
+                nombre_archivo_open = buffer_unpack_string(bufferOpen); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
 
-            log_info(fs->logger, YELLOW BOLD "Recibo operacion F_OPEN <%s> de KERNEL", nombre_archivo_open);
+                log_info(fs->logger, YELLOW BOLD "Recibo operacion F_OPEN <%s> de KERNEL", nombre_archivo_open);
 
-            operacion_OK = abrir_archivo_fs(nombre_archivo_open, fs);
-            if (operacion_OK)
-            {
-                stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO EXISTE Y LO AGREGUE A SU TABLA GLOBAL
-            }
-            else
-            {
-                log_info(fs->logger, "El archivo no existe. Solicite crearlo"); // NO EXISTE ESE ARCHIVO. TIENE QUE SOLICITAR CREARLO PARA AGREGARLO AL DIRECTORIO DE FCBs
-                stream_send_empty_buffer(fs->socket_kernel, HEADER_f_create);
-            }
+                operacion_OK = abrir_archivo_fs(nombre_archivo_open, fs);
+                if (operacion_OK)
+                {
+                    stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO EXISTE Y LO AGREGUE A SU TABLA GLOBAL
+                }
+                else
+                {
+                    log_info(fs->logger, "El archivo no existe. Solicite crearlo"); // NO EXISTE ESE ARCHIVO. TIENE QUE SOLICITAR CREARLO PARA AGREGARLO AL DIRECTORIO DE FCBs
+                    stream_send_empty_buffer(fs->socket_kernel, HEADER_f_create);
+                }
 
-            free(nombre_archivo_open);
-            buffer_destroy(bufferOpen);
-
-            break;
-
-        case HEADER_f_create:
-
-            char *nombre_archivo_create;
-            t_buffer *bufferCreate = buffer_create();
-
-            stream_recv_buffer(fs->socket_kernel, bufferCreate);        // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
-            nombre_archivo_create = buffer_unpack_string(bufferCreate); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
-
-            log_info(fs->logger, YELLOW BOLD "Recibo operacion F_CREATE <%s> de KERNEL", nombre_archivo_create);
-
-            operacion_OK = crear_archivo(nombre_archivo_create, fs);
-            if (operacion_OK)
-            {
-                stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue);
-            }
-
-            free(nombre_archivo_create);
-            buffer_destroy(bufferCreate);
+                free(nombre_archivo_open);
+                buffer_destroy(bufferOpen);
 
             break;
 
-        case HEADER_f_truncate:
+            case HEADER_f_create:
 
-            char *nombre_archivo_truncate;
-            uint32_t tamanio_archivo_truncate;
-            t_buffer *bufferTruncate = buffer_create();
+                char *nombre_archivo_create;
+                t_buffer *bufferCreate = buffer_create();
 
-            stream_recv_buffer(fs->socket_kernel, bufferTruncate);                                      // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
-            nombre_archivo_truncate = buffer_unpack_string(bufferTruncate);                             // DESERIALIZO EL BUFFER MANDADO POR KERNEL
-            buffer_unpack(bufferTruncate, &tamanio_archivo_truncate, sizeof(tamanio_archivo_truncate)); // DESERIALIZO EL TAMANIO DE ARCHIVO
+                stream_recv_buffer(fs->socket_kernel, bufferCreate);        // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
+                nombre_archivo_create = buffer_unpack_string(bufferCreate); // DESERIALIZO EL BUFFER MANDADO POR KERNEL
 
-            log_info(fs->logger, YELLOW BOLD "Recibo operacion F_TRUNCATE <%s, %" PRIu32 "> de KERNEL", nombre_archivo_truncate, tamanio_archivo_truncate);
+                log_info(fs->logger, YELLOW BOLD "Recibo operacion F_CREATE <%s> de KERNEL", nombre_archivo_create);
 
-            operacion_OK = truncar_archivo(nombre_archivo_truncate, tamanio_archivo_truncate, fs);
-            if (operacion_OK)
-            {
-                stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO SE TRUNCO
-            }
-            else
-            {
-                log_info(fs->logger, "Error al truncar");
-                stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // FALLO EN EL TRUNCATE
-            }
+                operacion_OK = crear_archivo(nombre_archivo_create, fs);
+                if (operacion_OK)
+                {
+                    stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue);
+                }
 
-            free(nombre_archivo_truncate);
-            buffer_destroy(bufferTruncate);
+                free(nombre_archivo_create);
+                buffer_destroy(bufferCreate);
 
             break;
 
-        case HEADER_f_read:
+            case HEADER_f_truncate:
 
-            char *nombre_archivo_read;
-            uint32_t base_fisica_read;
-            uint32_t desplazamiento_fisico_read;
-            uint32_t cantidad_bytes_a_leer;
-            uint32_t puntero_a_leer;
-            
-            t_buffer *bufferRead = buffer_create();
+                char *nombre_archivo_truncate;
+                uint32_t tamanio_archivo_truncate;
+                t_buffer *bufferTruncate = buffer_create();
 
-            stream_recv_buffer(fs->socket_kernel, bufferRead);
-            nombre_archivo_read = buffer_unpack_string(bufferRead);
-            buffer_unpack(bufferRead, &base_fisica_read, sizeof(base_fisica_read));
-            buffer_unpack(bufferRead, &cantidad_bytes_a_leer, sizeof(cantidad_bytes_a_leer));
-            buffer_unpack(bufferRead, &puntero_a_leer, sizeof(puntero_a_leer));
-            buffer_unpack(bufferRead, &desplazamiento_fisico_read, sizeof(desplazamiento_fisico_read));
+                stream_recv_buffer(fs->socket_kernel, bufferTruncate);                                      // RECIBO EL BUFFER NOMBRE DE ARCHIVO DE KERNEL
+                nombre_archivo_truncate = buffer_unpack_string(bufferTruncate);                             // DESERIALIZO EL BUFFER MANDADO POR KERNEL
+                buffer_unpack(bufferTruncate, &tamanio_archivo_truncate, sizeof(tamanio_archivo_truncate)); // DESERIALIZO EL TAMANIO DE ARCHIVO
 
-            log_info(fs->logger, YELLOW BOLD "Recibo operacion F_READ <%s, %" PRIu32 " puntero, [%" PRIu32 " | %" PRIu32 "], %" PRIu32 " bytes> de KERNEL", nombre_archivo_read, puntero_a_leer, base_fisica_read, desplazamiento_fisico_read, cantidad_bytes_a_leer);
+                log_info(fs->logger, YELLOW BOLD "Recibo operacion F_TRUNCATE <%s, %" PRIu32 "> de KERNEL", nombre_archivo_truncate, tamanio_archivo_truncate);
 
-            leer_archivo(nombre_archivo_read, base_fisica_read, desplazamiento_fisico_read, cantidad_bytes_a_leer, puntero_a_leer, fs);
-            stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE YA SE COMPLETO LA LECTURA
+                operacion_OK = truncar_archivo(nombre_archivo_truncate, tamanio_archivo_truncate, fs);
+                if (operacion_OK)
+                {
+                    stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE EL ARCHIVO SE TRUNCO
+                }
+                else
+                {
+                    log_info(fs->logger, "Error al truncar");
+                    stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // FALLO EN EL TRUNCATE
+                }
 
-            free(nombre_archivo_read);
-            buffer_destroy(bufferRead);
-
-            break;
-
-        case HEADER_f_write:
-
-            char *nombre_archivo_write;
-            uint32_t base_fisica_write;;
-            uint32_t cantidad_bytes_a_escribir;
-            uint32_t puntero_a_escribir;
-            uint32_t desplazamiento_fisico_write;
-
-            t_buffer *bufferWrite = buffer_create();
-
-            stream_recv_buffer(fs->socket_kernel, bufferWrite);
-            nombre_archivo_write = buffer_unpack_string(bufferWrite);
-            buffer_unpack(bufferWrite, &base_fisica_write, sizeof(base_fisica_write));
-            buffer_unpack(bufferWrite, &cantidad_bytes_a_escribir, sizeof(cantidad_bytes_a_escribir));
-            buffer_unpack(bufferWrite, &puntero_a_escribir, sizeof(puntero_a_escribir));
-            buffer_unpack(bufferWrite, &desplazamiento_fisico_write,sizeof(desplazamiento_fisico_write));
-
-            log_info(fs->logger, YELLOW BOLD "Recibo operacion F_WRITE <%s, %" PRIu32 " puntero, [%" PRIu32 " | %" PRIu32 "], %" PRIu32 " bytes> de KERNEL", nombre_archivo_write, puntero_a_escribir, base_fisica_write, desplazamiento_fisico_write , cantidad_bytes_a_escribir);
-
-            escribir_archivo(nombre_archivo_write, base_fisica_write, desplazamiento_fisico_write , cantidad_bytes_a_escribir, puntero_a_escribir, fs);
-            stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE YA SE COMPLETO LA ESCRITURA
-
-            free(nombre_archivo_write);
-            buffer_destroy(bufferWrite);
+                free(nombre_archivo_truncate);
+                buffer_destroy(bufferTruncate);
 
             break;
 
-        case HEADER_Compactacion:
+            case HEADER_f_read:
 
-            log_info(fs->logger, YELLOW BOLD "Recibo operacion COMPACTACION");
-            log_info(fs->logger, "Notifico a KERNEL que puede continuar");
-            stream_recv_empty_buffer(fs->socket_kernel);
-            stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue);            
+                char *nombre_archivo_read;
+                uint32_t base_fisica_read;
+                uint32_t desplazamiento_fisico_read;
+                uint32_t cantidad_bytes_a_leer;
+                uint32_t puntero_a_leer;
+                
+                t_buffer *bufferRead = buffer_create();
+
+                stream_recv_buffer(fs->socket_kernel, bufferRead);
+                nombre_archivo_read = buffer_unpack_string(bufferRead);
+                buffer_unpack(bufferRead, &base_fisica_read, sizeof(base_fisica_read));
+                buffer_unpack(bufferRead, &cantidad_bytes_a_leer, sizeof(cantidad_bytes_a_leer));
+                buffer_unpack(bufferRead, &puntero_a_leer, sizeof(puntero_a_leer));
+                buffer_unpack(bufferRead, &desplazamiento_fisico_read, sizeof(desplazamiento_fisico_read));
+
+                log_info(fs->logger, YELLOW BOLD "Recibo operacion F_READ <%s, %" PRIu32 " puntero, [%" PRIu32 " | %" PRIu32 "], %" PRIu32 " bytes> de KERNEL", nombre_archivo_read, puntero_a_leer, base_fisica_read, desplazamiento_fisico_read, cantidad_bytes_a_leer);
+
+                leer_archivo(nombre_archivo_read, base_fisica_read, desplazamiento_fisico_read, cantidad_bytes_a_leer, puntero_a_leer, fs);
+                stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE YA SE COMPLETO LA LECTURA
+
+                free(nombre_archivo_read);
+                buffer_destroy(bufferRead);
 
             break;
 
-        default:
-            log_error(fs->logger, "Peticion incorrecta. <%i>", header);
-            exit(1);
+            case HEADER_f_write:
+
+                char *nombre_archivo_write;
+                uint32_t base_fisica_write;;
+                uint32_t cantidad_bytes_a_escribir;
+                uint32_t puntero_a_escribir;
+                uint32_t desplazamiento_fisico_write;
+
+                t_buffer *bufferWrite = buffer_create();
+
+                stream_recv_buffer(fs->socket_kernel, bufferWrite);
+                nombre_archivo_write = buffer_unpack_string(bufferWrite);
+                buffer_unpack(bufferWrite, &base_fisica_write, sizeof(base_fisica_write));
+                buffer_unpack(bufferWrite, &cantidad_bytes_a_escribir, sizeof(cantidad_bytes_a_escribir));
+                buffer_unpack(bufferWrite, &puntero_a_escribir, sizeof(puntero_a_escribir));
+                buffer_unpack(bufferWrite, &desplazamiento_fisico_write,sizeof(desplazamiento_fisico_write));
+
+                log_info(fs->logger, YELLOW BOLD "Recibo operacion F_WRITE <%s, %" PRIu32 " puntero, [%" PRIu32 " | %" PRIu32 "], %" PRIu32 " bytes> de KERNEL", nombre_archivo_write, puntero_a_escribir, base_fisica_write, desplazamiento_fisico_write , cantidad_bytes_a_escribir);
+
+                escribir_archivo(nombre_archivo_write, base_fisica_write, desplazamiento_fisico_write , cantidad_bytes_a_escribir, puntero_a_escribir, fs);
+                stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue); // NOTIFICO A KERNEL QUE YA SE COMPLETO LA ESCRITURA
+
+                free(nombre_archivo_write);
+                buffer_destroy(bufferWrite);
+
+            break;
+
+            case HEADER_Compactacion:
+
+                log_info(fs->logger, YELLOW BOLD "Recibo operacion COMPACTACION");
+                log_info(fs->logger, "Notifico a KERNEL que puede continuar");
+                stream_recv_empty_buffer(fs->socket_kernel);
+                stream_send_empty_buffer(fs->socket_kernel, HANDSHAKE_ok_continue);            
+
+            break;
+
+            default:
+
+                log_info(fs->logger, "Hubo una desconexion");
+                log_info(fs->logger, CYAN BOLD "Cliente KERNEL desconectado");
+                conexion_kernel = 0;
+
             break;
         }
 
         pthread_mutex_unlock(&mutexTest);
         operacion_OK = 0;
-    }
+    }    
 
-    printf("Hubo una desconexion");
-    return;
+    return 0;
 }
 
 /*------------------------------------------------------------------------- F_OPEN ----------------------------------------------------------------------------- */
@@ -748,8 +752,7 @@ char *pedir_informacion_a_memoria(uint32_t base_segmento, uint32_t desplazamient
 
 /*------------------------------------------------------------------------- ESPERAR KERNEL ----------------------------------------------------------------------------- */
 
-int fs_escuchando_en(int server_fs, t_filesystem *fs)
-{
+int fs_escuchando_en(int server_fs, t_filesystem *fs) {
 
     pthread_t hilo;
     int socket_kernel = esperar_cliente(server_fs);
@@ -757,16 +760,13 @@ int fs_escuchando_en(int server_fs, t_filesystem *fs)
     fs->socket_kernel = socket_kernel;
     log_info(fs->logger, CYAN BOLD "Cliente KERNEL conectado");
 
-    if (socket_kernel != -1)
-    {
+    if (socket_kernel != -1) {
 
         pthread_create(&hilo, NULL, (void *)atender_kernel, (void *)fs);
         pthread_join(hilo, NULL);
-
-        return 1;
     }
 
-    return 0;
+    return (!conexion_kernel) ? 0 : 1;
 }
 
 /*------------------------------------------------------------------------- OTRAS ----------------------------------------------------------------------------- */
