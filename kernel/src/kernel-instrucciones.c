@@ -71,9 +71,9 @@ char* string_pids_ready(t_estado* estadoReady)
 void proceso_pasa_a_ready(t_pcb* pcb, char* estadoActual){
     pcb_set_estado_anterior(pcb, pcb_get_estado_actual(pcb));
     pcb_set_estado_actual(pcb, READY);
-    setear_tiempo_ready(pcb); // EMPIEZA A CONTAR EL TIEMPO 
+    //setear_tiempo_ready(pcb); // EMPIEZA A CONTAR EL TIEMPO 
+    pcb->tiempo_ready = temporal_create();
     estado_encolar_pcb_atomic(estadoReady, pcb);
-    
     char* stringPidsReady = string_pids_ready(estadoReady);
     log_transition(estadoActual, "READY", pcb_get_pid(pcb));
     log_info(kernelLogger, BOLD MAGENTA UNDERLINE "Cola Ready <%s>: %s" RESET, kernel_config_get_algoritmo_planificacion(kernelConfig), stringPidsReady);

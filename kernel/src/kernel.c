@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
    /////////////////////////////// CONEXION CON CPU /////////////////////////////
     conectar_a_servidor_cpu_dispatch(kernelConfig,kernelLogger);
     /////////////////////////////// CONEXION CON FILE_SYSTEM /////////////////////////////
-    conectar_con_servidor_file_system(kernelConfig,kernelLogger);
+    //conectar_con_servidor_file_system(kernelConfig,kernelLogger);
    /////////////////////////////// CONEXION CON MEMORIA /////////////////////////////
     conectar_con_servidor_memoria(kernelConfig,kernelLogger);
    ////////////////////////////// CONEXION CON CONSOLA //////////////////////////////
@@ -231,7 +231,7 @@ void* atender_pcb(void* args)
         pthread_mutex_unlock(estado_get_mutex(estadoExec));
 
         uint8_t headerAEnviar = HEADER_pcb_a_ejecutar;
-
+        temporal_destroy(pcb->tiempo_ready);
 
         pthread_mutex_lock(&mutexTablaGlobalSegmento); 
         t_segmento* aux = segmento_create(-1,-1);
@@ -243,13 +243,15 @@ void* atender_pcb(void* args)
 
         struct timespec start;
         set_timespec(&start);
+        t_temporal* tiempoEntrada = temporal_create();
         cpu_adapter_enviar_pcb_a_cpu(pcb, headerAEnviar, kernelConfig, kernelLogger);
         uint8_t cpuResponse = stream_recv_header(kernel_config_get_socket_dispatch_cpu(kernelConfig)); 
-        
+       // temporal_stop(tiempoEntrada);
         struct timespec end;
         set_timespec(&end);
-        
-        pcb_set_rafaga_anterior(pcb, obtener_diferencial_de_tiempo_en_milisegundos(end,start) );
+        pcb_set_rafaga_anterior(pcb, (double)temporal_gettime(tiempoEntrada));
+        temporal_destroy(tiempoEntrada);
+        //pcb_set_rafaga_anterior(pcb, obtener_diferencial_de_tiempo_en_milisegundos(end,start) );
 
         pcb = cpu_adapter_recibir_pcb_actualizado_de_cpu(pcb, cpuResponse, kernelConfig, kernelLogger); 
         

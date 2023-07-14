@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <commons/temporal.h>
 //////////////////////// BIBLOTECAS COMMONS /////////////////
 #include <commons/log.h>
 #include <commons/collections/list.h>
@@ -26,7 +27,7 @@ typedef struct {
     t_nombre_estado estadoActual;
     t_nombre_estado estadoAnterior;
     char* recursoUtilizado;
-    struct timespec tiempo_ready;
+    t_temporal* tiempo_ready;
     double rafaga_anterior;
     double rafaga_actual;
     double estimacionActual;
@@ -66,7 +67,7 @@ t_nombre_estado pcb_get_estado_actual(t_pcb* this);
 t_nombre_estado pcb_get_estado_anterior(t_pcb* this);
 uint32_t pcb_get_tiempoIO(t_pcb* this);
 char* pcb_get_recurso_utilizado(t_pcb* this);
-struct timespec pcb_get_tiempo_en_ready(t_pcb* this);
+t_temporal* pcb_get_tiempo_en_ready(t_pcb* this);
 double pcb_get_estimacion_anterior(t_pcb* this);
 double pcb_get_rafaga_anterior(t_pcb* this);
 t_list* pcb_get_lista_de_segmentos(t_pcb* this);
