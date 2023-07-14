@@ -46,6 +46,7 @@ typedef struct  {
     uint32_t punteroArchivo;
     uint32_t cantidadDeByte;
     uint32_t direccionFisicaArchivo;
+    uint32_t desplazamientoFisico;
     t_list* tablaDeSegmento;
 } t_cpu_pcb;
 
@@ -54,13 +55,6 @@ typedef struct{
     char* recursoUtilizado;
 } recurso;
 
-/*typedef struct {
-    uint32_t pid;
-    uint32_t id_de_segmento;
-    uint32_t base_del_segmento;
-    uint32_t tamanio_de_segmento;
-    bool victima;
-}t_segmento;*/
 
 
 

@@ -17,6 +17,7 @@ t_pcb_archivo* archivo_create_pcb(char* nombreArchivo){
     this->punteroArchivo=-1;
     this->direccionFisicaArchivo = -1;
     this->cantidadByte = -1;
+    this->desplazamientoFisico = -1;
     return this;
 
 }
@@ -65,6 +66,9 @@ uint32_t archivo_pcb_get_cantidad_byte(t_pcb_archivo* this){
     return this->cantidadByte;
 }
 
+uint32_t archivo_pcb_get_desplazamiento_fisico(t_pcb_archivo* this){
+    return this->desplazamientoFisico;
+}
 ///////////////////////// SETTER /////////////////////////////
 
 void kernel_archivo_set_pid(t_kernel_archivo* this , uint32_t pid)
@@ -101,6 +105,9 @@ void archivo_pcb_set_cantidad_byte(t_pcb_archivo* this, uint32_t cantidadByte){
     this->cantidadByte = cantidadByte;
 }
 
+void archivo_pcb_set_desplazamiento_fisico(t_pcb_archivo* this, uint32_t desplazamiento){
+    this->desplazamientoFisico = desplazamiento;
+}
 
 ///////////////////////////// FUNCIONES EXTRAS ///////////////////////////////
 

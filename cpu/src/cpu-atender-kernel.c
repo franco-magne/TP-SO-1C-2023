@@ -68,6 +68,24 @@ static char* t_registro_to_char(t_registro registro)
     }
 }
 
+uint32_t cantidad_byte_segun_registro(t_registro registro){
+    switch(registro){
+        case REGISTRO_ax:  
+        case REGISTRO_bx:
+        case REGISTRO_cx:
+        case REGISTRO_dx: return 4; break;
+        case REGISTRO_eax:
+        case REGISTRO_ebx:
+        case REGISTRO_ecx:
+        case REGISTRO_edx: return 8; break;
+        case REGISTRO_rax:
+        case REGISTRO_rbx:
+        case REGISTRO_rcx:
+        case REGISTRO_rdx: return 16; break;
+
+    }
+}
+
 
 
 void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
@@ -85,8 +103,9 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
         char* nombreArchivo = cpu_pcb_get_nombre_archivo(pcb);
         uint32_t tamanioArchivo = cpu_pcb_get_tamanio_archivo(pcb);
         uint32_t punteroArchivo = cpu_pcb_get_puntero_archivo(pcb);
-        uint32_t direccionFisicaArchivo = cpu_pcb_get_direccion_fisica_archivo(pcb);
-        uint32_t cantidadByte = cpu_pcb_get_cantidad_byte_archivo(pcb);
+        uint32_t direccionFisicaArchivo = cpu_pcb_get_base_direccion_fisica(pcb);
+        uint32_t cantidadByte = cpu_pcb_get_cantidad_byte(pcb);
+        uint32_t desplazamientoFisico = cpu_pcb_get_desplazamiento_segmento(pcb);
         t_buffer* buffer = buffer_create();
 
          //Empaqueto pid
@@ -138,6 +157,7 @@ void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
             buffer_pack_string(buffer,nombreArchivo);
             buffer_pack(buffer,&cantidadByte, sizeof(cantidadByte));
             buffer_pack(buffer,&direccionFisicaArchivo, sizeof(direccionFisicaArchivo));
+            buffer_pack(buffer,&desplazamientoFisico, sizeof(desplazamientoFisico));
             break;
             
             default: 
@@ -176,13 +196,14 @@ static bool cpu_decode_instruction(uint32_t pid, t_instruccion* instruction)
 
 static char* cpu_fetch_operands(t_instruccion* nextInstruction, t_cpu_pcb* pcb) 
 {
-    
+    t_registro registro = instruccion_get_registro1(nextInstruction);
+    uint32_t cantidadByteRegistro = cantidad_byte_segun_registro(registro);
     uint32_t direccionLogicaOrigen = instruccion_get_operando2(nextInstruction);
-    uint32_t dirFisica = cpu_mmu(cpu_config_get_socket_memoria(cpuConfig), direccionLogicaOrigen, cpu_pcb_get_tabla_de_segmento(pcb), cpu_pcb_get_pid(cpu_pcb_create));
-    if(dirFisica == 0){
+    cpu_mmu(cpu_config_get_socket_memoria(cpuConfig), direccionLogicaOrigen, cpu_pcb_get_tabla_de_segmento(pcb), pcb,cantidadByteRegistro);
+    if(cpu_pcb_get_base_direccion_fisica(pcb) == -1){
             return NULL;
     } else {
-           char* fetchedValue = cpu_leer_en_memoria(cpu_config_get_socket_memoria(cpuConfig), dirFisica, pcb );
+           char* fetchedValue = cpu_leer_en_memoria(cpu_config_get_socket_memoria(cpuConfig), pcb );
             //log_info(cpuLogger, "FETCH OPERANDS: PCB <ID %d> MOVIN  Fetched Value: %s",cpu_pcb_get_pid(pcb), fetchedValue);
            return fetchedValue;
     }
@@ -344,7 +365,6 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         
     } else if (tipoInstruccion == INSTRUCCION_IO ) {
         
-        uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
         uint32_t unidadesDeTrabajo = *((uint32_t*) operando1);
 
         cpu_set_recursoIO(recursos, unidadesDeTrabajo);
@@ -415,11 +435,9 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
     } else if (tipoInstruccion == INSTRUCCION_F_OPEN ) {
         
         char* recurso1 = string_duplicate((char*) operando1);
-        uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
         log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <F_OPEN> - <%s> ", cpu_pcb_get_pid(pcb),recurso1);
 
         cpu_pcb_set_nombre_archivo(pcb, recurso1);
-        intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
 
         empaquetar_instruccion(pcb, HEADER_f_open);
@@ -428,11 +446,9 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
     } else if (tipoInstruccion == INSTRUCCION_F_CLOSE ) {
         
         char* recurso1 = string_duplicate((char*) operando1);
-        uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
         log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <F_CLOSE> - <%s>", cpu_pcb_get_pid(pcb), recurso1);
         
         cpu_pcb_set_nombre_archivo(pcb, recurso1);
-        intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
 
         empaquetar_instruccion(pcb, HEADER_f_close);
@@ -444,13 +460,11 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t puntero = *((uint32_t*) operando2);
 
 
-        uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
         log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <F_SEEK> - <%s> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo,puntero);
 
         cpu_pcb_set_nombre_archivo(pcb,nombreArchivo);
         cpu_pcb_set_puntero_archivo(pcb, puntero);
 
-        intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
 
         empaquetar_instruccion(pcb, HEADER_f_seek);
@@ -462,10 +476,8 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t tamanio_archivo = *((uint32_t*) operando2);
 
 
-        uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
         log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <F_TRUNCATE> - <%s> - <%i>", cpu_pcb_get_pid(pcb),recurso1,tamanio_archivo);
 
-        intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
         cpu_pcb_set_nombre_archivo(pcb,recurso1);
         cpu_pcb_set_tamanio_archivo(pcb,tamanio_archivo);
@@ -478,15 +490,11 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t direccionLogica = *((uint32_t*) operando2);
         uint32_t cantidadByte = *((uint32_t*) operando3);
 
-        uint32_t direccionFisica = cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),direccionLogica,cpu_pcb_get_tabla_de_segmento(pcb), cpu_pcb_get_pid(pcb));
-        if(direccionFisica != 0){
-            uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
+        cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),direccionLogica,cpu_pcb_get_tabla_de_segmento(pcb), pcb, cantidadByte);
+        if(cpu_pcb_get_base_direccion_fisica(pcb) != -1){
             log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <F_READ> - <%s> - <%i> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo, cantidadByte, direccionLogica);
-            intervalo_de_pausa(retardoInstruccion);
             cpu_pcb_set_program_counter(pcb, programCounterActualizado);
             cpu_pcb_set_nombre_archivo(pcb, nombreArchivo);
-            cpu_pcb_set_cantidad_byte_archivo(pcb,cantidadByte);
-            cpu_pcb_set_direccion_fisica_archivo(pcb, direccionFisica);
             empaquetar_instruccion(pcb, HEADER_f_read);
         } else {
             cpu_pcb_set_program_counter(pcb, programCounterActualizado);
@@ -501,15 +509,13 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t direccionLogica = *((uint32_t*) operando2);
         uint32_t cantidadByte = *((uint32_t*) operando3);
 
-        uint32_t direccionFisica = cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),direccionLogica,cpu_pcb_get_tabla_de_segmento(pcb), cpu_pcb_get_pid(pcb));
-        if(direccionFisica != 0){
+        cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),direccionLogica,cpu_pcb_get_tabla_de_segmento(pcb), pcb, cantidadByte);
+        if(cpu_pcb_get_base_direccion_fisica(pcb) != -1){
             uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
             log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <F_WRITE> - <%s> - <%i> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo, cantidadByte, direccionLogica);
             intervalo_de_pausa(retardoInstruccion);
             cpu_pcb_set_program_counter(pcb, programCounterActualizado);
             cpu_pcb_set_nombre_archivo(pcb, nombreArchivo);
-            cpu_pcb_set_cantidad_byte_archivo(pcb,cantidadByte);
-            cpu_pcb_set_direccion_fisica_archivo(pcb, direccionFisica);
             empaquetar_instruccion(pcb, HEADER_f_write);
         } else {
             cpu_pcb_set_program_counter(pcb, programCounterActualizado);
@@ -543,10 +549,11 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t dirLogica = *((uint32_t*) operando1);
         t_registro registro = *((t_registro*) operando2);
         char* contenidoAEnviar = get_registro_segun_tipo(registro, pcb);    
+        uint32_t cantidadByteRegistro = cantidad_byte_segun_registro(registro);
 
-        uint32_t dirFisica = cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),dirLogica,cpu_pcb_get_tabla_de_segmento(pcb), cpu_pcb_get_pid(pcb));
-        if(dirFisica != 0){
-            cpu_escribir_en_memoria(cpu_config_get_socket_memoria(cpuConfig) , dirFisica, contenidoAEnviar, pcb);
+        cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),dirLogica,cpu_pcb_get_tabla_de_segmento(pcb), pcb, cantidadByteRegistro);
+        if(cpu_pcb_get_base_direccion_fisica(pcb) != -1){
+            cpu_escribir_en_memoria(cpu_config_get_socket_memoria(cpuConfig) , contenidoAEnviar, pcb);
             uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
             log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <MOV_OUT> - <%i> - <%s>", cpu_pcb_get_pid(pcb), dirLogica,  t_registro_to_char(registro) );
             intervalo_de_pausa(retardoInstruccion);

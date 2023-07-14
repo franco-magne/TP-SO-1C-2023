@@ -77,7 +77,7 @@ void file_system_adapter_recv_f_open(t_pcb* pcb, t_kernel_config* kernelConfig){
 }
 
 
-t_pcb* atender_f_close(char* nombreArchivo){
+t_pcb* atender_f_close(char* nombreArchivo, t_log* kernelLogger){
 
   pthread_mutex_lock(&mutexTablaGlobal);
   int index = archivo_kernel_index(tablaGlobalDeArchivosAbiertos,nombreArchivo);
@@ -88,6 +88,7 @@ t_pcb* atender_f_close(char* nombreArchivo){
   if( queue_is_empty (kernel_archivo_get_cola_procesos_bloqueados(archivo)) ){
         pthread_mutex_lock(&mutexTablaGlobal);
         list_remove(tablaGlobalDeArchivosAbiertos,index);
+        log_info(kernelLogger, GREEN BOLD  "ARCHIVO "RESET YELLOW BOLD  " <%s> "RESET GREEN BOLD " ELIMINADO DE LA TABLA GLOBAL ",nombreArchivo);
         pthread_mutex_unlock(&mutexTablaGlobal);
         return NULL;
   } 
@@ -167,7 +168,7 @@ void file_system_adapter_send_f_read(t_pcb* pcb, t_log* kernelLogger, t_kernel_c
     uint32_t tamanioArchivo = archivo_pcb_get_tamanio_archivo(archivoLeer);
     uint32_t direccionFisica = archivo_pcb_get_direccion_fisica(archivoLeer);
     uint32_t cantidadByte = archivo_pcb_get_cantidad_byte(archivoLeer);
-    
+    uint32_t desplazamientoFisico = archivo_pcb_get_desplazamiento_fisico(archivoLeer);
     log_info(kernelLogger,BOLD UNDERLINE CYAN "PID: <%i> - Leer Archivo: "RESET BOLD YELLOW"<%s> "RESET BOLD UNDERLINE CYAN" - Puntero <%i> - Dirección Memoria <%i> - Tamaño <%i>",pid,nombreArchivo,puntero,direccionFisica,tamanioArchivo);
 
      t_buffer* bufferFRead = buffer_create();
@@ -176,14 +177,31 @@ void file_system_adapter_send_f_read(t_pcb* pcb, t_log* kernelLogger, t_kernel_c
     buffer_pack(bufferFRead, &direccionFisica, sizeof(direccionFisica));
     buffer_pack(bufferFRead, &cantidadByte, sizeof(cantidadByte));
     buffer_pack(bufferFRead, &puntero, sizeof(puntero));
+    buffer_pack(bufferFRead,&desplazamientoFisico, sizeof(desplazamientoFisico));
 
     
     stream_send_buffer(kernel_config_get_socket_file_system(kernelConfig),HEADER_f_read,bufferFRead);
 
     buffer_destroy(bufferFRead);
 
+    
+
+
 
 }
+
+void file_system_adapter_recv_f_read(t_kernel_config* kernelConfig, t_log* kernelLogger){
+
+  uint8_t fileSystemResponse = stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
+    stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
+  if(fileSystemResponse == HANDSHAKE_ok_continue){
+
+      log_info(kernelLogger,BLUE ITALIC "EL ARCHIVO FUE LEIDO");
+  }
+
+}
+
+
 
 void file_system_adapter_send_f_write(t_pcb* pcb, t_log* kernelLogger, t_kernel_config* kernelConfig){
 
@@ -194,6 +212,7 @@ void file_system_adapter_send_f_write(t_pcb* pcb, t_log* kernelLogger, t_kernel_
     uint32_t puntero = archivo_pcb_get_puntero_archivo(archivoEscribir);
     uint32_t tamanioArchivo = archivo_pcb_get_tamanio_archivo(archivoEscribir);
     uint32_t direccionFisica = archivo_pcb_get_direccion_fisica(archivoEscribir);
+    uint32_t desplazamientoFisico = archivo_pcb_get_desplazamiento_fisico(archivoEscribir);
 
   
     log_info(kernelLogger,BOLD UNDERLINE CYAN "PID: <%i> - Escribir Archivo: "RESET BOLD YELLOW"<%s> "RESET BOLD UNDERLINE CYAN"- Puntero <%i> - Dirección Memoria <%i> - Tamaño <%i>",pid,nombreArchivo,puntero,direccionFisica,tamanioArchivo);
@@ -204,11 +223,25 @@ void file_system_adapter_send_f_write(t_pcb* pcb, t_log* kernelLogger, t_kernel_
     buffer_pack(bufferFWrite, &direccionFisica, sizeof(direccionFisica));
     buffer_pack(bufferFWrite, &cantidadByte, sizeof(cantidadByte));
     buffer_pack(bufferFWrite, &puntero, sizeof(puntero));
+    buffer_pack(bufferFWrite, &desplazamientoFisico, sizeof(desplazamientoFisico));
 
     
     stream_send_buffer(kernel_config_get_socket_file_system(kernelConfig),HEADER_f_write,bufferFWrite);
 
     buffer_destroy(bufferFWrite);
 
+
+
+}
+
+
+void file_system_adapter_recv_f_write(t_kernel_config* kernelConfig, t_log* kernelLogger){
+
+  uint8_t fileSystemResponse = stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
+    stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
+  if(fileSystemResponse == HANDSHAKE_ok_continue){
+    
+      log_info(kernelLogger,BLUE ITALIC "EL ARCHIVO FUE ESCRITO");
+  }
 
 }

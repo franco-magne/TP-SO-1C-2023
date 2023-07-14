@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <commons/temporal.h>
 //////////////////////// BIBLOTECAS COMMONS /////////////////
 #include <commons/log.h>
 #include <commons/collections/list.h>
@@ -26,9 +27,10 @@ typedef struct {
     t_nombre_estado estadoActual;
     t_nombre_estado estadoAnterior;
     char* recursoUtilizado;
-    struct timespec tiempo_ready;
+    t_temporal* tiempo_ready;
     double rafaga_anterior;
     double rafaga_actual;
+    double estimacionActual;
     uint32_t tamanio_de_segmento;
     uint32_t id_de_segmento;
     t_list *listaDeSegmento;
@@ -65,8 +67,8 @@ t_nombre_estado pcb_get_estado_actual(t_pcb* this);
 t_nombre_estado pcb_get_estado_anterior(t_pcb* this);
 uint32_t pcb_get_tiempoIO(t_pcb* this);
 char* pcb_get_recurso_utilizado(t_pcb* this);
-struct timespec pcb_get_tiempo_en_ready(t_pcb* this);
-double pcb_get_rafaga_actual(t_pcb* this);
+t_temporal* pcb_get_tiempo_en_ready(t_pcb* this);
+double pcb_get_estimacion_anterior(t_pcb* this);
 double pcb_get_rafaga_anterior(t_pcb* this);
 t_list* pcb_get_lista_de_segmentos(t_pcb* this);
 t_list* pcb_get_lista_de_archivos_abiertos(t_pcb* this);
@@ -79,7 +81,7 @@ void pcb_set_estado_anterior(t_pcb* this, uint32_t estadoAnterior);
 void pcb_set_tiempoIO(t_pcb*, uint32_t tiempoIO);
 void pcb_set_recurso_utilizado(t_pcb* this, char* recurso);
 void pcb_set_tiempo_en_ready(t_pcb* this, struct timespec tiempo_en_ready);
-void pcb_set_rafaga_actual(t_pcb* this,double );
+void pcb_set_estimacion_anterior(t_pcb* this,double );
 void pcb_set_rafaga_anterior(t_pcb* this,double );
 void pcb_set_lista_de_segmentos(t_pcb* this, t_list* unSegmento);
 void pcb_add_lista_de_archivos(t_pcb* this,t_pcb_archivo* unArchivo );

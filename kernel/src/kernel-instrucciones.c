@@ -71,9 +71,9 @@ char* string_pids_ready(t_estado* estadoReady)
 void proceso_pasa_a_ready(t_pcb* pcb, char* estadoActual){
     pcb_set_estado_anterior(pcb, pcb_get_estado_actual(pcb));
     pcb_set_estado_actual(pcb, READY);
-    setear_tiempo_ready(pcb); // EMPIEZA A CONTAR EL TIEMPO 
+    //setear_tiempo_ready(pcb); // EMPIEZA A CONTAR EL TIEMPO 
+    pcb->tiempo_ready = temporal_create();
     estado_encolar_pcb_atomic(estadoReady, pcb);
-    
     char* stringPidsReady = string_pids_ready(estadoReady);
     log_transition(estadoActual, "READY", pcb_get_pid(pcb));
     log_info(kernelLogger, BOLD MAGENTA UNDERLINE "Cola Ready <%s>: %s" RESET, kernel_config_get_algoritmo_planificacion(kernelConfig), stringPidsReady);
@@ -145,14 +145,13 @@ bool recurso_disponible(int posicion_recurso){
     return ( *(recursoConfig[posicion_recurso].instancias_recurso) > 0);
 }
 
-void devolver_recurso(int posicion_recurso){
 
+void asignar_recurso(int posicion_recurso){
     pthread_mutex_lock(&mutexCantidadRecursos);
-    *(recursoConfig[posicion_recurso].instancias_recurso) += 1;
+    *(recursoConfig[posicion_recurso].instancias_recurso) -= 1;
     pthread_mutex_unlock(&mutexCantidadRecursos);
 
 }
-
 
 bool instruccion_wait(t_pcb* pcb) {
     char* recursoUtilizado = pcb_get_recurso_utilizado(pcb);
@@ -164,6 +163,9 @@ bool instruccion_wait(t_pcb* pcb) {
             asignar_recurso(posicion_recurso);
             log_info(kernelLogger,BOLD UNDERLINE CYAN "PID: <%i> - Wait:"RESET BOLD GREEN" <%s> "RESET BOLD UNDERLINE CYAN"- Instancias: <%i> ",pcb_get_pid(pcb),  recursoConfig[posicion_recurso].recurso , *recursoConfig[posicion_recurso].instancias_recurso );    
         } else {
+            asignar_recurso(posicion_recurso);
+            log_info(kernelLogger, "RECURSO QUE SE BLOQUEA <%s> PCB <%i> ",recursoUtilizado,pcb->pid );
+            pcb_set_recurso_utilizado(pcb,recursoUtilizado);
             proceso_pasa_a_bloqueado(pcb,recursoConfig[posicion_recurso].recurso);
             return true;
         }
@@ -178,44 +180,46 @@ bool instruccion_wait(t_pcb* pcb) {
 
 ///////////////////////////////// INSTRUCCION SIGNAL //////////////////////////////
 
-bool pcb_esta_bloqueado_por_recurso(void* pcb){
-return (strcmp(pcb_get_recurso_utilizado(pcb), nombre_recurso) == 0);
+bool pcb_esta_bloqueado_por_recurso(void* pcb, void* pcb_aux){
+return (strcmp(pcb_get_recurso_utilizado(pcb),pcb_get_recurso_utilizado(pcb_aux)) == 0);
 }
 
 
-void asignar_recurso(int posicion_recurso){
+void devolver_recurso(int posicion_recurso){
+
     pthread_mutex_lock(&mutexCantidadRecursos);
-    *(recursoConfig[posicion_recurso].instancias_recurso) -= 1;
+    *(recursoConfig[posicion_recurso].instancias_recurso) += 1;
     pthread_mutex_unlock(&mutexCantidadRecursos);
 
 }
 
-
-t_pcb* primer_elemento_bloqueado_por_recurso(t_list* listaBloqueado, char* nombreRecurso){
-    
+t_pcb* primer_elemento_bloqueado_por_recurso(char* nombreRecurso) {
     t_pcb* pcb;
-    t_list* listAux = list_create();
-    listAux = listaBloqueado;
-    
+
     pthread_mutex_lock(&mutexNombreRecurso);
-    nombre_recurso = nombreRecurso;
+    t_pcb* pcb_aux = pcb_create(-1);
+    pcb_aux->recursoUtilizado = strdup(nombreRecurso); // Utilizar strdup para crear una copia de la cadena
+    log_info(kernelLogger, "RECURSO A LIBERAR "RED BOLD" <%s>", nombreRecurso);
+    t_list* listAux = list_filter_ok(estado_get_list(estadoBlocked), pcb_esta_bloqueado_por_recurso, pcb_aux);
     pthread_mutex_unlock(&mutexNombreRecurso);
-    listAux = list_filter(listAux, pcb_esta_bloqueado_por_recurso);
-    int cantidadPcbsEnLista = list_size(listAux);
-    if(cantidadPcbsEnLista == 1){
-         pcb = estado_desencolar_primer_pcb(estadoBlocked);
-         return pcb;
-    } else if(cantidadPcbsEnLista > 1){
+
+    int cantidadPcbsEnLista = list_size(estado_get_list(estadoBlocked));
+    if (cantidadPcbsEnLista == 1) {
+        pcb = estado_desencolar_primer_pcb(estadoBlocked);
+        list_destroy(listAux);
+        return pcb;
+    } else if (cantidadPcbsEnLista > 1) {
+        pthread_mutex_lock(&mutexNombreRecurso);
         pcb = list_get(listAux, 0);
-        pcb = estado_remover_pcb_de_cola_atomic(estadoBlocked,pcb);
+        pthread_mutex_unlock(&mutexNombreRecurso);
+        pcb = estado_remover_pcb_de_cola_atomic(estadoBlocked, pcb);
+        list_destroy(listAux);
         return pcb;
     }
 
-    
+    list_destroy(listAux);
     return NULL;
-            
 }
-
 
 void instruccion_signal(t_pcb* pcb){
     
@@ -224,7 +228,7 @@ void instruccion_signal(t_pcb* pcb){
             int posicion_recurso = position_in_list(kernel_config_get_recurso(kernelConfig) , pcb_get_recurso_utilizado(pcb));
             devolver_recurso(posicion_recurso);
             log_info(kernelLogger,BOLD UNDERLINE CYAN "PID: <%i> - Signal: "RESET BOLD GREEN" <%s> "BOLD UNDERLINE CYAN" - Instancias: <%i> ",pcb_get_pid(pcb), recursoConfig[posicion_recurso].recurso , *recursoConfig[posicion_recurso].instancias_recurso );    
-            t_pcb* pcbPasaReady = primer_elemento_bloqueado_por_recurso(estado_get_list(estadoBlocked), pcb_get_recurso_utilizado(pcb));
+            t_pcb* pcbPasaReady = primer_elemento_bloqueado_por_recurso(pcb_get_recurso_utilizado(pcb));
             if(pcbPasaReady != NULL){
                 proceso_pasa_a_ready(pcbPasaReady,"BLOCK");
             }
@@ -238,7 +242,7 @@ void instruccion_signal(t_pcb* pcb){
 
 ///////////////////////////////// INSTRUCCION CREATE_SEGMENT //////////////////////////////
 
-void instruccion_create_segment(t_pcb* pcb){
+bool instruccion_create_segment(t_pcb* pcb){
 
     memoria_adapter_enviar_create_segment(pcb,kernelConfig);
 
@@ -246,10 +250,11 @@ void instruccion_create_segment(t_pcb* pcb){
 
     if(memoriaResponse == HEADER_memoria_insuficiente){
         liberar_segmentos_del_proceso_tabla_global(pcb);
-        memoria_adapter_enviar_finalizar_proceso(pcb,kernelConfig,kernelLogger,BOLD BLUE "OUT_OF_MEMORY");
+        memoria_adapter_enviar_finalizar_proceso(pcb,kernelConfig,kernelLogger,BOLD BLUE "OUT_OF_MEMORY" RESET);
         proceso_pasa_a_exit(pcb);
+        return true;
     }
-
+    return false;
 }
 
 ///////////////////////////////// INSTRUCCION DELETE_SEGMENT //////////////////////////////
@@ -291,7 +296,7 @@ void instruccion_f_close(t_pcb* pcb){
 
     log_info(kernelLogger,BOLD UNDERLINE CYAN "PID: <%i> - Cerrar Archivo: "RESET BOLD YELLOW"<%s>", pcb_get_pid(pcb), nombreArchivo);
 
-    t_pcb* pcbBloqueado = atender_f_close(nombreArchivo);
+    t_pcb* pcbBloqueado = atender_f_close(nombreArchivo, kernelLogger);
 
     eliminar_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
 
@@ -336,8 +341,12 @@ void instruccion_f_write(t_pcb* pcb){
    
     t_pcb_archivo* archivoEscribir = list_find(pcb_get_lista_de_archivos_abiertos(pcb), es_el_archivo_victima);
     char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoEscribir);
-
     file_system_adapter_send_f_write(pcb, kernelLogger,kernelConfig);
+    proceso_pasa_a_bloqueado(pcb, BOLD YELLOW "ARCHIVO F_WRITE");
+    file_system_adapter_recv_f_write(kernelConfig, kernelLogger);
+    pcb = estado_remover_pcb_de_cola_atomic(estadoBlocked,pcb);
+    proceso_pasa_a_ready(pcb, "BLOCK");
+
 
     int index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
     archivo_pcb_set_victima(archivoEscribir,false);
@@ -353,6 +362,11 @@ void instruccion_f_read(t_pcb* pcb){
     char* nombreArchivo = archivo_pcb_get_nombre_archivo(archivoLeer);
 
     file_system_adapter_send_f_read(pcb,kernelLogger,kernelConfig);
+    proceso_pasa_a_bloqueado(pcb, BOLD YELLOW "ARCHIVO F_READ");
+    file_system_adapter_recv_f_read(kernelConfig, kernelLogger);
+    pcb = estado_remover_pcb_de_cola_atomic(estadoBlocked,pcb);
+    proceso_pasa_a_ready(pcb, "BLOCK");
+
     
     int index = index_de_archivo_pcb(pcb_get_lista_de_archivos_abiertos(pcb),nombreArchivo);
     archivo_pcb_set_victima(archivoLeer,false);

@@ -13,6 +13,7 @@
 #include <math.h>
 #include <dirent.h>
 #include <errno.h>
+#include <inttypes.h>
 
 //////////////////////// BIBLOTECAS COMMONS /////////////////
 #include <commons/log.h>
@@ -20,6 +21,9 @@
 #include <commons/bitarray.h>
 #include <commons/string.h>
 #include <commons/collections/list.h>
+
+//////////////////////////////// BIBLOTECA UTILS NUESTRA //////////////
+#include <../../utils/src/utils/commons-nuestras.h>
 
 
 /////////////////////// ESTRUCTURA PARA FILESYSTEM ////////////////////////

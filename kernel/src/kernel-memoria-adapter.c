@@ -39,16 +39,19 @@ uint8_t memoria_adapter_recibir_create_segment(t_pcb* pcbAActualizar, t_kernel_c
     stream_recv_buffer(kernel_config_get_socket_memoria(kernelConfig), bufferTablaSegmentoActualizada);
     
     if(headerMemoria == HEADER_Compactacion){
-        //stream_send_empty_buffer(kernel_config_get_socket_file_system(kernelConfig), HEADER_Compactacion);
-        //uint8_t fileSystemResponse =stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
-        //stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
-        uint8_t fileSystemResponse = HANDSHAKE_ok_continue;
+
+        stream_send_empty_buffer(kernel_config_get_socket_file_system(kernelConfig), HEADER_Compactacion);
+        log_info(kernelLogger,"TEST 1");
+        uint8_t fileSystemResponse = stream_recv_header(kernel_config_get_socket_file_system(kernelConfig));
+        stream_recv_empty_buffer(kernel_config_get_socket_file_system(kernelConfig));
+        log_info(kernelLogger,"TEST 2");
 
         if(fileSystemResponse == HANDSHAKE_ok_continue){
             stream_send_empty_buffer(kernel_config_get_socket_memoria(kernelConfig), HANDSHAKE_ok_continue);
             headerMemoria = stream_recv_header(kernel_config_get_socket_memoria(kernelConfig));
             stream_recv_empty_buffer(kernel_config_get_socket_memoria(kernelConfig));
             if(headerMemoria == HEADER_Compactacion_finalizada){
+                // recibir la tabla de segmento
                 memoria_adapter_enviar_create_segment(pcbAActualizar,kernelConfig);
                 memoria_adapter_recibir_create_segment(pcbAActualizar,kernelConfig,kernelLogger);
             }
@@ -76,7 +79,7 @@ uint8_t memoria_adapter_recibir_create_segment(t_pcb* pcbAActualizar, t_kernel_c
         return HEADER_create_segment;
     
     } else if (headerMemoria == HEADER_memoria_insuficiente) {
-        log_info(kernelLogger,BACKGROUND_RED GREEN ITALIC "PID: <%i> No pudo crear el segmento",  pcb_get_pid(pcbAActualizar));
+        log_info(kernelLogger,BACKGROUND_RED GREEN ITALIC "PID: <%i> No pudo crear el segmento" RESET,  pcb_get_pid(pcbAActualizar));
         return HEADER_memoria_insuficiente;
 
     } else {

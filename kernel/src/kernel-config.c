@@ -13,8 +13,8 @@ t_kernel_config* kernel_config_initializer(t_config* tempCfg)
     kernelConfig->IP_ESCUCHA = strdup(config_get_string_value(tempCfg, "IP_ESCUCHA"));
     kernelConfig->PUERTO_ESCUCHA = strdup(config_get_string_value(tempCfg, "PUERTO_ESCUCHA"));
     kernelConfig->ALGORITMO_PLANIFICACION = strdup(config_get_string_value(tempCfg, "ALGORITMO_PLANIFICACION"));
-    kernelConfig->ESTIMACION_INICIAL = config_get_int_value(tempCfg, "ESTIMACION_INICIAL");
-    kernelConfig->HRRN_ALFA =  config_get_int_value(tempCfg, "HRRN_ALFA");
+    kernelConfig->ESTIMACION_INICIAL = config_get_double_value(tempCfg, "ESTIMACION_INICIAL");
+    kernelConfig->HRRN_ALFA = strdup(config_get_string_value(tempCfg, "HRRN_ALFA"));
     kernelConfig->SOCKET_MEMORIA = -1;
     kernelConfig->SOCKET_DISPATCH_CPU = -1;
     kernelConfig->SOCKET_FILE_SYSTEM = -1;
@@ -113,7 +113,7 @@ char** kernel_config_get_instancias(t_kernel_config* this){
     return this->INSTANCIAS_RECURSOS;
 }
 
-uint32_t kernel_config_get_estimacion_inicial(t_kernel_config* this){
+double kernel_config_get_estimacion_inicial(t_kernel_config* this){
     return this->ESTIMACION_INICIAL;
 }
 
