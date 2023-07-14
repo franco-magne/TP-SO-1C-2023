@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
    /////////////////////////////// CONEXION CON CPU /////////////////////////////
     conectar_a_servidor_cpu_dispatch(kernelConfig,kernelLogger);
     /////////////////////////////// CONEXION CON FILE_SYSTEM /////////////////////////////
-    //conectar_con_servidor_file_system(kernelConfig,kernelLogger);
+    conectar_con_servidor_file_system(kernelConfig,kernelLogger);
    /////////////////////////////// CONEXION CON MEMORIA /////////////////////////////
     conectar_con_servidor_memoria(kernelConfig,kernelLogger);
    ////////////////////////////// CONEXION CON CONSOLA //////////////////////////////
@@ -146,6 +146,8 @@ void encolar_en_new_a_nuevo_proceso(int cliente){
         uint32_t newPid = obtener_siguiente_pid();
         t_pcb* newPcb = pcb_create(newPid); // Me rompe pcb_create()
         // LE SETEO LOS VALORES BASICOS
+        pcb_set_estimacion_anterior(newPcb, kernel_config_get_estimacion_inicial(kernelConfig));
+        pcb_set_rafaga_anterior(newPcb, 0);
         pcb_set_instructions_buffer(newPcb, instructionsBufferCopy);
         
 
@@ -224,6 +226,7 @@ void* atender_pcb(void* args)
 {
     for (;;) {
         bool procesoFueBloqueado = false;
+        bool procesoTuvoOutOfMemory = false;
         sem_wait(estado_get_sem(estadoExec));
 
         pthread_mutex_lock(estado_get_mutex(estadoExec));
@@ -231,7 +234,7 @@ void* atender_pcb(void* args)
         pthread_mutex_unlock(estado_get_mutex(estadoExec));
 
         uint8_t headerAEnviar = HEADER_pcb_a_ejecutar;
-        temporal_destroy(pcb->tiempo_ready);
+
 
         pthread_mutex_lock(&mutexTablaGlobalSegmento); 
         t_segmento* aux = segmento_create(-1,-1);
@@ -243,15 +246,13 @@ void* atender_pcb(void* args)
 
         struct timespec start;
         set_timespec(&start);
-        t_temporal* tiempoEntrada = temporal_create();
         cpu_adapter_enviar_pcb_a_cpu(pcb, headerAEnviar, kernelConfig, kernelLogger);
         uint8_t cpuResponse = stream_recv_header(kernel_config_get_socket_dispatch_cpu(kernelConfig)); 
-       // temporal_stop(tiempoEntrada);
+        
         struct timespec end;
         set_timespec(&end);
-        pcb_set_rafaga_anterior(pcb, (double)temporal_gettime(tiempoEntrada));
-        temporal_destroy(tiempoEntrada);
-        //pcb_set_rafaga_anterior(pcb, obtener_diferencial_de_tiempo_en_milisegundos(end,start) );
+        
+        pcb_set_rafaga_anterior(pcb, obtener_diferencial_de_tiempo_en_milisegundos(end,start) );
 
         pcb = cpu_adapter_recibir_pcb_actualizado_de_cpu(pcb, cpuResponse, kernelConfig, kernelLogger); 
         
@@ -299,7 +300,7 @@ void* atender_pcb(void* args)
 
             case HEADER_create_segment:
 
-                instruccion_create_segment(pcb);
+                procesoTuvoOutOfMemory = instruccion_create_segment(pcb);
 
                 break;
             
@@ -340,8 +341,8 @@ void* atender_pcb(void* args)
         ( 
            (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado && pcb_get_estado_actual(pcb) != EXIT) 
         || (cpuResponse == HEADER_proceso_devolver_recurso && pcb_get_estado_actual(pcb) == EXEC) 
-        || (cpuResponse == HEADER_create_segment)
-        || (cpuResponse == HEADER_delete_segment)
+        || (cpuResponse == HEADER_create_segment) && !procesoTuvoOutOfMemory
+        || (cpuResponse == HEADER_delete_segment) 
         || (cpuResponse == HEADER_f_open) && !procesoFueBloqueado
         || (cpuResponse == HEADER_f_close)
         || (cpuResponse == HEADER_f_seek)
