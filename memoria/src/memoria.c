@@ -38,13 +38,13 @@ int main() {
     segmento_set_bit_validez(segCompartido, 1);
     list_add(listaDeSegmentos, segCompartido);    
     log_info(memoriaLogger,"Crear Segmento 0: <%i> - Base: <%i> - TAMAÑO: <%i> - LIMITE <%i>", segmento_get_id(segCompartido), segmento_get_base(segCompartido), segmento_get_tamanio(segCompartido), segmento_get_limite(segCompartido));
-    restar_a_tamMemoriaActual(memoria_config_get_tamanio_segmento_0(memoriaConfig));
     Segmento* segmentoUsuario = crear_segmento(tamActualMemoria - segmento_get_tamanio(segCompartido));
     segmento_set_base(segmentoUsuario,  segmento_get_limite(segCompartido) + 1 );
     segmento_set_limite(segmentoUsuario, segmento_get_base(segmentoUsuario) + segmento_get_tamanio(segmentoUsuario) );
     segmento_set_bit_validez(segmentoUsuario, 0);
     list_add_in_index(listaDeSegmentos,1, segmentoUsuario);
     log_info(memoriaLogger,"Crear Hueco Libre: <%i> - Base: <%i> - TAMAÑO: <%i> - LIMITE <%i>", segmento_get_id(segmentoUsuario), segmento_get_base(segmentoUsuario), segmento_get_tamanio(segmentoUsuario), segmento_get_limite(segmentoUsuario));
+    restar_a_tamMemoriaActual(memoria_config_get_tamanio_segmento_0(memoriaConfig));
 
    //tabla_segmentos = estado_create();
 

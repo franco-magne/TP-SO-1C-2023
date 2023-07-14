@@ -18,7 +18,7 @@
 ////////////////// BIBLOTECAS NUESTRAS ///////////////
 #include "kernel-estado.h"
 #include "pcb.h"
-
+#include "kernel.h"
 #include "../../utils/src/utils/commons-nuestras.h"
 
 t_pcb* elegir_pcb_segun_fifo(t_estado* estado);
