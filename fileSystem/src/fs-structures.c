@@ -444,7 +444,7 @@ void crear_directorios(t_filesystem* fs) {
 
     int resultado;
 
-    resultado = mkdir("/home/utnso/fs", 0777);      // RUTA PARA LA ENTREGA FINAL:     ./fs
+    resultado = mkdir("./fs", 0777);      // RUTA ANTERIOR: /home/utnso/fs   -   RUTA PARA LA ENTREGA FINAL: ./fs
     resultado = mkdir(fs->fcb_path, 0777);
 
     if (!resultado) {
@@ -480,7 +480,6 @@ char* devolver_fcb_path_config(char* path_fcbs, char* nombre_archivo) {
 }
 
 void cerrar_archivos() {
-    
     close(fd_bloques);
     close(fd_bitmap);
 }

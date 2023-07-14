@@ -9,8 +9,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/socket.h>
 #include <stdbool.h>
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 
 typedef enum {
@@ -65,6 +68,7 @@ typedef enum {
 int conectar_a_servidor(char* ip, char* puerto);
 int iniciar_servidor(char* ip, char* puerto);
 int esperar_cliente(int socket_servidor);
+char* obtener_ip();
 bool not(bool x);
 
 

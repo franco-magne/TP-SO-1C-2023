@@ -11,12 +11,14 @@ int main() {
 
    fs = malloc(sizeof(t_filesystem));   
    fs_config = config_create(FILESYSTEM_CONFIG_UBICACION);
-   superbloque_config = config_create(FILESYSTEM_CONFIG_UBICACION);
+   superbloque_config = config_create(SUPERBLOQUE_CONFIG_UBICACION);
    fs_logger = log_create(FS_LOG_UBICACION, FS_PROCESS_NAME, true, LOG_LEVEL_INFO);
 
    cargar_t_filesystem(fs_config, superbloque_config, fs);   
    fs->logger = fs_logger;
    imprimir_file_system();
+
+   log_info(fs->logger, "La IP de FILESYSTEM es %s", obtener_ip()); 
    
 /*
    RUTAS DEL CONFIG PARA LA ENTREGA FINAL
