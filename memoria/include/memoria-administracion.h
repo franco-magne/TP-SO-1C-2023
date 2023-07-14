@@ -22,5 +22,6 @@ bool segmentos_validez_1(Segmento* unSegmento);
 void borrar_tabla_de_segmentos_x_pid(uint32_t pid);
 void borrar_tabla_de_segmentos_x_pid(uint32_t pid);
 void iniciar_compactacion();
+void mostrar_lista_segmentos_actualizados_por_compactacion();
 
 #endif

@@ -16,6 +16,7 @@ t_cpu_config* cpu_config_initializer(t_config* tempCfg)
     
     return self;
 }
+
 void cpu_config_destroy(t_cpu_config* self) 
 {
     free(self->IP_MEMORIA);
@@ -26,6 +27,7 @@ void cpu_config_destroy(t_cpu_config* self)
 }
 
 
+///////////////////////////// GETTERS ////////////////////////////////////
 
 uint32_t cpu_config_get_retardo_instruccion(t_cpu_config* self) 
 {
@@ -67,17 +69,19 @@ int cpu_config_get_tamanio_maximo_segmento(t_cpu_config* self)
 {
     return self->TAMANIO_MAXIMO_SEGMENTO;
 }
+
+
 ///////////////////////////// SETTERS ////////////////////////////////////
 
 void cpu_config_set_socket_memoria(t_cpu_config* self, int socketMemoria) 
 {
     self->SOCKET_MEMORIA = socketMemoria;
 }
+
 void cpu_config_set_socket_dispatch(t_cpu_config* self, int socketDispatch) 
 {
     self->SOCKET_DISPATCH_CPU = socketDispatch;
 }
-
 
 void cpu_set_recurso_sem(recurso* this, char* recurso)
 {
@@ -98,5 +102,3 @@ uint32_t cpu_get_recurso_IO(recurso* this)
 {
     return this->tiempoIO;
 }
-
-///////////////////////////////////////// UTILS /////////////////////////////

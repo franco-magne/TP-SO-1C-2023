@@ -14,11 +14,9 @@ int inicializar_servidor_cpu_dispatch(t_cpu_config* cpuConfig, t_log* cpuLogger)
     }
 
     log_info(cpuLogger, "Se ha inicializado el servidor de escucha dispatch del kernel correctamente");
+
     return tempCpuSocketServerEscucha;
 }
-
-
-
 
 void aceptar_conexion_dispatch(const int socketEscuchaDispatch, struct sockaddr* cliente, socklen_t* len)
 {
@@ -28,12 +26,11 @@ void aceptar_conexion_dispatch(const int socketEscuchaDispatch, struct sockaddr*
     if (kernelDispatchSocket == -1) {
         
         log_error(cpuLogger, "Error al intentar establecer conexión inicial módulo Kernel por canal Dispatch");
-     //   cpu_destroy(cpuConfig, cpuLogger);
+        //   cpu_destroy(cpuConfig, cpuLogger);
         exit(EXIT_FAILURE);
     }
     
-    cpu_config_set_socket_dispatch(cpuConfig, kernelDispatchSocket);
-   
+    cpu_config_set_socket_dispatch(cpuConfig, kernelDispatchSocket);   
 
     t_handshake kernelDispatchResponse = stream_recv_header(kernelDispatchSocket);
     stream_recv_empty_buffer(kernelDispatchSocket);
@@ -41,7 +38,7 @@ void aceptar_conexion_dispatch(const int socketEscuchaDispatch, struct sockaddr*
     if (kernelDispatchResponse != HANDSHAKE_dispatch) {
         log_info(cpuLogger,"%i",kernelDispatchResponse );
         log_error(cpuLogger, "Error al intentar establecer Handshake inicial con módulo Kernel por canal Dispatch");
-     //   cpu_destroy(cpuConfig, cpuLogger);
+        //   cpu_destroy(cpuConfig, cpuLogger);
         exit(EXIT_FAILURE);
     }
     

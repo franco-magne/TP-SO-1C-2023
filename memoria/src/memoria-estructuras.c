@@ -138,7 +138,6 @@ void modificarSegmento(uint32_t baseSegmento, Segmento* segNuevo){
 
     uint32_t index = list_get_index(listaDeSegmentos, es_el_segmento_por_BASE, aux1);
     list_replace(listaDeSegmentos, index, segNuevo);
-    printf("Segmento de ID <%i> modificado", segmento_get_id(segNuevo));
     free(aux1);
 }
 

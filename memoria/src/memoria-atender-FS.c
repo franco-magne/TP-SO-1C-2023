@@ -15,6 +15,7 @@ void atender_peticiones_fileSystem(int socketFS) {
 
         switch (header) {
             case HEADER_f_read:{        //Lee del archivo y escribe en memoria
+                log_info(memoriaLogger, "\e[1;93mPETICION DE ESCRITURA FS\e[0m");
                 uint32_t base_segmento;
                 uint32_t desplazamiento_segmento;
                 uint32_t cantidadByte;
@@ -40,12 +41,15 @@ void atender_peticiones_fileSystem(int socketFS) {
                 memset(contenidoAEscribir, 0, (size_t)cantidadByte + 1); // Inicializar el buffer con ceros
                 }
                 log_info(memoriaLogger, "Contenido escrito : <%s> - En el segmento ID : <%i> ", contenidoAEscribir, segmento_get_id(unSegmento));
+                log_info(memoriaLogger,BOLDMAGENTA " PID: "RESET BOLDGREEN"<%i>"RESET BOLDMAGENTA" - Acción: "RESET BOLDGREEN"<ESCRIBIR>"RESET BOLDMAGENTA" - Dirección física: "RESET BOLDGREEN"<(%i|%i)>"RESET BOLDMAGENTA" - Tamaño: "RESET BOLDGREEN"<%i>"RESET BOLDMAGENTA" - Origen: "RESET BOLDGREEN"<CPU> ",segmento_get_pid(unSegmento),base_segmento,desplazamiento_segmento, segmento_get_tamanio(unSegmento));
+
                 stream_send_empty_buffer(socketFS, HANDSHAKE_ok_continue);
 
                 free(contenidoAEscribir);
                 break;
             }
             case HEADER_f_write:{   //Lee de memoria y lo escribe en el archivo
+                log_info(memoriaLogger, "\e[1;93mPETICION DE LECTURA FS\e[0m");
                 uint32_t base_segmento;
                 uint32_t desplazamiento_segmento;
                 uint32_t cantidadByte;
@@ -54,7 +58,6 @@ void atender_peticiones_fileSystem(int socketFS) {
                 buffer_unpack(buffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
                 buffer_unpack(buffer, &cantidadByte, sizeof(cantidadByte));
                 
-                log_info(memoriaLogger, RED UNDERLINE BOLD"Base <%i> - Desplazamiento <%i> - Cantidad de byte <%i> " RESET, base_segmento, desplazamiento_segmento, cantidadByte);
 
                 Segmento* segmentoLeido = obtener_segmento_por_BASE(base_segmento);
 
@@ -62,7 +65,8 @@ void atender_peticiones_fileSystem(int socketFS) {
                 memset(contenidoAenviar, 0, cantidadByte + 1); // Inicializar el buffer con ceros
                 memcpy(contenidoAenviar, memoriaPrincipal + (size_t)base_segmento +(size_t)desplazamiento_segmento, (size_t)cantidadByte);
 
-                log_info(memoriaLogger,BOLD  BLUE UNDERLINE "Escritura en el segmento con base <%i> - Enviamos "RESET BOLD GREEN" <%s> ", base_segmento, contenidoAenviar) ;
+                log_info(memoriaLogger, "Contenido lectura : <%s> - En el segmento ID : <%i> ", contenidoAenviar, segmento_get_id(segmentoLeido));
+                log_info(memoriaLogger,BOLDMAGENTA " PID: "RESET BOLDGREEN"<%i>"RESET BOLDMAGENTA" - Acción: "RESET BOLDGREEN"<LEER>"RESET BOLDMAGENTA" - Dirección física: "RESET BOLDGREEN"<(%i|%i)>"RESET BOLDMAGENTA" - Tamaño: "RESET BOLDGREEN"<%i>"RESET BOLDMAGENTA" - Origen: "RESET BOLDGREEN"<FS> ",segmento_get_pid(segmentoLeido),base_segmento,desplazamiento_segmento, segmento_get_tamanio(segmentoLeido));
 
                 t_buffer* bufferContenido = buffer_create();        
             

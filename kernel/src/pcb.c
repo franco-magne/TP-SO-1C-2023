@@ -15,6 +15,7 @@ t_pcb* pcb_create(uint32_t pid)
    this->programCounter = 0;
    this->instruccionesBuffer = NULL;
    this->registros = registros_cpu_create();
+   this->socketConsola = -1;
    this->tiempoIO = 0;
    this->recursoUtilizado = NULL;
    this->rafaga_actual = 0;
@@ -24,6 +25,22 @@ t_pcb* pcb_create(uint32_t pid)
    this->listaArchivosAbiertos = list_create();
    return this;
 }
+
+
+void pcb_destroy(t_pcb* self) 
+{
+
+    list_destroy(self->listaArchivosAbiertos);
+    list_destroy(self->listaDeSegmento);
+    buffer_destroy(self->instruccionesBuffer);
+    free(self->recursoUtilizado);
+    if(self->tiempo_ready != NULL){
+    temporal_destroy(self->tiempo_ready);
+    }
+    free(self->registros);
+    free(self);
+}
+
 
 //////////////////////////////////// SEGMENTO /////////////////////////////////////////
 
@@ -115,6 +132,10 @@ uint32_t pcb_get_pid(t_pcb* this)
     return this->pid;
 }
 
+int pcb_get_socket_consola(t_pcb* this){
+    return this->socketConsola;
+}
+
 t_buffer* pcb_get_instrucciones_buffer(t_pcb* this)
 {   
     return this->instruccionesBuffer;
@@ -172,6 +193,10 @@ void pcb_set_instructions_buffer(t_pcb* this, t_buffer* instructionsBuffer)
 void pcb_set_pid(t_pcb* this, uint32_t pid) 
 {
    this->pid = pid;
+}
+
+void pcb_set_socket_consola(t_pcb* this, int socket){
+    this->socketConsola = socket;
 }
 
 void pcb_set_estado_actual(t_pcb* this, uint32_t estadoActual) 
