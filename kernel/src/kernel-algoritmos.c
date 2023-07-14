@@ -24,22 +24,34 @@ static double calcularEstimacionProxima(double estimacionAnterior, double realAn
 }
 
 double calcular_siguiente_estimacion(t_pcb* pcb) {
-
+  
+//struct timespec tiempoFinalSpec;
+//struct timespec tiempoEnReadySpec;
+double tiempoDeEspera = 0;
 double resultado = 0;
 double resultadoEstimacionProxima = 0;
 
 if(pcb_get_estimacion_anterior(pcb) == 0){
-    pcb_set_estimacion_anterior(pcb, kernel_config_get_estimacion_inicial(kernelConfig));   
-    resultado = calcularHRRN((double)temporal_gettime(pcb->tiempo_ready), pcb_get_estimacion_anterior(pcb));
-
+resultado = calcularHRRN((double)temporal_gettime(pcb->tiempo_ready), kernel_config_get_estimacion_inicial(kernelConfig));
 } else {
 
-    resultadoEstimacionProxima = calcularEstimacionProxima( pcb_get_estimacion_anterior(pcb) , pcb_get_rafaga_anterior(pcb) );
-    resultado = calcularHRRN((double)temporal_gettime(pcb->tiempo_ready), resultadoEstimacionProxima);
-
+resultadoEstimacionProxima = calcularEstimacionProxima( pcb_get_estimacion_anterior(pcb) , pcb_get_rafaga_anterior(pcb) );
+resultado = calcularHRRN((double)temporal_gettime(pcb->tiempo_ready), resultadoEstimacionProxima);
 }
 
+// 
 
+//set_timespec(&tiempoFinalSpec);
+
+//tiempoEnReadySpec = pcb_get_tiempo_en_ready(pcb);
+
+//tiempoDeEspera = obtener_diferencial_de_tiempo_en_milisegundos(tiempoFinalSpec,tiempoEnReadySpec);
+
+//temporal_stop(pcb->tiempo_ready);
+
+
+
+//temporal_resume(pcb->tiempo_ready);
 return resultado;
 
 }
@@ -66,9 +78,15 @@ t_pcb* elegir_pcb_segun_hhrn(t_estado* estado) {
 
     }
     pthread_mutex_unlock(estado_get_mutex(estado));
+
     
+    if( pcb_get_estimacion_anterior(pcbElecto) !=0 ){
     setearEstimacionAnteriorPCBelecto =  calcularEstimacionProxima( pcb_get_estimacion_anterior(pcbElecto) , pcb_get_rafaga_anterior(pcbElecto) );
     pcb_set_estimacion_anterior(pcbElecto,setearEstimacionAnteriorPCBelecto);
+    } else {
+        pcb_set_estimacion_anterior(pcbElecto, kernel_config_get_estimacion_inicial(kernelConfig)); 
+    }
+    
 
     return pcbElecto;
 }
