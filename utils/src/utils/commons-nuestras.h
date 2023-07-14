@@ -13,23 +13,33 @@
 #include "instrucciones.h"
 #include "serializacion.h"
 
-typedef struct{
- uint32_t tamanio_de_segmento;
- uint32_t id_de_segmento;
- uint32_t base_del_segmento;
- bool victima;
- uint32_t pid;
 
-}t_segmento;
+// MACROS DE UBICACION DE LAS CONFIG DE LOS PROCESOS
+
+#define KERNEL_CONFIG_UBICACION "config/kernel.config"
+#define FILESYSTEM_CONFIG_UBICACION "config/fileSystem.config"
+#define SUPERBLOQUE_CONFIG_UBICACION "config/superbloque.config"
+#define MEMORIA_CONFIG_UBICACION "config/memoria.config"
+#define CPU_CONFIG_UBICACION "config/cpu.config"
 
 
-typedef struct{
+typedef struct {
+    uint32_t tamanio_de_segmento;
+    uint32_t id_de_segmento;
+    uint32_t base_del_segmento;
+    bool victima;
+    uint32_t pid;
+} t_segmento;
+
+
+typedef struct {
 
     uint32_t baseSegmento;
     uint32_t desplazamiento;
     uint32_t cantidadByte;
 
-}t_direccionFisica;
+} t_direccionFisica;
+
 
 FILE* abrir_archivo(const char* pathArchivo, const char* mode, t_log* moduloLogger);
 int config_init(void* moduleConfig, char* pathToConfig, t_log* moduleLogger, void (*config_initializer)(void* moduleConfig, t_config* tempConfig));
@@ -47,8 +57,6 @@ t_segmento* buffer_unpack_segmento(t_buffer* buffer);
 void buffer_pack_segmento(t_buffer* buffer, t_segmento* segmento);
 void buffer_pack_segmento_list(t_buffer* buffer, t_list* lista_segmentos);
 t_segmento* segmento_create(uint32_t id_de_segmento, uint32_t tamanio_de_segmento);
-
-
 
 
 void inicio_kernel();
@@ -75,8 +83,19 @@ void imprimir_file_system();
 #define STRIKETHROUGH "\x1B[9m"
 #define ITALIC "\x1B[3m"
 
+#define BOLDRED "\x1B[1;31m"
+#define BOLDGREEN "\x1B[1;32m"
+#define BOLDYELLOW "\x1B[1;33m"
+#define BOLDBLUE "\x1B[1;34m"
+#define BOLDMAGENTA "\x1B[1;35m"
+#define BOLDCYAN "\x1B[1;36m"
+#define BOLDWHITE "\x1B[1;37m"
+
 #define BACKGROUND_RED "\033[41m"   // Fondo rojo
 #define BACKGROUND_GREEN "\033[42m" // Fondo verde
 #define BACKGROUND_BLUE "\033[44m"  // Fondo azul
+
+
+
 
 #endif

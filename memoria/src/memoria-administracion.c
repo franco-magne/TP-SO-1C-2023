@@ -29,6 +29,15 @@ void mostrar_lista_segmentos(t_list* lista) {
     free(temp_string);
 }
 
+void mostrar_lista_segmentos_actualizados_por_compactacion(){
+
+    for(int i = 0; i<list_size; i++){
+        Segmento* segmento = list_get(listaDeSegmentos, i);
+        log_info(memoriaLogger, BOLDBLUE"PID: "RESET BOLDYELLOW"<%i>"RESET BOLDBLUE" - Segmento: "RESET BOLDYELLOW"<%i>"RESET BOLDBLUE" - Base: "RESET BOLDYELLOW"<%i>"RESET BOLDBLUE" - Tamaño "RESET BOLDYELLOW"<%i>", segmento_get_pid(segmento), segmento_get_id(segmento), segmento_get_base(segmento), segmento_get_tamanio(segmento));
+    }
+
+}
+
 bool hueco_mas_grande(Segmento* unSegmento, Segmento* otroSegmento){
     return unSegmento->tamanio > otroSegmento->tamanio;
 }
@@ -110,7 +119,7 @@ void administrar_primer_hueco_libre(t_list* huecosLibres, Segmento* nuevoSegment
         segmento_set_bit_validez(nuevoSegmento,1);
         //segmento_set_tamanio(nuevoSegmento);
         list_replace(listaDeSegmentos,index2, nuevoSegmento); 
-        log_info(memoriaLogger,"no hubo F.interna PID: <%i> - Crear Segmento: <%i> - Base: <%i> - TAMAÑO: <%i>", segmento_get_pid(nuevoSegmento), segmento_get_id(nuevoSegmento), segmento_get_base(nuevoSegmento), segmento_get_tamanio(nuevoSegmento));
+        log_info(memoriaLogger,ITALIC BLUE "NO HUBO F.INTERNA PID: <%i> - ID: <%i> - BASE: <%i> - TAMAÑO: <%i>", segmento_get_pid(nuevoSegmento), segmento_get_id(nuevoSegmento), segmento_get_base(nuevoSegmento), segmento_get_tamanio(nuevoSegmento));
         //bit_ultimo_seg = 1            //en todos iria en 0 pero en este seria 1 xq tendria el puntero apuntando
     } else {
     
@@ -125,7 +134,7 @@ void administrar_primer_hueco_libre(t_list* huecosLibres, Segmento* nuevoSegment
 
         uint32_t tamanioDelHuecoLibre = segmento_get_tamanio(segmentoReal) - segmento_get_tamanio(nuevoSegmento);
         uint32_t baseDelHuecoLibre = segmento_get_limite(nuevoSegmento) + 1;
-        log_info(memoriaLogger,"PID: <%i> - Crear Segmento: <%i> - Base: <%i> - TAMAÑO: <%i> - LIMITE <%i>", segmento_get_pid(nuevoSegmento), segmento_get_id(nuevoSegmento), segmento_get_base(nuevoSegmento), segmento_get_tamanio(nuevoSegmento), segmento_get_limite(nuevoSegmento));
+        log_info(memoriaLogger,BOLD "PID: <%i> - SE CREA SEGMENTO : ID "RESET BOLD RED" <%i> "RESET BOLD" - BASE: "RESET BOLD RED"<%i> "RESET BOLD" - TAMAÑO: "RESET BOLD RED"<%i> "RESET BOLD" - LIMITE "RESET BOLD RED"<%i>", segmento_get_pid(nuevoSegmento), segmento_get_id(nuevoSegmento), segmento_get_base(nuevoSegmento), segmento_get_tamanio(nuevoSegmento), segmento_get_limite(nuevoSegmento));
 
         // ACA TRABAJO CON LA FRAGMENTACION INTERNA QUE GENERA
         segmento_set_base(nuevoHuecoLibre,baseDelHuecoLibre);
@@ -136,7 +145,7 @@ void administrar_primer_hueco_libre(t_list* huecosLibres, Segmento* nuevoSegment
 
         segmento_set_bit_validez(nuevoHuecoLibre,0);
         list_add_in_index(listaDeSegmentos,index2+1,nuevoHuecoLibre);
-        log_info(memoriaLogger,"Crear Hueco Libre: Base: <%i> - TAMAÑO: <%i>", baseDelHuecoLibre, tamanioDelHuecoLibre);
+        log_info(memoriaLogger,BOLD BLUE "SE CREA HUECO LIBRE: BASE: "RESET BOLD YELLOW "<%i>" RESET BOLD BLUE" - TAMAÑO: "RESET BOLD YELLOW" <%i>", baseDelHuecoLibre, tamanioDelHuecoLibre);
 
         
     }
@@ -148,9 +157,9 @@ uint8_t administrar_nuevo_segmento(Segmento* nuevoSegmento){
     t_list* listaDeHuecosLibres = listaDeSegmentos; 
  
     listaDeHuecosLibres = list_filter(listaDeHuecosLibres,segmentos_validez_0);
-    log_info(memoriaLogger, "1- lista vacia Aca -> <%i>", list_size(listaDeHuecosLibres) );
+    log_info(memoriaLogger,GREEN BOLD "CANTIDAD DE HUECOS LIBRES  "RESET BOLD YELLOW " <%i>", list_size(listaDeHuecosLibres) );
     listaDeHuecosLibres = list_filter_ok(listaDeHuecosLibres,hay_segmento_libre_de_ese_tamanio,nuevoSegmento);
-    log_info(memoriaLogger, "2- lista vacia Aca -> <%i>", list_size(listaDeHuecosLibres) );
+    log_info(memoriaLogger,GREEN BOLD "CANTIDAD HUECOS LIBRES QUE PUEDA ENTRAR EL SEGMENTO " RESET BOLD YELLOW " <%i>", list_size(listaDeHuecosLibres) );
 
 
     if( list_is_empty(listaDeHuecosLibres) ){
@@ -195,7 +204,6 @@ Segmento* consolidar_segmentos(Segmento* unSegmento, Segmento* segSiguiente){
     segmento_set_tamanio(unSegmento, segmento_get_tamanio(unSegmento) + segmento_get_tamanio(segSiguiente) );
     segmento_set_limite(unSegmento,segmento_get_limite(segSiguiente));
     segmento_set_bit_validez(unSegmento, 0);
-    log_info(memoriaLogger, "CONSOLIDAN SEGMENTO (1) ID <%i> - SEGMENTO (2) ID <%i>", segmento_get_id(unSegmento),segmento_get_id(segSiguiente));
     return unSegmento;
 
 }
@@ -206,12 +214,12 @@ void eliminar_segmento_memoria(Segmento* segmentoAEliminar){
     int index = list_get_index(listaDeSegmentos,es_el_mismo_segmento_pid_id, segmentoAEliminar ); 
     Segmento* segmentoRealAModificar = list_get(list_filter_ok(listaDeSegmentos,es_el_mismo_segmento_pid_id,segmentoAEliminar),0);
     sumar_memoriaRecuperada_a_tamMemoriaActual(segmento_get_tamanio(segmentoRealAModificar));
+    log_info(memoriaLogger,BOLDBLUE  "PID: "RESET BOLDRED "<%i>"RESET BOLDBLUE" - Eliminar Segmento: "RESET BOLDRED"<%i>"RESET BOLDBLUE" - Base: "RESET BOLDRED"<%i>"RESET BOLDBLUE" - TAMAÑO: "RESET BOLDRED"<%i>",segmento_get_pid(segmentoRealAModificar), segmento_get_id(segmentoRealAModificar), segmento_get_base(segmentoRealAModificar), segmento_get_tamanio(segmentoRealAModificar) );
 
     if(segmentoRealAModificar->pid == -1) return 0;
     segmento_set_bit_validez(segmentoRealAModificar, 0);
 
     if(index+1 >= list_size(listaDeSegmentos) ){ // ES EL ULTIMO SEGMENTO DE LA MEMORIA
-        log_info(memoriaLogger, "ENTRE ACA");
         if(segmento_anterior_esta_libre(index) == 0){
 
             Segmento* segmentoAnterior =list_get(listaDeSegmentos, index - 1);    
@@ -262,7 +270,6 @@ void liberar_tabla_segmentos(int pid){
         Segmento* segmentoAEliminar = list_get(tablaDeSegmentoAELiminar,i); 
 
         if(segmentoAEliminar->pid != -1 && segmentoAEliminar->validez != 0){
-        log_info(memoriaLogger, "ID <%i> PID <%i>", segmentoAEliminar->segmento_id, segmentoAEliminar->pid);
         eliminar_segmento_memoria(segmentoAEliminar);  
 
         }
@@ -299,7 +306,6 @@ void iniciar_compactacion() {
             segmento_set_base(segmentoActual, segmento_get_limite(segmentoAnterior)+1);
             list_replace(listaDeSegmentos, i, segmentoActual);
           
-            log_info(memoriaLogger, "Entre UCA");
         } else {
             if (segmento_anterior_esta_libre(i) == 0) {
                 if (es_el_ultimo_segmento_lista(i)) {
@@ -326,7 +332,6 @@ void iniciar_compactacion() {
                     segmento_set_limite(segmentoActual, segmento_get_limite(segmentoActual) - segmento_get_tamanio(segmentoAnterior));
                     list_replace(listaDeSegmentos, i - 1, segmentoActual);
                     list_remove(listaDeSegmentos, i);
-                    log_info(memoriaLogger, "Entre OCA");
                     i = i - 1;
 
                   
@@ -340,7 +345,6 @@ void iniciar_compactacion() {
                 segmento_set_limite(segmentoActual, segmento_get_limite(segmentoActual) - (segmento_get_base(segmentoActual) - segmento_get_limite(segmentoAnterior)));
                 segmento_set_base(segmentoActual, segmento_get_limite(segmentoAnterior) + 1);
                 list_replace(listaDeSegmentos, i, segmentoActual);
-                log_info(memoriaLogger, "Entre ACA");
 
             }
           

@@ -37,19 +37,19 @@ int main() {
     segmento_set_limite(segCompartido, limiteCompartido);
     segmento_set_bit_validez(segCompartido, 1);
     list_add(listaDeSegmentos, segCompartido);    
-    log_info(memoriaLogger,"Crear Segmento 0: <%i> - Base: <%i> - TAMAÑO: <%i> - LIMITE <%i>", segmento_get_id(segCompartido), segmento_get_base(segCompartido), segmento_get_tamanio(segCompartido), segmento_get_limite(segCompartido));
+    log_info(memoriaLogger,CYAN BOLD UNDERLINE "SE CREA EL SEGMENTO 0: "RESET YELLOW BOLD UNDERLINE"<%i>"RESET CYAN BOLD UNDERLINE" - BASE: "RESET YELLOW BOLD UNDERLINE"<%i>"RESET CYAN BOLD UNDERLINE" - TAMAÑO: "RESET YELLOW BOLD UNDERLINE"<%i>"RESET CYAN BOLD UNDERLINE" - LIMITE "RESET YELLOW BOLD UNDERLINE"<%i>", segmento_get_id(segCompartido), segmento_get_base(segCompartido), segmento_get_tamanio(segCompartido), segmento_get_limite(segCompartido));
     Segmento* segmentoUsuario = crear_segmento(tamActualMemoria - segmento_get_tamanio(segCompartido));
     segmento_set_base(segmentoUsuario,  segmento_get_limite(segCompartido) + 1 );
     segmento_set_limite(segmentoUsuario, segmento_get_base(segmentoUsuario) + segmento_get_tamanio(segmentoUsuario) );
     segmento_set_bit_validez(segmentoUsuario, 0);
     list_add_in_index(listaDeSegmentos,1, segmentoUsuario);
-    log_info(memoriaLogger,"Crear Hueco Libre: <%i> - Base: <%i> - TAMAÑO: <%i> - LIMITE <%i>", segmento_get_id(segmentoUsuario), segmento_get_base(segmentoUsuario), segmento_get_tamanio(segmentoUsuario), segmento_get_limite(segmentoUsuario));
+    log_info(memoriaLogger,GREEN BOLD UNDERLINE "SE CREA EL ESPACIO DE USUARIO: BASE: "RESET UNDERLINE YELLOW BOLD"<%i>"RESET GREEN BOLD UNDERLINE" - TAMAÑO: "RESET YELLOW UNDERLINE BOLD"<%i>"RESET GREEN BOLD UNDERLINE" - LIMITE: "RESET YELLOW UNDERLINE BOLD"<%i>", segmento_get_base(segmentoUsuario), segmento_get_tamanio(segmentoUsuario), segmento_get_limite(segmentoUsuario));
     restar_a_tamMemoriaActual(memoria_config_get_tamanio_segmento_0(memoriaConfig));
 
    //tabla_segmentos = estado_create();
 
     int serverMemoria = iniciar_servidor(memoria_config_get_ip_escucha(memoriaConfig), memoria_config_get_puerto_escucha(memoriaConfig) );
-    log_info(memoriaLogger,"Servidor memoria listo para recibir al modulo\n");
+    log_info(memoriaLogger,ITALIC YELLOW "MODULO MEMORIA "RESET GREEN "ACTIVADO "RESET ITALIC YELLOW"ESPERANDO PARA RECIBIR A LOS OTROS MODULO\n");
     inicializar_memoria();
     aceptar_conexiones_memoria(serverMemoria);
 
@@ -83,7 +83,6 @@ void* atender_conexiones_fileSystem(void* socket_ptr) {
 void aceptar_conexiones_memoria(const int socketEscucha) {
     struct sockaddr cliente = {0};
     socklen_t len = sizeof(cliente);
-    log_info(memoriaLogger, "A la escucha de nuevas conexiones en puerto %d", socketEscucha);
 
     while (true) {
         const int clienteAceptado = accept(socketEscucha, &cliente, &len);

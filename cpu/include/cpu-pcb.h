@@ -16,6 +16,8 @@ t_cpu_pcb* cpu_pcb_create(uint32_t pid, uint32_t programCounter, t_registros_cpu
 void cpu_pcb_destroy(t_cpu_pcb* self);
 recurso* recursos_inicializar();
 
+
+
 ////// FIRMAS DE GETTERS ////////////
 uint32_t cpu_pcb_get_program_counter(t_cpu_pcb* self);
 uint32_t cpu_pcb_get_pid(t_cpu_pcb* self);
@@ -44,6 +46,8 @@ uint32_t cpu_pcb_get_base_direccion_fisica(t_cpu_pcb* this);
 t_list* cpu_pcb_get_tabla_de_segmento(t_cpu_pcb* this);
 uint32_t cpu_pcb_get_cantidad_byte(t_cpu_pcb* this);
 uint32_t cpu_pcb_get_desplazamiento_segmento(t_cpu_pcb* this);
+
+
 
 ////// FIRMAS DE SETTERS /////////////
 void cpu_pcb_set_tiempoIO(t_cpu_pcb* self, uint32_t tiempoIO);
@@ -76,7 +80,6 @@ void cpu_pcb_set_registro_rax(t_cpu_pcb* self, char* registro);
 void cpu_pcb_set_registro_rbx(t_cpu_pcb* self, char* registro);
 void cpu_pcb_set_registro_rcx(t_cpu_pcb* self, char* registro);
 void cpu_pcb_set_registro_rdx(t_cpu_pcb* self, char* registro);
-
 
 
 

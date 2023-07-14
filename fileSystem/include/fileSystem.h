@@ -19,8 +19,6 @@
 #include <commons/log.h>
 #include <commons/config.h>
 
-#define FS_SUPERBLOQUE_UBICACION "config/superbloque.config"
-#define FS_CONFIG_UBICACION "config/fileSystem.config"
 #define FS_LOG_UBICACION "logs/fileSystem.log"
 #define FS_PROCESS_NAME "FILESYSTEM" 
 

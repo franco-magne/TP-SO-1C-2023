@@ -18,7 +18,7 @@ void atender_peticiones_cpu(int socketCpu) {
         case HEADER_chequeo_DF :{ //acceso a memoria  HEADER_chequeo_DF
             //marco es la direccion Fisica
             uint32_t pid;
-            log_info(memoriaLogger, "\e[1;93mPetición de marco\e[0m");
+            log_info(memoriaLogger, "\e[1;93mPetición de Acceso a Memoria\e[0m");
             uint32_t base_segmento;
             uint32_t desplazamiento_segmento;
             uint32_t cantidadByte;
@@ -34,25 +34,22 @@ void atender_peticiones_cpu(int socketCpu) {
             uint32_t retardoInstruccion = memoria_config_get_retardo_memoria(memoriaConfig);
             intervalo_de_pausa(retardoInstruccion);
             
-            log_info(memoriaLogger, "Se quiere la dirección física del segmento con base <%i>", base_segmento);
             pid = segmento_get_pid(segementoSolic);
 
             t_buffer* respuestaBuffer = buffer_create();
-            //Logica de desplazamiento ...          desplazamiento <= limite todo ok, si es > entonces hay segmentation fault
-            if((desplazamiento_segmento + cantidadByte) > segmento_get_tamanio(segementoSolic)){
+
+            if( (desplazamiento_segmento + cantidadByte) > segmento_get_tamanio(segementoSolic) ){
                 uint32_t baseSegFault = -1;
                 buffer_pack(respuestaBuffer, &baseSegFault, sizeof(baseSegFault));
                 stream_send_buffer(socketCpu, HEADER_chequeo_DF,respuestaBuffer);   //seria el HEADER_SegFault
+                log_info(memoriaLogger, "SE ENVIA EL SEG_FAULT A LA CPU PARA PID : [%i]", segmento_get_pid(segementoSolic));
 
-                printf("\nentra al if de segFautl\n");
-                //log_info(memoriaLogger, "Segmentation Fault!! Fallo en el acceso al segmento <%i> con pid <%i>", id_segmento, pid);
-                //Deberia finalizar el proceso
-                // BORRAR TODA LAS TABLAS DE SEGMENTO DE ESE PROCESO 
-                //--->>> lo hago cuando kernel me avisa que tengo que eliminar el proceso
+                
+        
             } else {
                 buffer_pack(respuestaBuffer, &base_segmento, sizeof(base_segmento));
                 stream_send_buffer(socketCpu, HEADER_chequeo_DF,respuestaBuffer);
-                log_info(memoriaLogger, "Se enviá la base del segmento[%i]", segementoSolic->segmento_id);
+                log_info(memoriaLogger, "SE ENVIA EL OK A LA CPU PARA PID : [%i]", segmento_get_pid(segementoSolic));
             
             }
             
@@ -62,7 +59,7 @@ void atender_peticiones_cpu(int socketCpu) {
         break;
         
         case HEADER_move_in :{ //lee de memoria y lo guarda en el registro
-            log_info(memoriaLogger, "\e[1;93mPetición de lectura\e[0m");
+            log_info(memoriaLogger, "\e[1;93mPETICION DE LECTURA CPU\e[0m");
             uint32_t base_segmento;
             uint32_t desplazamiento_segmento;
             uint32_t cantidadByte;
@@ -80,8 +77,7 @@ void atender_peticiones_cpu(int socketCpu) {
             uint32_t retardoInstruccion = memoria_config_get_retardo_memoria(memoriaConfig);
             intervalo_de_pausa(retardoInstruccion);
             
-            /*char* contenidoAenviar = malloc(strlen(segmentoLeido->contenido) + 1);
-            strcpy(contenidoAenviar, segmentoLeido->contenido);*/
+    
 
             char* contenidoAenviarAux = malloc(cantidadByte + 1); // Buffer de destino para almacenar los datos leídos, se reserva un espacio adicional para el carácter nulo
             memset(contenidoAenviarAux, 0, cantidadByte + 1); // Inicializar el buffer con ceros
@@ -94,13 +90,15 @@ void atender_peticiones_cpu(int socketCpu) {
             stream_send_buffer(socketCpu, HEADER_move_in, bufferContenido);
 
             buffer_destroy(bufferContenido);    
-            log_info(memoriaLogger, "Contenido leido : <%s> - En el segmento ID : <%i> ", contenidoAenviarAux, segmento_get_id(segmentoLeido));
+            log_info(memoriaLogger,BLUE ITALIC " CONTENIDO LEIDO : "RESET YELLOW "<%s> "RESET BLUE ITALIC" - EN EL SEGMENTO ID : <%i> ", contenidoAenviarAux, segmento_get_id(segmentoLeido));
+            log_info(memoriaLogger,BOLDMAGENTA " PID: "RESET BOLDGREEN"<%i>"RESET BOLDMAGENTA" - Acción: "RESET BOLDGREEN"<LEER>"RESET BOLDMAGENTA" - Dirección física: "RESET BOLDGREEN"<(%i|%i)>"RESET BOLDMAGENTA" - Tamaño: "RESET BOLDGREEN"<%i>"RESET BOLDMAGENTA" - Origen: "RESET BOLDGREEN"<CPU> ",segmento_get_pid(segmentoLeido),base_segmento,desplazamiento_segmento, segmento_get_tamanio(segmentoLeido));
+
             //buffer_destroy(buffer);
             //free(contenidoAenviarAux);
         }
         break;
         case HEADER_move_out : {//"escribir"
-            log_info(memoriaLogger, "\e[1;93mPetición de escritura\e[0m");
+            log_info(memoriaLogger, "\e[1;93mPetición de escritura CPU\e[0m");
             
             uint32_t base_segmento;
             uint32_t desplazamiento_segmento;
@@ -120,18 +118,14 @@ void atender_peticiones_cpu(int socketCpu) {
             uint32_t retardoInstruccion = memoria_config_get_retardo_memoria(memoriaConfig);
             intervalo_de_pausa(retardoInstruccion);
 
-            //cada vez que hago un obtener segmento hago un list_replace
             if (contenidoAEscribir != NULL) {
                 memcpy(memoriaPrincipal + (size_t)base_segmento + (size_t)desplazamiento_segmento, contenidoAEscribir, (size_t)cantidadByte);
-                //segmento_set_contenido(unSegmento, contenidoAEscribir);
             } else {
                 memset(contenidoAEscribir, 0, (size_t)cantidadByte + 1); // Inicializar el buffer con ceros
             }
-            /*pthread_mutex_lock(&mutexListaDeSegmento);
-            modificarSegmento(base_segmento, unSegmento);    //es un obtener-segmento con list_replace
-            pthread_mutex_unlock(&mutexListaDeSegmento);*/
-            log_info(memoriaLogger, "Contenido escrito : <%s> - En el segmento ID : <%i> ", contenidoAEscribir, segmento_get_id(unSegmento));
-
+           
+            log_info(memoriaLogger, "CONTENIDO LEIDO : "RESET YELLOW "<%s> "RESET BLUE ITALIC " - EN EL SEGMENTO ID : <%i>" , contenidoAEscribir, segmento_get_id(unSegmento));
+            log_info(memoriaLogger,BOLDMAGENTA " PID: "RESET BOLDGREEN"<%i>"RESET BOLDMAGENTA" - Acción: "RESET BOLDGREEN"<LEER>"RESET BOLDMAGENTA" - Dirección física: "RESET BOLDGREEN"<(%i|%i)>"RESET BOLDMAGENTA" - Tamaño: "RESET BOLDGREEN"<%i>"RESET BOLDMAGENTA" - Origen: "RESET BOLDGREEN"<CPU> ",segmento_get_pid(unSegmento),base_segmento,desplazamiento_segmento, segmento_get_tamanio(unSegmento));
             //buffer_destroy(buffer);
             break;
             

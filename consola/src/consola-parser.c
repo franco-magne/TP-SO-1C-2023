@@ -19,9 +19,9 @@ bool consola_parser_parse_instructions(t_buffer *buffer, const char *pathInstruc
         
         instruccion = malloc(MAX_LENGTH_INSTRUCTION);
 
-        if(fgets(instruccion, MAX_LENGTH_INSTRUCTION, archivoInstrucciones) != NULL){ 
+        if(fgets(instruccion, MAX_LENGTH_INSTRUCTION, archivoInstrucciones) != NULL) {
             
-            if(string_equals_ignore_case(instruccion, "\n")){
+            if(string_equals_ignore_case(instruccion, "\n")) {
 
                 free(instruccion);
                 continue;
@@ -33,9 +33,9 @@ bool consola_parser_parse_instructions(t_buffer *buffer, const char *pathInstruc
             identificadorInstruccion = string_duplicate(vectorStringsInstruccion[0]); 
             string_trim(&identificadorInstruccion); 
            
-            if(es_instruccion_valida(identificadorInstruccion)){ 
+            if(es_instruccion_valida(identificadorInstruccion)) {
                  
-                if(es_instruccion_con_dos_argumentos(identificadorInstruccion) || es_instruccion_con_tres_argumentos(identificadorInstruccion) || es_instruccion_con_un_argumentos(identificadorInstruccion) || !strcmp("YIELD",identificadorInstruccion)  ){
+                if(es_instruccion_con_dos_argumentos(identificadorInstruccion) || es_instruccion_con_tres_argumentos(identificadorInstruccion) || es_instruccion_con_un_argumentos(identificadorInstruccion) || !strcmp("YIELD",identificadorInstruccion) ) {
 
                     switch (obtener_tipo_instruccion(identificadorInstruccion))
                     {   
@@ -43,6 +43,7 @@ bool consola_parser_parse_instructions(t_buffer *buffer, const char *pathInstruc
                             consola_serializer_pack_no_args(buffer, obtener_tipo_instruccion(identificadorInstruccion));
                             log_info(consolaLogger, "Se empaqueta la instruccion: %s", identificadorInstruccion);
                             break;
+
                         case INSTRUCCION_SET:
                             arg1 = string_duplicate(vectorStringsInstruccion[1]); // guardarlo en arg1 string
                             string_trim(&arg1); //quita los estapcios
@@ -51,6 +52,7 @@ bool consola_parser_parse_instructions(t_buffer *buffer, const char *pathInstruc
                             string_trim(&arg2); //le quita string
                             consola_serializer_pack_two_args(buffer, obtener_tipo_instruccion(identificadorInstruccion), (void*)&auxRegistro1, (void*)arg2);
                             break;
+
                         case INSTRUCCION_MOV_IN:
                             arg1 = string_duplicate(vectorStringsInstruccion[1]);
                             string_trim(&arg1);
@@ -60,6 +62,7 @@ bool consola_parser_parse_instructions(t_buffer *buffer, const char *pathInstruc
                             op2 = (uint32_t) atoi(arg2);
                             consola_serializer_pack_two_args(buffer, obtener_tipo_instruccion(identificadorInstruccion), (void*)&auxRegistro1, (void*)&op2);
                             break;
+
                         case INSTRUCCION_F_SEEK:
                         case INSTRUCCION_F_TRUNCATE:
             
@@ -70,6 +73,7 @@ bool consola_parser_parse_instructions(t_buffer *buffer, const char *pathInstruc
                             op2 = (uint32_t) atoi(arg2);
                             consola_serializer_pack_two_args(buffer, obtener_tipo_instruccion(identificadorInstruccion), (void*)arg1, (void*)&op2);
                             break;
+
                         case INSTRUCCION_MOV_OUT:
                             arg1 = string_duplicate(vectorStringsInstruccion[1]);
                             string_trim(&arg1);
@@ -79,6 +83,7 @@ bool consola_parser_parse_instructions(t_buffer *buffer, const char *pathInstruc
                             auxRegistro2 = obtener_registro(arg2);
                             consola_serializer_pack_two_args(buffer, obtener_tipo_instruccion(identificadorInstruccion), (void*)&op1, (void*)&auxRegistro2);
                             break;
+
                         case INSTRUCCION_IO:
                         case INSTRUCCION_DELETE_SEGMENT:
                             arg1 = string_duplicate(vectorStringsInstruccion[1]);
@@ -86,6 +91,7 @@ bool consola_parser_parse_instructions(t_buffer *buffer, const char *pathInstruc
                             op1 = (uint32_t) atoi(arg1);
                             consola_serializer_pack_one_integer_args(buffer, obtener_tipo_instruccion(identificadorInstruccion), op1 );
                             break;
+
                         case INSTRUCCION_WAIT:
                         case INSTRUCCION_SIGNAL:
                         case INSTRUCCION_F_OPEN:
@@ -94,6 +100,7 @@ bool consola_parser_parse_instructions(t_buffer *buffer, const char *pathInstruc
                             string_trim(&arg1);
                             consola_serializer_pack_one_string_args(buffer, obtener_tipo_instruccion(identificadorInstruccion), arg1 );
                             break;
+
                         case INSTRUCCION_CREATE_SEGMENT:
                             arg1 = string_duplicate(vectorStringsInstruccion[1]);
                             string_trim(&arg1);
@@ -103,6 +110,7 @@ bool consola_parser_parse_instructions(t_buffer *buffer, const char *pathInstruc
                             op2 = (uint32_t) atoi(arg2);
                             consola_serializer_pack_two_args(buffer, obtener_tipo_instruccion(identificadorInstruccion), (void*)&op1, (void*)&op2);
                             break;
+
                         case INSTRUCCION_F_WRITE:
                         case INSTRUCCION_F_READ:
                             arg1 = string_duplicate(vectorStringsInstruccion[1]);
@@ -120,36 +128,42 @@ bool consola_parser_parse_instructions(t_buffer *buffer, const char *pathInstruc
                     
                         default:
                             break;
-                    }  
-                if(cantidad_argumentos(vectorStringsInstruccion) == 1 ){
-                    log_info(consolaLogger, "Se empaqueta instruccion: %s con operador %s", identificadorInstruccion, arg1);
-                    free(instruccion);
-                    free(auxInstruccion);
-                    //destruir_vector_strings(vectorStringsInstruccion);
-                    free(identificadorInstruccion);
-                    free(arg1);
-                    continue; 
-                } else if(cantidad_argumentos(vectorStringsInstruccion) == 2 ){
-                    log_info(consolaLogger, "Se empaqueta instruccion: %s con operandos %s y %s", identificadorInstruccion, arg1, arg2);
-                    free(instruccion);
-                    free(auxInstruccion);
-                    //destruir_vector_strings(vectorStringsInstruccion);
-                    free(identificadorInstruccion);
-                    free(arg1);
-                    free(arg2);
-                    continue;
-                  }  else if (cantidad_argumentos(vectorStringsInstruccion) == 3){
-                log_info(consolaLogger, "Se empaqueta instruccion: %s con operandos %s y %i y %i", identificadorInstruccion, arg1, op1, op2);
-                free(instruccion);
-                free(auxInstruccion);
-                free(identificadorInstruccion);
-                free(arg1);
-                continue;
-                  }
-                }
-                else{
+                    }
 
-                    if(cantidad_argumentos(vectorStringsInstruccion) > 0){
+                    if (cantidad_argumentos(vectorStringsInstruccion) == 1 ) {
+
+                        log_info(consolaLogger, "Se empaqueta instruccion: %s con operador %s", identificadorInstruccion, arg1);
+                        free(instruccion);
+                        free(auxInstruccion);
+                        //destruir_vector_strings(vectorStringsInstruccion);
+                        free(identificadorInstruccion);
+                        free(arg1);
+                        continue;
+
+                    } else if (cantidad_argumentos(vectorStringsInstruccion) == 2 ) {
+
+                        log_info(consolaLogger, "Se empaqueta instruccion: %s con operandos %s y %s", identificadorInstruccion, arg1, arg2);
+                        free(instruccion);
+                        free(auxInstruccion);
+                        //destruir_vector_strings(vectorStringsInstruccion);
+                        free(identificadorInstruccion);
+                        free(arg1);
+                        free(arg2);
+                        continue;
+
+                    } else if (cantidad_argumentos(vectorStringsInstruccion) == 3) {
+                        
+                        log_info(consolaLogger, "Se empaqueta instruccion: %s con operandos %s y %i y %i", identificadorInstruccion, arg1, op1, op2);
+                        free(instruccion);
+                        free(auxInstruccion);
+                        free(identificadorInstruccion);
+                        free(arg1);
+                        continue;
+                    }
+                }
+                else {
+
+                    if (cantidad_argumentos(vectorStringsInstruccion) > 0) {
 
                         log_error(consolaLogger, "La instruccion EXIT no debe contener ningun argumento. Uso: EXIT");
                         free(instruccion);
@@ -160,7 +174,8 @@ bool consola_parser_parse_instructions(t_buffer *buffer, const char *pathInstruc
                         break;
                     }
                         
-                        if(!strcmp(identificadorInstruccion, "EXIT")) {
+                    if (!strcmp(identificadorInstruccion, "EXIT")) {
+
                         consola_serializer_pack_no_args(buffer, obtener_tipo_instruccion(identificadorInstruccion));
                         log_info(consolaLogger, "Se empaqueta la instruccion: %s", instruccion);
                         free(instruccion);
@@ -169,9 +184,8 @@ bool consola_parser_parse_instructions(t_buffer *buffer, const char *pathInstruc
                         free(identificadorInstruccion);
                         parseSuccess = true;
                         break;
-                        }
-                        
-                        
+                    }                        
+                       
                 }
             }
             else{
@@ -208,6 +222,7 @@ bool es_instruccion_con_un_argumentos(char* instruccion)
         || !strcmp(instruccion, "DELETE_SEGMENT")
         || !strcmp(instruccion, "F_CLOSE");
 }
+
 bool es_instruccion_con_tres_argumentos(char* instruccion)
 {
     return !strcmp(instruccion, "F_READ") 
@@ -270,16 +285,14 @@ t_registro obtener_registro(char* registro)
     else if(!strcmp(registro, "RDX")) return REGISTRO_rdx;
 }
 
-
 int cantidad_argumentos(char** vectorInstruccion)
 {
     int cantidadArgumentos = 0;
 
-    for(int i = 0; vectorInstruccion[i] != NULL; i++){
+    for (int i = 0; vectorInstruccion[i] != NULL; i++) {
 
         cantidadArgumentos++;
     }
 
     return cantidadArgumentos - 1;
 }
-

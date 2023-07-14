@@ -74,7 +74,7 @@ void liberar_segmentos_del_proceso_tabla_global(t_pcb* pcb){
 /////////////////////////////// FUNCION MAIN ////////////////////////////
 int main(int argc, char* argv[]) {
     kernelLogger = log_create(KERNEL_LOG_UBICACION,KERNEL_PROCESS_NAME,true,LOG_LEVEL_INFO);
-    t_config* kernelConfigPath = config_create(argv[1]);
+    t_config* kernelConfigPath = config_create(KERNEL_CONFIG_UBICACION);
     tablaGlobalDeArchivosAbiertos = list_create();
     tablaGlobalDeSegmentos = list_create();
     nextPid++;

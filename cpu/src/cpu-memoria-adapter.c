@@ -1,4 +1,3 @@
-
 #include <../include/cpu-memoria-adapter.h>
 
 
@@ -6,15 +5,13 @@ extern t_cpu_config *cpuConfig;
 extern t_log *cpuLogger;
 
 
-bool es_el_segmento_id(t_segmento* unSegmento, t_segmento* otroSegmento){
+bool es_el_segmento_id(t_segmento* unSegmento, t_segmento* otroSegmento) {
     return unSegmento->id_de_segmento == otroSegmento->id_de_segmento;
 } 
 
-
-
-
-t_segmento* obtener_base_segmento_num_segmento(t_list* listaDeSegmento, uint32_t num_segmento){
-      t_segmento* aux = segmento_create(num_segmento, -1);
+t_segmento* obtener_base_segmento_num_segmento(t_list* listaDeSegmento, uint32_t num_segmento) {
+    
+    t_segmento* aux = segmento_create(num_segmento, -1);
     int index = list_get_index(listaDeSegmento, es_el_segmento_id, aux);
 
     uint32_t base_del_segmento;
@@ -25,19 +22,14 @@ t_segmento* obtener_base_segmento_num_segmento(t_list* listaDeSegmento, uint32_t
     } else {
         aux->base_del_segmento = 0;
         return aux;
-    }
-
-   
+    }   
 }
-
-
-
 
 //seria la implementacion segmentation
 static uint32_t cpu_chequeo_base(int toSocket, uint32_t base, uint32_t desplazamiento_segmento ,  t_header requestHeader, uint32_t cantidadByte) {
+    
     t_buffer *requestBuffer = buffer_create();
     
-
     buffer_pack(requestBuffer, &base, sizeof(base));
     buffer_pack(requestBuffer, &desplazamiento_segmento, sizeof(desplazamiento_segmento));
     buffer_pack(requestBuffer, &cantidadByte, sizeof(cantidadByte));
@@ -46,20 +38,23 @@ static uint32_t cpu_chequeo_base(int toSocket, uint32_t base, uint32_t desplazam
     stream_send_buffer(toSocket, requestHeader, requestBuffer); 
     buffer_destroy(requestBuffer);
     uint8_t responseHeader = stream_recv_header(toSocket);  
+
     if (responseHeader != requestHeader) { 
         exit(-1);
-    }  
+    } 
+
     t_buffer *responseBuffer = buffer_create();
     stream_recv_buffer(toSocket, responseBuffer);
     uint32_t requestRetVal = -1;
     buffer_unpack(responseBuffer, &requestRetVal, sizeof(requestRetVal));
     buffer_destroy(responseBuffer);
+    
     return requestRetVal;
-
 }
 
 //MMU
 void cpu_mmu(int toSocket, uint32_t direccionLogica, t_list* tablaDeSegmento, t_cpu_pcb* pcb , uint32_t cantidadByte) {
+
     int tamanioMaximoSegmento = cpu_config_get_tamanio_maximo_segmento(cpuConfig);
     uint32_t num_segmento  = floor(direccionLogica / tamanioMaximoSegmento);
     uint32_t desplazamiento_segmento = direccionLogica % tamanioMaximoSegmento;
@@ -68,7 +63,7 @@ void cpu_mmu(int toSocket, uint32_t direccionLogica, t_list* tablaDeSegmento, t_
     uint32_t baseDelSegmento = cpu_chequeo_base(toSocket, segmento->base_del_segmento , desplazamiento_segmento, HEADER_chequeo_DF, cantidadByte);
     
     if(baseDelSegmento == -1)
-    log_info(cpuLogger,BACKGROUND_RED BOLD YELLOW "PID: <%i> - Error SEG_FAULT- Segmento: <%i> - Offset: <%i> - Tamaño: <%i>" RESET, cpu_pcb_get_pid(pcb), num_segmento, desplazamiento_segmento, segmento->tamanio_de_segmento);
+    log_info(cpuLogger, BACKGROUND_RED BOLD YELLOW "PID: <%i> - Error SEG_FAULT- Segmento: <%i> - Offset: <%i> - Tamaño: <%i>" RESET, cpu_pcb_get_pid(pcb), num_segmento, desplazamiento_segmento, segmento->tamanio_de_segmento);
     
     cpu_pcb_set_cantidad_byte(pcb,cantidadByte); // cantidad_byte
     cpu_pcb_set_base_direccion_fisica(pcb,baseDelSegmento); //base_direccion_fisica
@@ -77,6 +72,7 @@ void cpu_mmu(int toSocket, uint32_t direccionLogica, t_list* tablaDeSegmento, t_
 
 // Write
 void cpu_escribir_en_memoria(int toSocket,char* contenidoAEscribir, t_cpu_pcb* pcb) {
+
     uint32_t baseDireccionFisica = cpu_pcb_get_base_direccion_fisica(pcb);
     uint32_t desplazamientoSegmento = cpu_pcb_get_desplazamiento_segmento(pcb);
     uint32_t cantidadByte = cpu_pcb_get_cantidad_byte(pcb);
@@ -89,7 +85,6 @@ void cpu_escribir_en_memoria(int toSocket,char* contenidoAEscribir, t_cpu_pcb* p
     buffer_pack_string(buffer, contenidoAEscribir);
     stream_send_buffer(toSocket, HEADER_move_out, buffer);
     buffer_destroy(buffer);
-
 }
 
 // Read
@@ -107,15 +102,18 @@ char* cpu_leer_en_memoria( int toSocket,t_cpu_pcb* pcb) {
 
     stream_send_buffer(toSocket, HEADER_move_in, requestBuffer);
     buffer_destroy(requestBuffer);
+
     uint32_t responseHeader = stream_recv_header(toSocket);
     if (responseHeader != HEADER_move_in) 
     {
         log_error(cpuLogger, "Error al leer en memoria");
         exit(-1);
     }
+
     t_buffer *responseBuffer = buffer_create();
     stream_recv_buffer(toSocket, responseBuffer);
     char* contenidoLeido = buffer_unpack_string(responseBuffer);
     buffer_destroy(responseBuffer);
+
     return contenidoLeido;
 }

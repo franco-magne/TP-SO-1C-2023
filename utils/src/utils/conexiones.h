@@ -13,7 +13,6 @@
 #include <stdbool.h>
 
 
-
 typedef enum {
     
     HEADER_error,
@@ -46,7 +45,6 @@ typedef enum {
     HEADER_Compactacion_finalizada,
     HEADER_Segmentation_fault
 
-
 } t_header;
 
 typedef enum {
@@ -68,7 +66,6 @@ int conectar_a_servidor(char* ip, char* puerto);
 int iniciar_servidor(char* ip, char* puerto);
 int esperar_cliente(int socket_servidor);
 bool not(bool x);
-
 
 
 #endif

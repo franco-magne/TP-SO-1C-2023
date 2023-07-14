@@ -1,14 +1,10 @@
 #include <../include/cpu-atender-kernel.h>
 
 
-
-
-
 static bool hayInterrupcion;
 static int pidProcesoEnExec;
 static pthread_mutex_t mutexInterrupcion;
 static recurso* recursos;
-
 
 
 //utils functions 
@@ -68,8 +64,9 @@ static char* t_registro_to_char(t_registro registro)
     }
 }
 
-uint32_t cantidad_byte_segun_registro(t_registro registro){
-    switch(registro){
+uint32_t cantidad_byte_segun_registro(t_registro registro) {
+
+    switch(registro) {
         case REGISTRO_ax:  
         case REGISTRO_bx:
         case REGISTRO_cx:
@@ -82,93 +79,96 @@ uint32_t cantidad_byte_segun_registro(t_registro registro){
         case REGISTRO_rbx:
         case REGISTRO_rcx:
         case REGISTRO_rdx: return 16; break;
-
     }
 }
 
+void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header) {
 
+    uint32_t pid = cpu_pcb_get_pid(pcb);
+    uint32_t programCounterActualizado = cpu_pcb_get_program_counter(pcb);
+    t_registros_cpu* registrosCpuActualizado = cpu_pcb_get_registros(pcb);
+    // esto es para las instrucciones bloqueantes IO y posibles bloqueantes wait y signal
+    uint32_t  unidadesDeTrabajo = cpu_get_recurso_IO(recursos);
+    char* recurso_utilizado = cpu_get_recurso_sem(recursos);
+    //PARTE DE MEMORIA
+    uint32_t id_de_segmento = cpu_pcb_get_id_de_segmento(pcb);
+    uint32_t tamanio_de_segmento = cpu_pcb_get_tamanio_de_segmento(pcb);
+    //PARTE DE FILE_SYSTEM
+    char* nombreArchivo = cpu_pcb_get_nombre_archivo(pcb);
+    uint32_t tamanioArchivo = cpu_pcb_get_tamanio_archivo(pcb);
+    uint32_t punteroArchivo = cpu_pcb_get_puntero_archivo(pcb);
+    uint32_t direccionFisicaArchivo = cpu_pcb_get_base_direccion_fisica(pcb);
+    uint32_t cantidadByte = cpu_pcb_get_cantidad_byte(pcb);
+    uint32_t desplazamientoFisico = cpu_pcb_get_desplazamiento_segmento(pcb);
+    t_buffer* buffer = buffer_create();
 
-void empaquetar_instruccion(t_cpu_pcb* pcb, uint8_t header){
+        //Empaqueto pid
+    buffer_pack(buffer, &pid, sizeof(pid));
 
-        uint32_t pid = cpu_pcb_get_pid(pcb);
-        uint32_t programCounterActualizado = cpu_pcb_get_program_counter(pcb);
-        t_registros_cpu* registrosCpuActualizado = cpu_pcb_get_registros(pcb);
-        // esto es para las instrucciones bloqueantes IO y posibles bloqueantes wait y signal
-        uint32_t  unidadesDeTrabajo = cpu_get_recurso_IO(recursos);
-        char* recurso_utilizado = cpu_get_recurso_sem(recursos);
-        //PARTE DE MEMORIA
-        uint32_t id_de_segmento = cpu_pcb_get_id_de_segmento(pcb);
-        uint32_t tamanio_de_segmento = cpu_pcb_get_tamanio_de_segmento(pcb);
-        //PARTE DE FILE_SYSTEM
-        char* nombreArchivo = cpu_pcb_get_nombre_archivo(pcb);
-        uint32_t tamanioArchivo = cpu_pcb_get_tamanio_archivo(pcb);
-        uint32_t punteroArchivo = cpu_pcb_get_puntero_archivo(pcb);
-        uint32_t direccionFisicaArchivo = cpu_pcb_get_base_direccion_fisica(pcb);
-        uint32_t cantidadByte = cpu_pcb_get_cantidad_byte(pcb);
-        uint32_t desplazamientoFisico = cpu_pcb_get_desplazamiento_segmento(pcb);
-        t_buffer* buffer = buffer_create();
+    //Empaqueto pc
+    buffer_pack(buffer, &programCounterActualizado, sizeof(programCounterActualizado));
+    //Empaquetamos registros
+    buffer_pack_string(buffer, registrosCpuActualizado->registroAx);
+    buffer_pack_string(buffer, registrosCpuActualizado->registroBx);
+    buffer_pack_string(buffer, registrosCpuActualizado->registroCx);
+    buffer_pack_string(buffer, registrosCpuActualizado->registroDx);
+    
+    buffer_pack_string(buffer, registrosCpuActualizado->registroEAx);
+    buffer_pack_string(buffer, registrosCpuActualizado->registroEBx);
+    buffer_pack_string(buffer, registrosCpuActualizado->registroECx);
+    buffer_pack_string(buffer, registrosCpuActualizado->registroEDx);
 
-         //Empaqueto pid
-        buffer_pack(buffer, &pid, sizeof(pid));
+    buffer_pack_string(buffer, registrosCpuActualizado->registroRAx);
+    buffer_pack_string(buffer, registrosCpuActualizado->registroRBx);
+    buffer_pack_string(buffer, registrosCpuActualizado->registroRCx);
+    buffer_pack_string(buffer, registrosCpuActualizado->registroRDx);
 
-        //Empaqueto pc
-        buffer_pack(buffer, &programCounterActualizado, sizeof(programCounterActualizado));
-        //Empaquetamos registros
-        buffer_pack_string(buffer, registrosCpuActualizado->registroAx);
-        buffer_pack_string(buffer, registrosCpuActualizado->registroBx);
-        buffer_pack_string(buffer, registrosCpuActualizado->registroCx);
-        buffer_pack_string(buffer, registrosCpuActualizado->registroDx);
+    
+    switch(header) {
+
+        case HEADER_proceso_bloqueado : buffer_pack(buffer, &unidadesDeTrabajo, sizeof(unidadesDeTrabajo));
+        break;
+
+        case HEADER_proceso_pedir_recurso:
+        case HEADER_proceso_devolver_recurso: buffer_pack_string(buffer, recurso_utilizado);
+        break;
+
+        case HEADER_create_segment: buffer_pack(buffer, &id_de_segmento, sizeof(id_de_segmento));
+        buffer_pack(buffer, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
+        break;
+
+        case HEADER_delete_segment: buffer_pack(buffer, &id_de_segmento, sizeof(id_de_segmento));
+        break;
+
+        case HEADER_f_open: 
+        case HEADER_f_close: buffer_pack_string(buffer,nombreArchivo);
+        break;
+
+        case HEADER_f_truncate:
+        buffer_pack_string(buffer,nombreArchivo);
+        buffer_pack(buffer,&tamanioArchivo, sizeof(tamanioArchivo));
+        break;
+
+        case HEADER_f_seek:
+        buffer_pack_string(buffer,nombreArchivo);
+        buffer_pack(buffer,&punteroArchivo, sizeof(punteroArchivo));
+        break;
+
+        case HEADER_f_write:
+        case HEADER_f_read:
+        buffer_pack_string(buffer,nombreArchivo);
+        buffer_pack(buffer,&cantidadByte, sizeof(cantidadByte));
+        buffer_pack(buffer,&direccionFisicaArchivo, sizeof(direccionFisicaArchivo));
+        buffer_pack(buffer,&desplazamientoFisico, sizeof(desplazamientoFisico));
+        break;
         
-        buffer_pack_string(buffer, registrosCpuActualizado->registroEAx);
-        buffer_pack_string(buffer, registrosCpuActualizado->registroEBx);
-        buffer_pack_string(buffer, registrosCpuActualizado->registroECx);
-        buffer_pack_string(buffer, registrosCpuActualizado->registroEDx);
+        default: 
+        break;
+    }   
 
-        buffer_pack_string(buffer, registrosCpuActualizado->registroRAx);
-        buffer_pack_string(buffer, registrosCpuActualizado->registroRBx);
-        buffer_pack_string(buffer, registrosCpuActualizado->registroRCx);
-        buffer_pack_string(buffer, registrosCpuActualizado->registroRDx);
-
-        
-        switch(header){
-            case HEADER_proceso_bloqueado : buffer_pack(buffer, &unidadesDeTrabajo, sizeof(unidadesDeTrabajo));
-            break;
-            case HEADER_proceso_pedir_recurso:
-            case HEADER_proceso_devolver_recurso: buffer_pack_string(buffer, recurso_utilizado);
-            break;
-            case HEADER_create_segment: buffer_pack(buffer, &id_de_segmento, sizeof(id_de_segmento));
-            buffer_pack(buffer, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
-            break;
-            case HEADER_delete_segment: buffer_pack(buffer, &id_de_segmento, sizeof(id_de_segmento));
-            break;
-            case HEADER_f_open: 
-            case HEADER_f_close: buffer_pack_string(buffer,nombreArchivo);
-            break;
-            case HEADER_f_truncate:
-            buffer_pack_string(buffer,nombreArchivo);
-            buffer_pack(buffer,&tamanioArchivo, sizeof(tamanioArchivo));
-            break;
-            case HEADER_f_seek:
-            buffer_pack_string(buffer,nombreArchivo);
-            buffer_pack(buffer,&punteroArchivo, sizeof(punteroArchivo));
-            break;
-            case HEADER_f_write:
-            case HEADER_f_read:
-            buffer_pack_string(buffer,nombreArchivo);
-            buffer_pack(buffer,&cantidadByte, sizeof(cantidadByte));
-            buffer_pack(buffer,&direccionFisicaArchivo, sizeof(direccionFisicaArchivo));
-            buffer_pack(buffer,&desplazamientoFisico, sizeof(desplazamientoFisico));
-            break;
-            
-            default: 
-            break;
-        }   
-
-        stream_send_buffer(cpu_config_get_socket_dispatch(cpuConfig), header, buffer);
-        buffer_destroy(buffer);
+    stream_send_buffer(cpu_config_get_socket_dispatch(cpuConfig), header, buffer);
+    buffer_destroy(buffer);
 }
-
-
 
 //Dispatch module
 
@@ -199,18 +199,16 @@ static char* cpu_fetch_operands(t_instruccion* nextInstruction, t_cpu_pcb* pcb)
     t_registro registro = instruccion_get_registro1(nextInstruction);
     uint32_t cantidadByteRegistro = cantidad_byte_segun_registro(registro);
     uint32_t direccionLogicaOrigen = instruccion_get_operando2(nextInstruction);
+
     cpu_mmu(cpu_config_get_socket_memoria(cpuConfig), direccionLogicaOrigen, cpu_pcb_get_tabla_de_segmento(pcb), pcb,cantidadByteRegistro);
-    if(cpu_pcb_get_base_direccion_fisica(pcb) == -1){
-            return NULL;
+
+    if(cpu_pcb_get_base_direccion_fisica(pcb) == -1) {
+        return NULL;
     } else {
-           char* fetchedValue = cpu_leer_en_memoria(cpu_config_get_socket_memoria(cpuConfig), pcb );
-            //log_info(cpuLogger, "FETCH OPERANDS: PCB <ID %d> MOVIN  Fetched Value: %s",cpu_pcb_get_pid(pcb), fetchedValue);
-           return fetchedValue;
-    }
- 
-    
-
-
+        char* fetchedValue = cpu_leer_en_memoria(cpu_config_get_socket_memoria(cpuConfig), pcb );
+        //log_info(cpuLogger, "FETCH OPERANDS: PCB <ID %d> MOVIN  Fetched Value: %s",cpu_pcb_get_pid(pcb), fetchedValue);
+        return fetchedValue;
+    }     
 }
 
 
@@ -261,6 +259,7 @@ static char*  get_registro_segun_tipo(t_registro tipoRegistro, t_cpu_pcb* pcb)
 }
 
 void cpu_pcb_set_registro(t_registros_cpu* registros, t_registro tipoRegistro, char* valor) {
+
     switch (tipoRegistro) {
         case REGISTRO_ax:
             free(registros->registroAx); // Liberar la memoria del registro anterior
@@ -314,8 +313,8 @@ void cpu_pcb_set_registro(t_registros_cpu* registros, t_registro tipoRegistro, c
             // Registro inválido, no se hace nada
             break;
     }
-        log_info(cpuLogger,BACKGROUND_GREEN BOLD RED "Registro %s seteado con valor: %s" RESET, t_registro_to_char(tipoRegistro), valor  ); 
 
+    log_info(cpuLogger,BACKGROUND_GREEN BOLD RED "Registro %s seteado con valor: %s" RESET, t_registro_to_char(tipoRegistro), valor  ); 
 }
 
 static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstruccion, void* operando1, void* operando2, void* operando3) 
@@ -330,16 +329,15 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         t_registro registroASetear = *((t_registro*) operando1);
         char* valorASetear = string_duplicate((char*) operando2);
         uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);
-
       
         log_info(cpuLogger, BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN " <SET> - <%s> - <%s>", cpu_pcb_get_pid(pcb), t_registro_to_char(registroASetear), valorASetear);
         
         intervalo_de_pausa(retardoInstruccion);
         cpu_pcb_set_registro(cpu_pcb_get_registros(pcb),registroASetear,valorASetear);
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
+
     } else if (tipoInstruccion == INSTRUCCION_EXIT) {
-        
-        
+                
         log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <EXIT> ", cpu_pcb_get_pid(pcb));
 
         uint32_t pid = cpu_pcb_get_pid(pcb);
@@ -349,9 +347,9 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         empaquetar_instruccion(pcb, HEADER_proceso_terminado);
     
         shouldStopExec = true;
+
     } else if (tipoInstruccion == INSTRUCCION_YIELD ) {
-        
-        
+                
         log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <YIELD> ", cpu_pcb_get_pid(pcb));
 
         uint32_t pid = cpu_pcb_get_pid(pcb);
@@ -361,7 +359,6 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         shouldStopExec = true;
 
         empaquetar_instruccion(pcb, HEADER_proceso_desalojado);
-
         
     } else if (tipoInstruccion == INSTRUCCION_IO ) {
         
@@ -379,7 +376,6 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         cpu_pcb_set_program_counter(pcb, programCounterActualizado);
 
         empaquetar_instruccion(pcb, HEADER_proceso_bloqueado);
-
     
     } else if (tipoInstruccion == INSTRUCCION_SIGNAL ) {
         
@@ -422,6 +418,7 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         shouldStopExec = true;
 
     } else if (tipoInstruccion == INSTRUCCION_DELETE_SEGMENT ) {
+
         uint32_t id_de_segmento = *((uint32_t*) operando1);
 
         log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <DELETE_SEGMENT> - <%i>", cpu_pcb_get_pid(pcb),id_de_segmento);
@@ -459,7 +456,6 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         char* nombreArchivo = string_duplicate((char*) operando1);
         uint32_t puntero = *((uint32_t*) operando2);
 
-
         log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <F_SEEK> - <%s> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo,puntero);
 
         cpu_pcb_set_nombre_archivo(pcb,nombreArchivo);
@@ -474,7 +470,6 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         
         char* recurso1 = string_duplicate((char*) operando1);
         uint32_t tamanio_archivo = *((uint32_t*) operando2);
-
 
         log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <F_TRUNCATE> - <%s> - <%i>", cpu_pcb_get_pid(pcb),recurso1,tamanio_archivo);
 
@@ -491,7 +486,9 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t cantidadByte = *((uint32_t*) operando3);
 
         cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),direccionLogica,cpu_pcb_get_tabla_de_segmento(pcb), pcb, cantidadByte);
-        if(cpu_pcb_get_base_direccion_fisica(pcb) != -1){
+        
+        if(cpu_pcb_get_base_direccion_fisica(pcb) != -1) {
+
             log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <F_READ> - <%s> - <%i> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo, cantidadByte, direccionLogica);
             cpu_pcb_set_program_counter(pcb, programCounterActualizado);
             cpu_pcb_set_nombre_archivo(pcb, nombreArchivo);
@@ -502,16 +499,17 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         }
         shouldStopExec = true;
 
-    } else if (tipoInstruccion == INSTRUCCION_F_WRITE ) {
-        
+    } else if (tipoInstruccion == INSTRUCCION_F_WRITE ) {        
 
         char* nombreArchivo = string_duplicate((char*) operando1);
         uint32_t direccionLogica = *((uint32_t*) operando2);
         uint32_t cantidadByte = *((uint32_t*) operando3);
 
         cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),direccionLogica,cpu_pcb_get_tabla_de_segmento(pcb), pcb, cantidadByte);
-        if(cpu_pcb_get_base_direccion_fisica(pcb) != -1){
-            uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
+
+        if(cpu_pcb_get_base_direccion_fisica(pcb) != -1) {
+
+            uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig); //PROVISORIO !!!!!!!!!
             log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <F_WRITE> - <%s> - <%i> - <%i>", cpu_pcb_get_pid(pcb),nombreArchivo, cantidadByte, direccionLogica);
             intervalo_de_pausa(retardoInstruccion);
             cpu_pcb_set_program_counter(pcb, programCounterActualizado);
@@ -524,14 +522,14 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
 
         shouldStopExec = true;
 
-
     } else if (tipoInstruccion == INSTRUCCION_MOV_IN ) {
         
         t_registro registroASetear = *((t_registro*) operando1);
         char* valorASetear = string_duplicate((char*) operando2);
 
-        if(valorASetear == NULL){
-             // ACA ENTRARIA POR EL SEGMENTATION FAULT
+        if(valorASetear == NULL) {
+
+            // ACA ENTRARIA POR EL SEGMENTATION FAULT
             cpu_pcb_set_program_counter(pcb, programCounterActualizado);
             empaquetar_instruccion(pcb, HEADER_Segmentation_fault);
             shouldStopExec = true;
@@ -543,7 +541,6 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
             cpu_pcb_set_program_counter(pcb, programCounterActualizado);
         }
 
-
     } else if (tipoInstruccion == INSTRUCCION_MOV_OUT ) {
 
         uint32_t dirLogica = *((uint32_t*) operando1);
@@ -552,7 +549,9 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
         uint32_t cantidadByteRegistro = cantidad_byte_segun_registro(registro);
 
         cpu_mmu(cpu_config_get_socket_memoria(cpuConfig),dirLogica,cpu_pcb_get_tabla_de_segmento(pcb), pcb, cantidadByteRegistro);
-        if(cpu_pcb_get_base_direccion_fisica(pcb) != -1){
+
+        if(cpu_pcb_get_base_direccion_fisica(pcb) != -1) {
+
             cpu_escribir_en_memoria(cpu_config_get_socket_memoria(cpuConfig) , contenidoAEnviar, pcb);
             uint32_t retardoInstruccion = cpu_config_get_retardo_instruccion(cpuConfig);//PROVISORIO !!!!!!!!!
             log_info(cpuLogger,BOLD UNDERLINE MAGENTA "PID: <%d> - Ejecutando:"RESET BOLD ITALIC CYAN" <MOV_OUT> - <%i> - <%s>", cpu_pcb_get_pid(pcb), dirLogica,  t_registro_to_char(registro) );
@@ -560,13 +559,12 @@ static bool cpu_exec_instruction(t_cpu_pcb* pcb, t_tipo_instruccion tipoInstrucc
             cpu_pcb_set_program_counter(pcb, programCounterActualizado);
 
         } else {
+
             // ACA ENTRARIA POR EL SEGMENTATION FAULT
             cpu_pcb_set_program_counter(pcb, programCounterActualizado);
             empaquetar_instruccion(pcb, HEADER_Segmentation_fault);
-            shouldStopExec = true;
-        
+            shouldStopExec = true;        
         }
-
 
     } 
 
@@ -677,11 +675,8 @@ static void dispatch_peticiones_de_kernel()
         
         uint8_t kernelResponse = stream_recv_header(cpu_config_get_socket_dispatch(cpuConfig));
                
-
-
         t_buffer* bufferPcb = NULL;
         t_cpu_pcb* pcb = NULL;
-
 
         if (kernelResponse == HEADER_pcb_a_ejecutar) {
             
@@ -757,7 +752,6 @@ static void dispatch_peticiones_de_kernel()
             log_error(cpuLogger, "Error al intentar recibir el PCB de Kernel");
             exit(EXIT_FAILURE);
         }
-
 
         pidRecibido = 0;
         programCounter = 0;

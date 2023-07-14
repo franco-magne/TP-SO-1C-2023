@@ -5,15 +5,17 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+
 //Commons libaries
 #include <commons/log.h>
 #include <commons/string.h>
-//Static libraries
 
+//Static libraries
 #include "../../utils/src/utils/instrucciones.h"
 
 //Internal libraries consola module
 #include "consola_serializar.h" 
+
 //#include <consola-estructuras.h>
 #include "../../utils/src/utils/conexiones.h"
 #include "../../utils/src/utils/serializacion.h"

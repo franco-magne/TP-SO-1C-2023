@@ -11,8 +11,8 @@ int main() {
 
    fs = malloc(sizeof(t_filesystem));
    fs_logger = log_create(FS_LOG_UBICACION, FS_PROCESS_NAME, true, LOG_LEVEL_INFO);
-   fs_config = config_create(FS_CONFIG_UBICACION);
-   superbloque_config = config_create(FS_SUPERBLOQUE_UBICACION);
+   fs_config = config_create(FILESYSTEM_CONFIG_UBICACION);
+   superbloque_config = config_create(SUPERBLOQUE_CONFIG_UBICACION);
 
    cargar_t_filesystem(fs_config, superbloque_config, fs);   
    fs->logger = fs_logger;
