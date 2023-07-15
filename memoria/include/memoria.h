@@ -9,6 +9,7 @@
 #include <../../utils/src/utils/conexiones.h>
 #include <../../utils/src/utils/serializacion.h>
 #include <../../utils/src/utils/commons-nuestras.h>
+#include <readline/readline.h>
 
 #include <commons/log.h>
 #include <commons/config.h>

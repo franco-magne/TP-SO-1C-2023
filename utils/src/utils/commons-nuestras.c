@@ -1,5 +1,9 @@
 #include "commons-nuestras.h"
 
+#define MAX_COMMAND_LENGTH 1000
+#define MAX_IP_LENGTH 16
+
+
 FILE* abrir_archivo(const char* pathArchivo, const char* mode, t_log* moduloLogger)
 {
     FILE* tempFilePointer = fopen(pathArchivo, mode);
@@ -244,4 +248,51 @@ void imprimir_file_system() {
     printf("\033[1;31m   SSSSS   \033[1;32m    Y     \033[1;33m   SSSSS   \033[1;34m    TT     \033[1;35m  EEEE    \033[1;36m  M   M   \033[0m\n");
     printf("\033[1;31m        S  \033[1;32m    Y     \033[1;33m        S  \033[1;34m    TT     \033[1;35m  E       \033[1;36m  M   M   \033[0m\n");
     printf("\033[1;31m  SSSSSS   \033[1;32m    Y     \033[1;33m  SSSSSS   \033[1;34m    TT     \033[1;35m  EEEEE   \033[1;36m  M   M   \033[0m\n");
+}
+
+
+char* getIPAddress() {
+
+    struct ifaddrs* ifaddr;
+    struct ifaddrs* ifa;
+    char* ip = NULL;
+
+    // Obtener la lista de interfaces de red
+    if (getifaddrs(&ifaddr) == -1) {
+        perror("Error al obtener la lista de interfaces de red");
+        exit(EXIT_FAILURE);
+    }
+
+    // Recorrer la lista de interfaces
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr == NULL)
+            continue;
+
+        // Verificar si es una interfaz de red IPv4 y no loopback
+        if (ifa->ifa_addr->sa_family == AF_INET &&
+            !(ifa->ifa_flags & 0x8)) {
+            // Obtener la dirección IP como una cadena
+            struct sockaddr_in* addr = (struct sockaddr_in*)ifa->ifa_addr;
+            ip = malloc(INET_ADDRSTRLEN);
+            inet_ntop(AF_INET, &(addr->sin_addr), ip, INET_ADDRSTRLEN);
+
+            // Buscar la cadena "inet " en la descripción
+            char* description = ifa->ifa_data;
+            if (description != NULL) {
+                char* inetPtr = strstr(description, "inet ");
+                if (inetPtr != NULL) {
+                    // Obtener el valor de la dirección IP después de "inet "
+                    char* inetValue = inetPtr + strlen("inet ");
+                    strncpy(ip, inetValue, INET_ADDRSTRLEN);
+                }
+            }
+
+            break;
+        }
+    }
+
+    // Liberar la memoria de la lista de interfaces
+    freeifaddrs(ifaddr);
+
+    return ip;
 }

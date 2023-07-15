@@ -79,7 +79,6 @@ void atender_peticiones_fileSystem(int socketFS) {
                 break;
             }
             default:
-            printf("hola");
                 break;
         }
         buffer_destroy(buffer);
