@@ -18,11 +18,11 @@ pthread_mutex_t mutexMemoriaData = PTHREAD_MUTEX_INITIALIZER;   //para controlar
 pthread_mutex_t mutexListaDeSegmento = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutexTamMemoriaActual = PTHREAD_MUTEX_INITIALIZER;
 
-int main() {
+int main(int argc, char *argv[]) {
 
     imprimir_memoria();
     memoriaLogger = log_create(MEMORIA_LOG_UBICACION,MEMORIA_PROCESS_NAME,true,LOG_LEVEL_INFO);
-    memoriaConfigInicial = config_create(MEMORIA_CONFIG_UBICACION);
+    memoriaConfigInicial = config_create(argv[1]);
     memoriaConfig = memoria_config_initializer(memoriaConfigInicial);
     
     tamActualMemoria = memoria_config_get_tamanio_memoria(memoriaConfig); 

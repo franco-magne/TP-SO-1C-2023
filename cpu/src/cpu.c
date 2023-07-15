@@ -3,14 +3,14 @@
 t_log* cpuLogger;
 t_cpu_config* cpuConfig;
 
-int main() {  
+int main(int argc, char *argv[]) {  
 
   cpuLogger = log_create(CPU_LOG_UBICACION,CPU_PROCESS_NAME,true,LOG_LEVEL_INFO);
   char* pathArchivoConfiguracion;
   struct sockaddr cliente = {0};
   socklen_t len = sizeof(cliente);
     
-  t_config* configIncial = config_create(CPU_CONFIG_UBICACION);
+  t_config* configIncial = config_create(argv[1]);
   cpuConfig = cpu_config_initializer(configIncial);
   inicio_cpu();
 
