@@ -1,22 +1,24 @@
 #include <../include/fileSystem.h>
 
+t_filesystem* fs;
 t_log* fs_logger;
 t_config* fs_config;
 t_config* superbloque_config;
-t_filesystem* fs;
 
 int main() {
    
    /*------------------------------------------------------------------------- INICIO DE FILESYSTEM ----------------------------------------------------------------------------- */
 
-   fs = malloc(sizeof(t_filesystem));
-   fs_logger = log_create(FS_LOG_UBICACION, FS_PROCESS_NAME, true, LOG_LEVEL_INFO);
+   fs = malloc(sizeof(t_filesystem));   
    fs_config = config_create(FILESYSTEM_CONFIG_UBICACION);
    superbloque_config = config_create(SUPERBLOQUE_CONFIG_UBICACION);
+   fs_logger = log_create(FS_LOG_UBICACION, FS_PROCESS_NAME, true, LOG_LEVEL_INFO);
 
    cargar_t_filesystem(fs_config, superbloque_config, fs);   
    fs->logger = fs_logger;
    imprimir_file_system();
+
+   log_info(fs->logger, "La IP de FILESYSTEM es %s", obtener_ip()); 
    
 /*
    RUTAS DEL CONFIG PARA LA ENTREGA FINAL
@@ -36,11 +38,10 @@ int main() {
       log_destroy(fs->logger);
 
       return -2;
-   }  
-
-   stream_send_empty_buffer(fsSocketMemoria, HANDSHAKE_fileSystem);
+   }     
 
    log_info(fs->logger, MAGENTA BOLD "Conexion con MEMORIA establecida");
+   stream_send_empty_buffer(fsSocketMemoria, HANDSHAKE_fileSystem);
    fs->socket_memoria = fsSocketMemoria;   
   
 
@@ -62,9 +63,13 @@ int main() {
 
    // -------------------------------------------------------------------------- FIN DE FILESYSTEM ------------------------------------------------------------------------------
 
-   config_destroy(fs_config);
-   config_destroy(superbloque_config);
+   log_info(fs->logger, "Finalizando FILESYSTEM...");
+
    cerrar_archivos();
+   log_destroy(fs_logger);
+   close(fs->socket_kernel);
+   config_destroy(fs_config);
+   config_destroy(superbloque_config); 
 
    return 0;
 }

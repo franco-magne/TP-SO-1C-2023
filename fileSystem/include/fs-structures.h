@@ -60,7 +60,6 @@ typedef struct {
 } t_fcb;
 
 
-
 ////////////////////////// DEFINICION DE LAS FUNCIONES ////////////////
 
 
