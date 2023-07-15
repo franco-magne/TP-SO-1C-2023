@@ -1,6 +1,8 @@
 # TP Sistemas Operativos 1° Cuatrimestre 2023
 
-![](https://redgol.cl/_next/image?url=https%3A%2F%2Fredgol.cl%2F__export%2F1560607922493%2Fsites%2Fredgol%2Fimg%2F2019%2F06%2F15%2Fmaxresdefault_x1x_crop1560607911829.jpg_1546398727.jpg&w=1920&q=75)
+<p align="center">
+    <img src="https://redgol.cl/_next/image?url=https%3A%2F%2Fredgol.cl%2F__export%2F1560607922493%2Fsites%2Fredgol%2Fimg%2F2019%2F06%2F15%2Fmaxresdefault_x1x_crop1560607911829.jpg_1546398727.jpg&w=1920&q=75">
+</p>
 
 ## Contexto
 Trabajo práctico cuatrimestral de Sistemas Operativos, materia de la carrera Ingeniería en Sistemas de Información, UTN FRBA.
