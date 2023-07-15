@@ -25,3 +25,6 @@ Trabajo práctico cuatrimestral de Sistemas Operativos, materia de la carrera In
 | ------------------------------------------------------------------------------------------------- |
 | [Enunciado](https://docs.google.com/document/d/1orfThJsPmMx5uPzbY3wClGhqX8jASMOCUMlWnYAr7cA/edit) |
 | [Pruebas](https://docs.google.com/document/d/1MNalaTCB95qGO8q3rlR7VVCQqv3VLP3oeYxBgXgBy5g/edit)   |
+
+## Agradecimientos
+- [SO Project Template](https://github.com/RaniAgus/so-project-template): Templates para facilitar la creación de proyectos en Lenguaje C, por [Agustin Ranieri](https://github.com/RaniAgus)
