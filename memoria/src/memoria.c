@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
     log_info(memoriaLogger,CYAN BOLD UNDERLINE "SE CREA EL SEGMENTO 0: "RESET YELLOW BOLD UNDERLINE"<%i>"RESET CYAN BOLD UNDERLINE" - BASE: "RESET YELLOW BOLD UNDERLINE"<%i>"RESET CYAN BOLD UNDERLINE" - TAMAÑO: "RESET YELLOW BOLD UNDERLINE"<%i>"RESET CYAN BOLD UNDERLINE" - LIMITE "RESET YELLOW BOLD UNDERLINE"<%i>", segmento_get_id(segCompartido), segmento_get_base(segCompartido), segmento_get_tamanio(segCompartido), segmento_get_limite(segCompartido));
     Segmento* segmentoUsuario = crear_segmento(tamActualMemoria - segmento_get_tamanio(segCompartido));
     segmento_set_base(segmentoUsuario,  segmento_get_limite(segCompartido) + 1 );
-    segmento_set_limite(segmentoUsuario, segmento_get_base(segmentoUsuario) + segmento_get_tamanio(segmentoUsuario) );
+    segmento_set_limite(segmentoUsuario, segmento_get_base(segmentoUsuario) + segmento_get_tamanio(segmentoUsuario) - 1 );
     segmento_set_bit_validez(segmentoUsuario, 0);
     list_add_in_index(listaDeSegmentos,1, segmentoUsuario);
     log_info(memoriaLogger,GREEN BOLD UNDERLINE "SE CREA EL ESPACIO DE USUARIO: BASE: "RESET UNDERLINE YELLOW BOLD"<%i>"RESET GREEN BOLD UNDERLINE" - TAMAÑO: "RESET YELLOW UNDERLINE BOLD"<%i>"RESET GREEN BOLD UNDERLINE" - LIMITE: "RESET YELLOW UNDERLINE BOLD"<%i>", segmento_get_base(segmentoUsuario), segmento_get_tamanio(segmentoUsuario), segmento_get_limite(segmentoUsuario));
