@@ -729,7 +729,6 @@ static void dispatch_peticiones_de_kernel()
                 
                 t_list* listaInstrucciones = lista_de_instrucciones_buffer(bufferInstrucciones, cpuLogger);  // Agregar a las commons?
                 cpu_pcb_set_instrucciones(pcb, listaInstrucciones);
-                
                 buffer_destroy(bufferInstrucciones);
             } 
             else {
@@ -744,8 +743,7 @@ static void dispatch_peticiones_de_kernel()
                 
                 shouldStopExec = cpu_ejecutar_ciclos_de_instruccion(pcb);
             }
-            
-            //cpu_pcb_destroy(pcb);
+            cpu_pcb_destroy(pcb);
         }
         else {
             

@@ -9,14 +9,14 @@ extern Segmento* segCompartido;
 extern void* memoriaPrincipal;
 
 extern t_list* listaDeSegmentos; //la VERDADERA
-
+int test = 1;
 //t_config *memoriaConfig;
 
 
 
 void atender_peticiones_kernel(int socketKernel) {
     uint8_t header;
-    for (;;) {
+    while (test) {
         header = stream_recv_header(socketKernel);
         pthread_mutex_lock(&mutexMemoriaData);
         t_buffer* buffer = buffer_create();
@@ -138,13 +138,14 @@ void atender_peticiones_kernel(int socketKernel) {
                 stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
                 log_info(memoriaLogger,RED STRIKETHROUGH "SE ELIMINA EL PROCESO CON PID: <%i>", pid);
                 mostrar_lista_segmentos(listaDeSegmentos);
-
+                break;
             }
             default:
-               // exit(-1);
+                test = 0;
                 break;
         }
         pthread_mutex_unlock(&mutexMemoriaData);
         buffer_destroy(buffer);
     }
+
 }

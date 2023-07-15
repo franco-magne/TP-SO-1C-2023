@@ -83,32 +83,33 @@ void* atender_conexiones_fileSystem(void* socket_ptr) {
 void aceptar_conexiones_memoria(const int socketEscucha) {
     struct sockaddr cliente = {0};
     socklen_t len = sizeof(cliente);
+    int numClientesAtendidos = 0;
 
-    while (true) {
+    while (numClientesAtendidos < 3) {
         const int clienteAceptado = accept(socketEscucha, &cliente, &len);
+
         if (clienteAceptado > -1) {
             uint8_t handshake = stream_recv_header(clienteAceptado);
+            stream_recv_empty_buffer(clienteAceptado);
             if (handshake == HANDSHAKE_cpu) {
                 pthread_t threadAtencion;
                 pthread_create(&threadAtencion, NULL, atender_conexiones_cpu, &clienteAceptado);
                 pthread_detach(threadAtencion);
-                cpuSinAtender = true;
+                numClientesAtendidos++;
             } else if (handshake == HANDSHAKE_kernel) {
                 pthread_t threadAtencion;
                 pthread_create(&threadAtencion, NULL, atender_conexiones_kernel, &clienteAceptado);
-                pthread_detach(threadAtencion);
-                kernelSinAtender = true;
+                pthread_join(threadAtencion, NULL);
+                numClientesAtendidos++;
             } else if (handshake == HANDSHAKE_fileSystem) {
-                
                 pthread_t threadAtencion;
                 pthread_create(&threadAtencion, NULL, atender_conexiones_fileSystem, &clienteAceptado);
                 pthread_detach(threadAtencion);
-                fileSystemSinAtender = true;
+                numClientesAtendidos++;
             } else {
                 log_error(memoriaLogger, "Error al recibir handshake de cliente en socket [%d]", clienteAceptado);
                 close(clienteAceptado); // Cerrar el socket cliente en caso de error
             }
-
         } else {
             log_error(memoriaLogger, "Error al aceptar conexión: %s", strerror(errno));
         }

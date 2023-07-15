@@ -64,7 +64,7 @@ void atender_peticiones_fileSystem(int socketFS) {
                 char* contenidoAenviar = malloc(cantidadByte + 1); // Buffer de destino para almacenar los datos leídos, se reserva un espacio adicional para el carácter nulo
                 memset(contenidoAenviar, 0, cantidadByte + 1); // Inicializar el buffer con ceros
                 memcpy(contenidoAenviar, memoriaPrincipal + (size_t)base_segmento +(size_t)desplazamiento_segmento, (size_t)cantidadByte);
-
+                contenidoAenviar[cantidadByte] = '\0';
                 log_info(memoriaLogger, "Contenido lectura : <%s> - En el segmento ID : <%i> ", contenidoAenviar, segmento_get_id(segmentoLeido));
                 log_info(memoriaLogger,BOLDMAGENTA " PID: "RESET BOLDGREEN"<%i>"RESET BOLDMAGENTA" - Acción: "RESET BOLDGREEN"<LEER>"RESET BOLDMAGENTA" - Dirección física: "RESET BOLDGREEN"<(%i|%i)>"RESET BOLDMAGENTA" - Tamaño: "RESET BOLDGREEN"<%i>"RESET BOLDMAGENTA" - Origen: "RESET BOLDGREEN"<FS> ",segmento_get_pid(segmentoLeido),base_segmento,desplazamiento_segmento, segmento_get_tamanio(segmentoLeido));
 
@@ -79,6 +79,7 @@ void atender_peticiones_fileSystem(int socketFS) {
                 break;
             }
             default:
+            printf("hola");
                 break;
         }
         buffer_destroy(buffer);
