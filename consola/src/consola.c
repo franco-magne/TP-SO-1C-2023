@@ -16,6 +16,12 @@ int main(int argc, char *argv[]) {
     char *kernelIP = config_get_string_value(consolaConfig, "IP");
     char *kernelPort = config_get_string_value(consolaConfig,"PUERTO");
     
+    
+    char* ipKernel = readline(RED BOLD "ESCRIBIR LA IP DE KERNEL -> ");
+    strcpy(kernelIP, ipKernel);
+    free(ipKernel);
+
+
     const int kernelSocket = conectar_a_servidor(kernelIP, kernelPort);
     if (kernelSocket == -1) {
         log_error(consolaLogger, "Error al intentar establecer conexión inicial con módulo Kernel");

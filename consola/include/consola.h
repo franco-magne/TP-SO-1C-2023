@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "consola_serializar.h"
 #include "consola-parser.h"
+#include <readline/readline.h>
 
 #define CONSOLA_CONFIG_UBICACION "config/consola.config"
 #define CONSOLA_LOG_UBICACION "logs/consola.log"

@@ -456,6 +456,7 @@ void crear_directorios(t_filesystem* fs) {
 
 void cargar_t_filesystem(t_config* config, t_config* sb_config, t_filesystem* fs) {
 
+    fs->ip_escucha = config_get_string_value(config, "IP_ESCUCHA");
     fs->ip_memoria = config_get_string_value(config, "IP_MEMORIA");
     fs->puerto_memoria = config_get_string_value(config,"PUERTO_MEMORIA");
     fs->puerto_escucha = config_get_string_value(config,"PUERTO_ESCUCHA");

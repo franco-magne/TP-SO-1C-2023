@@ -74,7 +74,7 @@ void liberar_segmentos_del_proceso_tabla_global(t_pcb* pcb){
 /////////////////////////////// FUNCION MAIN ////////////////////////////
 int main(int argc, char* argv[]) {
     kernelLogger = log_create(KERNEL_LOG_UBICACION,KERNEL_PROCESS_NAME,true,LOG_LEVEL_INFO);
-    t_config* kernelConfigPath = config_create(KERNEL_CONFIG_UBICACION);
+    t_config* kernelConfigPath = config_create(argv[1]);
     tablaGlobalDeArchivosAbiertos = list_create();
     tablaGlobalDeSegmentos = list_create();
     nextPid++;
@@ -84,6 +84,27 @@ int main(int argc, char* argv[]) {
     cantidad_de_recursos = size_recurso_list(kernel_config_get_recurso(kernelConfig));
     recursoConfig = iniciar_estructuras_de_recursos(cantidad_de_recursos, kernel_config_get_instancias(kernelConfig), kernel_config_get_recurso(kernelConfig));
     
+   char* ipMemoria = readline(RED BOLD "ESCRIBIR LA IP DE "RESET GREEN BOLD"MEMORIA "RESET BOLD RED" -> " RESET);
+   strcpy(kernelConfig->IP_MEMORIA, ipMemoria);
+   free(ipMemoria);
+
+   char* ipCPU = readline(RED BOLD "ESCRIBIR LA IP DE "RESET YELLOW BOLD " CPU  "RESET BOLD RED" -> " RESET);
+   strcpy(kernelConfig->IP_CPU, ipCPU);
+   free(ipCPU);
+
+   char* ipFs = readline(RED BOLD "ESCRIBIR LA IP DE "RESET CYAN BOLD" FILESYSTEM "RESET BOLD RED"-> " RESET);
+   strcpy(kernelConfig->IP_FILESYSTEM, ipFs);
+   free(ipFs);
+
+     
+    char* ipAddress = getIPAddress();
+    printf(RED BOLD  "IP DE KERNEL: %s\n" RESET, ipAddress);
+    strcpy( kernelConfig->IP_ESCUCHA , ipAddress);
+    free(ipAddress);
+
+
+
+
    /////////////////////////////// CONEXION CON CPU /////////////////////////////
     conectar_a_servidor_cpu_dispatch(kernelConfig,kernelLogger);
     /////////////////////////////// CONEXION CON FILE_SYSTEM /////////////////////////////

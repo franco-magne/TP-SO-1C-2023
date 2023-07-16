@@ -17,8 +17,15 @@ int main() {
    cargar_t_filesystem(fs_config, superbloque_config, fs);   
    fs->logger = fs_logger;
    imprimir_file_system();
-
-   log_info(fs->logger, "La IP de FILESYSTEM es %s", obtener_ip()); 
+   
+	char* ipMemoria = readline(BOLD WHITE "ESCRIBIR LA IP DE MEMORIA -> " RESET);
+   strcpy(fs->ip_memoria, ipMemoria);
+   free(ipMemoria);
+   
+   char* ipFS = getIPAddress();
+   printf(BOLD WHITE "IP DE FS: %s\n" RESET, ipFS);
+   strcpy(fs->ip_escucha, ipFS);
+   free(ipFS);
    
 /*
    RUTAS DEL CONFIG PARA LA ENTREGA FINAL
@@ -55,13 +62,15 @@ int main() {
 
    // ---------------------------------------------------------------------- CREA SERVIDOR PARA KERNEL --------------------------------------------------------------------------
    
-   int serverFS = iniciar_servidor(fs->ip_memoria, fs->puerto_escucha);
+
+   int serverFS = iniciar_servidor(fs->ip_escucha, fs->puerto_escucha);
    log_info(fs->logger, "Servidor FILESYSTEM listo para recibir a KERNEL...");
    
    while (fs_escuchando_en(serverFS, fs));
 
 
    // -------------------------------------------------------------------------- FIN DE FILESYSTEM ------------------------------------------------------------------------------
+
 
    log_info(fs->logger, "Finalizando FILESYSTEM...");
 

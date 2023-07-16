@@ -18,7 +18,6 @@ void atender_peticiones_cpu(int socketCpu) {
         case HEADER_chequeo_DF :{ //acceso a memoria  HEADER_chequeo_DF
             //marco es la direccion Fisica
             uint32_t pid;
-            log_info(memoriaLogger, "\e[1;93mPetición de Acceso a Memoria\e[0m");
             uint32_t base_segmento;
             uint32_t desplazamiento_segmento;
             uint32_t cantidadByte;
@@ -30,30 +29,14 @@ void atender_peticiones_cpu(int socketCpu) {
             pthread_mutex_lock(&mutexListaDeSegmento);
             Segmento* segementoSolic = obtener_segmento_por_BASE(base_segmento);
             pthread_mutex_unlock(&mutexListaDeSegmento);
-            
-            uint32_t retardoInstruccion = memoria_config_get_retardo_memoria(memoriaConfig);
-            intervalo_de_pausa(retardoInstruccion);
-            
-            pid = segmento_get_pid(segementoSolic);
-
+          
             t_buffer* respuestaBuffer = buffer_create();
 
-            if( (desplazamiento_segmento + cantidadByte) > segmento_get_tamanio(segementoSolic) ){
-                uint32_t baseSegFault = -1;
-                buffer_pack(respuestaBuffer, &baseSegFault, sizeof(baseSegFault));
-                stream_send_buffer(socketCpu, HEADER_chequeo_DF,respuestaBuffer);   //seria el HEADER_SegFault
-                log_info(memoriaLogger, "SE ENVIA EL SEG_FAULT A LA CPU PARA PID : [%i]", segmento_get_pid(segementoSolic));
-
-                
-        
-            } else {
-                buffer_pack(respuestaBuffer, &base_segmento, sizeof(base_segmento));
+           
+                buffer_pack(respuestaBuffer, &segementoSolic->tamanio, sizeof(segementoSolic->tamanio));
                 stream_send_buffer(socketCpu, HEADER_chequeo_DF,respuestaBuffer);
-                log_info(memoriaLogger, "SE ENVIA EL OK A LA CPU");
             
-            }
             
-          
             buffer_destroy(respuestaBuffer);
         }
         break;

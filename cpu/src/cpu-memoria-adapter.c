@@ -60,13 +60,19 @@ void cpu_mmu(int toSocket, uint32_t direccionLogica, t_list* tablaDeSegmento, t_
     uint32_t desplazamiento_segmento = direccionLogica % tamanioMaximoSegmento;
     t_segmento* segmento = obtener_base_segmento_num_segmento(tablaDeSegmento, num_segmento); // MODIFICARLA
    
-    uint32_t baseDelSegmento = cpu_chequeo_base(toSocket, segmento->base_del_segmento , desplazamiento_segmento, HEADER_chequeo_DF, cantidadByte);
-    
-    if(baseDelSegmento == -1)
-    log_info(cpuLogger, BACKGROUND_RED BOLD YELLOW "PID: <%i> - Error SEG_FAULT- Segmento: <%i> - Offset: <%i> - Tamaño: <%i>" RESET, cpu_pcb_get_pid(pcb), num_segmento, desplazamiento_segmento, segmento->tamanio_de_segmento);
+    if(segmento->base_del_segmento == 0){
+            uint32_t tamanioSegmento0 = cpu_chequeo_base(toSocket, segmento->base_del_segmento , desplazamiento_segmento, HEADER_chequeo_DF, cantidadByte);
+            segmento->tamanio_de_segmento = tamanioSegmento0;
+    }
+
+
+    if((desplazamiento_segmento + cantidadByte) > segmento->tamanio_de_segmento){
+            log_info(cpuLogger, BACKGROUND_RED BOLD YELLOW "PID: <%i> - Error SEG_FAULT- Segmento: <%i> - Offset: <%i> - Tamaño: <%i>" RESET, cpu_pcb_get_pid(pcb), num_segmento, desplazamiento_segmento, segmento->tamanio_de_segmento);
+            segmento->base_del_segmento = -1;
+    }
     
     cpu_pcb_set_cantidad_byte(pcb,cantidadByte); // cantidad_byte
-    cpu_pcb_set_base_direccion_fisica(pcb,baseDelSegmento); //base_direccion_fisica
+    cpu_pcb_set_base_direccion_fisica(pcb,segmento->base_del_segmento); //base_direccion_fisica
     cpu_pcb_set_desplazamiento_segmento(pcb,desplazamiento_segmento); //oka
 }
 

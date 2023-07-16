@@ -29,6 +29,7 @@
 /////////////////////// ESTRUCTURA PARA FILESYSTEM ////////////////////////
 
 typedef struct {
+    char* ip_escucha;
     char* ip_memoria;
     char* puerto_memoria;
     char* puerto_escucha;

@@ -12,6 +12,10 @@
 #include <time.h>
 #include "instrucciones.h"
 #include "serializacion.h"
+#include <ifaddrs.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <readline/readline.h>
 
 
 // MACROS DE UBICACION DE LAS CONFIG DE LOS PROCESOS
@@ -95,7 +99,7 @@ void imprimir_file_system();
 #define BACKGROUND_GREEN "\033[42m" // Fondo verde
 #define BACKGROUND_BLUE "\033[44m"  // Fondo azul
 
-
+char* getIPAddress();
 
 
 #endif
