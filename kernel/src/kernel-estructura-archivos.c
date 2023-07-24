@@ -15,6 +15,9 @@ t_pcb_archivo* archivo_create_pcb(char* nombreArchivo){
     this->tamanioArchivo = 0;
     this->victimaDelArchivo = true;
     this->punteroArchivo=-1;
+    this->direccionFisicaArchivo = -1;
+    this->cantidadByte = -1;
+    this->desplazamientoFisico = -1;
     return this;
 
 }
@@ -54,6 +57,18 @@ uint32_t archivo_pcb_get_tamanio_archivo(t_pcb_archivo* this)
 uint32_t archivo_pcb_get_puntero_archivo(t_pcb_archivo* this){
     return this->punteroArchivo;
 }
+
+uint32_t archivo_pcb_get_direccion_fisica(t_pcb_archivo* this){
+    return this->direccionFisicaArchivo;
+}
+
+uint32_t archivo_pcb_get_cantidad_byte(t_pcb_archivo* this){
+    return this->cantidadByte;
+}
+
+uint32_t archivo_pcb_get_desplazamiento_fisico(t_pcb_archivo* this){
+    return this->desplazamientoFisico;
+}
 ///////////////////////// SETTER /////////////////////////////
 
 void kernel_archivo_set_pid(t_kernel_archivo* this , uint32_t pid)
@@ -76,9 +91,22 @@ void archivo_pcb_set_puntero_archivo(t_pcb_archivo* this, uint32_t punteroArchiv
     this->punteroArchivo = punteroArchivo;
 }
 
+void archivo_pcb_set_direccion_fisica(t_pcb_archivo* this, uint32_t direccionFisicaArchivo){
+    this->direccionFisicaArchivo = direccionFisicaArchivo;
+}
+
+
 void kernel_archivo_set_cola_procesos_bloqueados(t_kernel_archivo* this , t_queue* cola)
 {
     this->colaDeProcesosEsperandoPorElArchivo = cola;
+}
+
+void archivo_pcb_set_cantidad_byte(t_pcb_archivo* this, uint32_t cantidadByte){
+    this->cantidadByte = cantidadByte;
+}
+
+void archivo_pcb_set_desplazamiento_fisico(t_pcb_archivo* this, uint32_t desplazamiento){
+    this->desplazamientoFisico = desplazamiento;
 }
 
 ///////////////////////////// FUNCIONES EXTRAS ///////////////////////////////
@@ -120,7 +148,7 @@ void eliminar_archivo_pcb(t_list* listaDeArchivosDePcb,char* nombreArchivo){
 int archivo_kernel_index(t_list* listaDeArchivosDePcb,char* nombreArchivo){
 
     t_kernel_archivo* aux = archivo_create_kernel(-1,nombreArchivo);
-    int index = list_get_index(listaDeArchivosDePcb,elArchivoEsVictima,aux);
+    int index = list_get_index(listaDeArchivosDePcb,el_archivo_ya_existe,aux);
     return index;
 }
 

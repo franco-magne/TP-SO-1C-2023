@@ -5,12 +5,12 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+
 //Commons libaries
 #include <commons/log.h>
 #include <commons/string.h>
+
 //Static libraries
-
-
 
 #include <utils/instrucciones.h>
 #include "utils/commons-nuestras.h"

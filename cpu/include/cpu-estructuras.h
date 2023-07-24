@@ -9,15 +9,15 @@
 //Commons libraries
 #include <commons/log.h>
 #include <commons/config.h>
+
 //Bibliotecas static-utils
 #include "../../utils/src/utils/instrucciones.h"
+#include <../../utils/src/utils/commons-nuestras.h>
 //Bibliotecas internas modulo consola
 
 #define CPU_MODULE_NAME "Cpu"
 
-typedef struct  {
-
-    
+typedef struct  {    
     uint32_t RETARDO_INSTRUCCION;
     char* IP_MEMORIA;
     char* PUERTO_MEMORIA;
@@ -26,7 +26,6 @@ typedef struct  {
     int SOCKET_MEMORIA;
     int SOCKET_DISPATCH_CPU;
     int TAMANIO_MAXIMO_SEGMENTO;
-
 } t_cpu_config;
 
 
@@ -43,7 +42,12 @@ typedef struct  {
     char* nombreArchivo;
     uint32_t tamanioArchivo;
     uint32_t punteroArchivo;
+    uint32_t cantidadDeByte;
+    uint32_t direccionFisicaArchivo;
+    uint32_t desplazamientoFisico;
+    t_list* tablaDeSegmento;
 } t_cpu_pcb;
+
 
 typedef struct{
     uint32_t tiempoIO;
@@ -67,15 +71,12 @@ int cpu_config_get_socket_memoria(t_cpu_config* self);
 int cpu_config_get_tamanio_maximo_segmento(t_cpu_config* self);
 
 
-
 void cpu_config_set_socket_memoria(t_cpu_config* self, int socketMemoria);
 void cpu_config_set_socket_dispatch(t_cpu_config* self, int socketDispatch); 
 void cpu_set_recurso_sem(recurso* this, char* recurso);
 void cpu_set_recursoIO(recurso* this, uint32_t tiempoIO);
 char* cpu_get_recurso_sem(recurso* this);
 uint32_t cpu_get_recurso_IO(recurso* this);
-
-
 
 
 #endif

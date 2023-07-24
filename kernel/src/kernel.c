@@ -6,12 +6,13 @@ t_kernel_config* kernelConfig;
 t_kernel_recurso* recursoConfig;
 static t_estado* elegir_pcb;
 t_list* tablaGlobalDeArchivosAbiertos;
-
+t_list* tablaGlobalDeSegmentos;
 /////////// LA USAN VARIOS PROCESOS "HILOS" /////////////
 static uint32_t nextPid ;
 static int cantidad_de_recursos;
 char* nombre_recurso;
 ///////////  SEMAFOROS MUTEX ////////////////
+pthread_mutex_t mutexTablaGlobalSegmento = PTHREAD_MUTEX_INITIALIZER;
  pthread_mutex_t mutexCantidadRecursos;
  pthread_mutex_t mutexNombreRecurso;
 static pthread_mutex_t nextPidMutex;
@@ -55,19 +56,55 @@ uint32_t obtener_siguiente_pid(void)
 
 
 
+void liberar_segmentos_del_proceso_tabla_global(t_pcb* pcb){
+
+    t_segmento* aux = segmento_create(-1,-1);
+    segmento_set_pid(aux, pcb_get_pid(pcb));
+    
+    pthread_mutex_lock(&mutexTablaGlobalSegmento);
+    tablaGlobalDeSegmentos = list_filter_ok(tablaGlobalDeSegmentos,es_el_segmento_pid,aux);
+    pthread_mutex_unlock(&mutexTablaGlobalSegmento);
+
+
+}
+
+
+
 //////////////////////////////////////////////////////////////////////////
 /////////////////////////////// FUNCION MAIN ////////////////////////////
 int main(int argc, char* argv[]) {
     kernelLogger = log_create(KERNEL_LOG_UBICACION,KERNEL_PROCESS_NAME,true,LOG_LEVEL_INFO);
     t_config* kernelConfigPath = config_create(argv[1]);
     tablaGlobalDeArchivosAbiertos = list_create();
+    tablaGlobalDeSegmentos = list_create();
     nextPid++;
     pthread_mutex_init(&nextPidMutex, NULL);
-
-   kernelConfig = kernel_config_initializer(kernelConfigPath);
-   cantidad_de_recursos = size_recurso_list(kernel_config_get_recurso(kernelConfig));
-   recursoConfig = iniciar_estructuras_de_recursos(cantidad_de_recursos, kernel_config_get_instancias(kernelConfig), kernel_config_get_recurso(kernelConfig));
+    inicio_kernel();
+    kernelConfig = kernel_config_initializer(kernelConfigPath);
+    cantidad_de_recursos = size_recurso_list(kernel_config_get_recurso(kernelConfig));
+    recursoConfig = iniciar_estructuras_de_recursos(cantidad_de_recursos, kernel_config_get_instancias(kernelConfig), kernel_config_get_recurso(kernelConfig));
     
+   char* ipMemoria = readline(RED BOLD "ESCRIBIR LA IP DE "RESET GREEN BOLD"MEMORIA "RESET BOLD RED" -> " RESET);
+   strcpy(kernelConfig->IP_MEMORIA, ipMemoria);
+   free(ipMemoria);
+
+   char* ipCPU = readline(RED BOLD "ESCRIBIR LA IP DE "RESET YELLOW BOLD " CPU  "RESET BOLD RED" -> " RESET);
+   strcpy(kernelConfig->IP_CPU, ipCPU);
+   free(ipCPU);
+
+   char* ipFs = readline(RED BOLD "ESCRIBIR LA IP DE "RESET CYAN BOLD" FILESYSTEM "RESET BOLD RED"-> " RESET);
+   strcpy(kernelConfig->IP_FILESYSTEM, ipFs);
+   free(ipFs);
+
+     
+    char* ipAddress = getIPAddress();
+    printf(RED BOLD  "IP DE KERNEL: %s\n" RESET, ipAddress);
+    strcpy( kernelConfig->IP_ESCUCHA , ipAddress);
+    free(ipAddress);
+
+
+
+
    /////////////////////////////// CONEXION CON CPU /////////////////////////////
     conectar_a_servidor_cpu_dispatch(kernelConfig,kernelLogger);
     /////////////////////////////// CONEXION CON FILE_SYSTEM /////////////////////////////
@@ -113,7 +150,7 @@ void aceptar_conexiones_kernel(const int socketEscucha)
 
 void encolar_en_new_a_nuevo_proceso(int cliente){
 
-    log_info(kernelLogger, "Nuevo proceso en la cola de new \n");
+    log_info(kernelLogger,BOLD UNDERLINE CYAN  "Nuevo proceso en la cola de new \n" RESET);
    
     // RECIBO LAS INSTRUCCIONES DE CONSOLA
     t_buffer* bufferIntrucciones = buffer_create();
@@ -128,15 +165,16 @@ void encolar_en_new_a_nuevo_proceso(int cliente){
 
     
         uint32_t newPid = obtener_siguiente_pid();
-        t_pcb* newPcb = pcb_create(newPid); // Me rompe pcb_create()
+        t_pcb* newPcb = pcb_create(newPid); 
         // LE SETEO LOS VALORES BASICOS
-        pcb_set_rafaga_actual(newPcb, kernel_config_get_estimacion_inicial(kernelConfig));
-        pcb_set_rafaga_anterior(newPcb, kernel_config_get_estimacion_inicial(kernelConfig));
+        pcb_set_socket_consola(newPcb, cliente);
+        pcb_set_estimacion_anterior(newPcb, kernel_config_get_estimacion_inicial(kernelConfig));
+        pcb_set_rafaga_anterior(newPcb, 0);
         pcb_set_instructions_buffer(newPcb, instructionsBufferCopy);
         
 
         
-        log_info(kernelLogger, "Creación de nuevo proceso ID %d mediante <socket %d>", pcb_get_pid(newPcb), cliente);
+        log_info(kernelLogger,BOLD UNDERLINE CYAN "Creación de nuevo proceso "RESET UNDERLINE BOLD MAGENTA"ID %d "RESET BOLD UNDERLINE CYAN " mediante <socket %d>", pcb_get_pid(newPcb), cliente);
 
         //////// LE ENVIO A CONSOLA EL PID ///////
         t_buffer* bufferPID = buffer_create();
@@ -174,13 +212,11 @@ void* hilo_que_libera_pcbs_en_exit(void* args)
     for (;;) {
         
         sem_wait(estado_get_sem(estadoExit));
-        t_pcb* pcbALiberar = malloc(sizeof(pcbALiberar));
-        pcbALiberar = estado_desencolar_primer_pcb_atomic(estadoExit);
-        //mem_adapter_finalizar_proceso(pcbALiberar, kernelConfig, kernelLogger);
+        t_pcb* pcbALiberar = estado_desencolar_primer_pcb_atomic(estadoExit);
         log_info(kernelLogger, "\e[0;32mSe finaliza PCB <ID %d>", pcb_get_pid(pcbALiberar));
-        //pcb_destroy(pcbALiberar);
+        stream_send_empty_buffer(pcb_get_socket_consola(pcbALiberar),HEADER_proceso_terminado);
+        pcb_destroy(pcbALiberar);
         sem_post(&gradoMultiprog);
-        free(pcbALiberar);
     }
 }
 
@@ -196,27 +232,10 @@ void* planificador_largo_plazo(void* args)
         sem_wait(&gradoMultiprog);
                                  
         t_pcb* pcbQuePasaAReady = estado_desencolar_primer_pcb_atomic(estadoNew);
-        
-        t_segmento* segmentoCero = segmento_create(0,0);
-        segmento_set_victima(segmentoCero, false);
-        pcb_set_lista_de_segmentos(pcbQuePasaAReady,segmentoCero);
-     //   segmento_destroy(segmentoCero);
+                proceso_pasa_a_ready(pcbQuePasaAReady, "NEW");
+                pcbQuePasaAReady = NULL;
+         
 
-        
-        //uint32_t* nuevaTablaPaginasSegmentos = mem_adapter_obtener_tabla_pagina(pcbQuePasaAReady, kernelConfig, kernelDevLogger);
-
-        //pcb_set_array_tabla_paginas(pcbQuePasaAReady, nuevaTablaPaginasSegmentos);
-
-        /*if (nuevaTablaPaginasSegmentos == NULL) {
-                
-            responder_memoria_insuficiente(pcbQuePasaAReady);   //podria pasarnos con el segmento
-        } 
-        else {*/
-
-        proceso_pasa_a_ready(pcbQuePasaAReady, "NEW");
-            
-        //}
-        pcbQuePasaAReady = NULL;
         
     }
 
@@ -228,6 +247,7 @@ void* atender_pcb(void* args)
 {
     for (;;) {
         bool procesoFueBloqueado = false;
+        bool procesoTuvoOutOfMemory = false;
         sem_wait(estado_get_sem(estadoExec));
 
         pthread_mutex_lock(estado_get_mutex(estadoExec));
@@ -235,7 +255,16 @@ void* atender_pcb(void* args)
         pthread_mutex_unlock(estado_get_mutex(estadoExec));
 
         uint8_t headerAEnviar = HEADER_pcb_a_ejecutar;
-        
+
+
+        pthread_mutex_lock(&mutexTablaGlobalSegmento); 
+        t_segmento* aux = segmento_create(-1,-1);
+        segmento_set_pid(aux, pcb_get_pid(pcb));
+        pcb_set_lista_de_segmentos(pcb, list_filter_ok(tablaGlobalDeSegmentos,es_el_segmento_pid,aux));
+        segmento_destroy(aux);
+        pthread_mutex_unlock(&mutexTablaGlobalSegmento); 
+
+
         struct timespec start;
         set_timespec(&start);
         cpu_adapter_enviar_pcb_a_cpu(pcb, headerAEnviar, kernelConfig, kernelLogger);
@@ -243,8 +272,8 @@ void* atender_pcb(void* args)
         
         struct timespec end;
         set_timespec(&end);
-
-        pcb_set_rafaga_actual( pcb,obtener_diferencial_de_tiempo_en_milisegundos(end,start) );
+        
+        pcb_set_rafaga_anterior(pcb, obtener_diferencial_de_tiempo_en_milisegundos(end,start) );
 
         pcb = cpu_adapter_recibir_pcb_actualizado_de_cpu(pcb, cpuResponse, kernelConfig, kernelLogger); 
         
@@ -260,9 +289,15 @@ void* atender_pcb(void* args)
                 break;
                 
             case HEADER_proceso_terminado:
-                
+                liberar_segmentos_del_proceso_tabla_global(pcb);
+                memoria_adapter_enviar_finalizar_proceso(pcb,kernelConfig,kernelLogger,RESET GREEN BOLD "SUCCES" RESET);
                 instruccion_exit(pcb);
-
+                break;
+                
+            case HEADER_Segmentation_fault:
+                liberar_segmentos_del_proceso_tabla_global(pcb);
+                memoria_adapter_enviar_finalizar_proceso(pcb,kernelConfig,kernelLogger,RESET RED BOLD "SEG_FAULT" RESET);
+                instruccion_exit(pcb);
                 break;
 
             case HEADER_proceso_bloqueado:
@@ -286,7 +321,7 @@ void* atender_pcb(void* args)
 
             case HEADER_create_segment:
 
-                instruccion_create_segment(pcb);
+                procesoTuvoOutOfMemory = instruccion_create_segment(pcb);
 
                 break;
             
@@ -309,9 +344,15 @@ void* atender_pcb(void* args)
                 sem_post(&dispatchPermitido);
                 instruccion_f_truncate(pcb);
                 break;
-
+            case HEADER_f_read:
+                sem_post(&dispatchPermitido);
+                instruccion_f_read(pcb);
+                break;
+            case HEADER_f_write:
+                sem_post(&dispatchPermitido);
+                instruccion_f_write(pcb);
+                break;
             default:
-
                 log_error(kernelLogger, "Error al recibir mensaje de CPU");
                 break;
         }
@@ -321,8 +362,8 @@ void* atender_pcb(void* args)
         ( 
            (cpuResponse == HEADER_proceso_pedir_recurso && !procesoFueBloqueado && pcb_get_estado_actual(pcb) != EXIT) 
         || (cpuResponse == HEADER_proceso_devolver_recurso && pcb_get_estado_actual(pcb) == EXEC) 
-        || (cpuResponse == HEADER_create_segment)
-        || (cpuResponse == HEADER_delete_segment)
+        || (cpuResponse == HEADER_create_segment) && !procesoTuvoOutOfMemory
+        || (cpuResponse == HEADER_delete_segment) 
         || (cpuResponse == HEADER_f_open) && !procesoFueBloqueado
         || (cpuResponse == HEADER_f_close)
         || (cpuResponse == HEADER_f_seek)
@@ -332,7 +373,11 @@ void* atender_pcb(void* args)
 
                 estado_encolar_pcb_atomic(estadoExec, pcb);
                 sem_post(estado_get_sem(estadoExec));
-        }else if((cpuResponse == HEADER_proceso_bloqueado) || (cpuResponse == HEADER_f_truncate) ){
+        }else if(
+           (cpuResponse == HEADER_proceso_bloqueado) 
+        || (cpuResponse == HEADER_f_truncate)  
+        || (cpuResponse == HEADER_f_read) 
+        || (cpuResponse == HEADER_f_write)){
          // ESTOS LIBERAN ANTES EL CPU DISPATCHPERMITIDO   
         }
         else{
@@ -380,11 +425,7 @@ void inicializar_estructuras(void) {
     
    // PLANI CORTO PLAZO
     nextPid = 1;
-    //procesoBloqueadoOTerminado = false;
     pthread_mutex_init(&nextPidMutex, NULL);
-    //pthread_mutex_init(&procesoBloqueadoOTerminadoMutex, NULL);
-    //pthread_mutex_init(&mutexSocketMemoria, NULL);
-    //pthread_mutex_init(&estadoEsperandoMemoria, 1);
     pthread_mutex_init(&mutexNombreRecurso, NULL);
     pthread_mutex_init(&mutexCantidadRecursos, NULL);
 
@@ -392,7 +433,7 @@ void inicializar_estructuras(void) {
     
     sem_init(&hayPcbsParaAgregarAlSistema, 0, 0);
     sem_init(&gradoMultiprog, 0, valorInicialGradoMultiprog);
-    sem_init(&dispatchPermitido, 0, 1); // plani de corto plazo
+    sem_init(&dispatchPermitido, 0, 1); 
     log_info(kernelLogger, "Se inicializa el grado multiprogramación en %d", valorInicialGradoMultiprog);
     
  

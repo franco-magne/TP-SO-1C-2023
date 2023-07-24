@@ -25,6 +25,9 @@ typedef struct{
     char* nombreDeArchivo;
     uint32_t tamanioArchivo;
     uint32_t punteroArchivo;
+    uint32_t direccionFisicaArchivo;
+    uint32_t cantidadByte;
+    uint32_t desplazamientoFisico;
     bool victimaDelArchivo;
 
 }t_pcb_archivo;
@@ -51,6 +54,12 @@ void archivo_pcb_set_tamanio_archivo(t_pcb_archivo* this, uint32_t tamanio);
 int index_de_archivo_pcb(t_list* listaDeArchivosDePcb, char* nombreArchivo);
 uint32_t archivo_pcb_get_puntero_archivo(t_pcb_archivo* this);
 void archivo_pcb_set_puntero_archivo(t_pcb_archivo* this, uint32_t punteroArchivo);
+void archivo_pcb_set_direccion_fisica(t_pcb_archivo* this, uint32_t direccionFisicaArchivo);
+uint32_t archivo_pcb_get_direccion_fisica(t_pcb_archivo* this);
+uint32_t archivo_pcb_get_cantidad_byte(t_pcb_archivo* this);
+uint32_t archivo_pcb_get_desplazamiento_fisico(t_pcb_archivo* this);
+void archivo_pcb_set_cantidad_byte(t_pcb_archivo* this, uint32_t cantidadByte);
+void archivo_pcb_set_desplazamiento_fisico(t_pcb_archivo* this, uint32_t desplazamiento);
 
 
 #endif

@@ -2,24 +2,26 @@
 #include "../include/consola_config.h"
 
 
-
 t_log* consolaLogger;
 t_config* consolaConfig;
 extern t_consola_config *configDeKernel;
 
 
-
-
 int main(int argc, char *argv[]) { 
-    
+
     consolaLogger = log_create(CONSOLA_LOG_UBICACION,CONSOLA_PROCESS_NAME,true,LOG_LEVEL_INFO);
     consolaConfig = config_create(CONSOLA_CONFIG_UBICACION);
     check_arguments(argc, consolaLogger); // chequea que se pasen todo los argumentos
     
-
     char *kernelIP = config_get_string_value(consolaConfig, "IP");
     char *kernelPort = config_get_string_value(consolaConfig,"PUERTO");
     
+    
+    char* ipKernel = readline(RED BOLD "ESCRIBIR LA IP DE KERNEL -> ");
+    strcpy(kernelIP, ipKernel);
+    free(ipKernel);
+
+
     const int kernelSocket = conectar_a_servidor(kernelIP, kernelPort);
     if (kernelSocket == -1) {
         log_error(consolaLogger, "Error al intentar establecer conexión inicial con módulo Kernel");
@@ -31,18 +33,17 @@ int main(int argc, char *argv[]) {
 
     char* pathArchivoInstrucciones = string_duplicate(argv[2]);
     consola_enviar_instrucciones_a_kernel(pathArchivoInstrucciones, kernelSocket, consolaLogger);
-   
-    
+       
     uint32_t idProceso = receive_pid_kernel(kernelSocket, consolaLogger);
-    log_info(consolaLogger, "Se recibio el PID %d", idProceso);
+    log_info(consolaLogger, "Se recibio el PID <%d>", idProceso);
+    imprimir_consola();
 
-    //wait_kernel_response(kernelSocket, idProceso, consolaConfig, consolaLogger);
+    uint8_t kernelResponse = stream_recv_header(kernelSocket);
+    if(kernelResponse == HEADER_proceso_terminado)
+        log_info(consolaLogger, BOLDRED UNDERLINE "PROCESO "RESET UNDERLINE BOLDYELLOW"<%i>"RESET  BOLDRED UNDERLINE" TERMINADO", idProceso);
+    
 
-    //consola_destroy(consolaConfig, consolaLogger);
-
- 
-
-   return 0;
+    return 0;
 }
 
 void check_arguments(int argc, t_log* consolaLogger)

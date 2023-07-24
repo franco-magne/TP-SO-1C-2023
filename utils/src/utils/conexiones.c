@@ -1,6 +1,8 @@
 #include "conexiones.h"
 
+
 int iniciar_servidor(char* ip, char* port) {
+
     int optVal = 1;
     struct addrinfo hints;
     struct addrinfo* serverInfo;
@@ -46,6 +48,7 @@ int iniciar_servidor(char* ip, char* port) {
 }
 
 int conectar_a_servidor(char* ip, char* port) {
+
     int conn;
     struct addrinfo hints;
     struct addrinfo* serverInfo;
@@ -61,6 +64,7 @@ int conectar_a_servidor(char* ip, char* port) {
         fprintf(stderr, "getaddrinfo error: %s", gai_strerror(rv));
         return EXIT_FAILURE;
     }
+
     for (p = serverInfo; p != NULL; p = p->ai_next) {
         conn = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
         if (-1 == conn) {
@@ -71,22 +75,20 @@ int conectar_a_servidor(char* ip, char* port) {
         }
         close(conn);
     }
+
     freeaddrinfo(serverInfo);
     if (conn != -1 && p != NULL) {
         return conn;
     }
+
     return -1;
 }
 
 int esperar_cliente(int socket_servidor)
 {
-
-
 	// Aceptamos un nuevo cliente
 	int socket_cliente;
     socket_cliente = accept(socket_servidor, NULL, NULL);
-	printf("Se conecto un cliente!\n");
 
 	return socket_cliente;
 }
-

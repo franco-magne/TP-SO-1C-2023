@@ -3,11 +3,10 @@
 extern t_log *memoriaLogger;
 extern t_memoria_config* memoriaConfig;
 
-uint32_t tamActualMemoria;
 extern Segmento* segCompartido; // tipo lista enlazada (obligatorio)
 
 extern t_list* listaDeSegmentos;
-
+extern uint32_t tamActualMemoria;
 extern pthread_mutex_t* mutexTamMemoriaActual;
 pthread_mutex_t* mutexMemoriaEstruct; //seria mutexMemoriaData
 
@@ -77,17 +76,22 @@ void segmento_set_contenido(Segmento* un_segmento, char* contenido){
 }
 
 
-bool es_el_segmento_victima_pid(Segmento* element, int pid_segmento) {
-   return element->pid == pid_segmento;
+bool es_el_segmento_victima_pid(Segmento* element, Segmento* otro_segmento) {
+   return element->pid == otro_segmento->pid;
 }
 
 t_list* obtener_tabla_de_segmentos_por_pid(int pid){
     t_list* tablaDeSegdelProceso = list_create();
-    tablaDeSegdelProceso = list_filter(listaDeSegmentos, es_el_segmento_victima_pid);
-
+    Segmento* aux = crear_segmento(-1);
+    segmento_set_pid(aux,pid);
+    tablaDeSegdelProceso = list_filter_ok(listaDeSegmentos, es_el_segmento_victima_pid,aux);
+    free(aux);
     return tablaDeSegdelProceso;
 }
 
+bool es_el_segmento_por_BASE(Segmento* element, Segmento* segVictima){
+    return element->base ==  segVictima->base;
+}
 
 Segmento* crear_segmento(int tamSegmento){
     Segmento* this = malloc(sizeof(*this)); //no seria sizeof(limite)?? que pasa si limite es muy chico, no puedo guardar id_segmento...
@@ -116,6 +120,25 @@ Segmento* obtener_segmento_por_id(int pid_victima, int id_victima){
     free(aux1);
     
     return aux2;
+}
+
+Segmento* obtener_segmento_por_BASE(uint32_t base_segmento){
+    Segmento* aux1 = crear_segmento(-1);
+    segmento_set_base(aux1, base_segmento);
+
+    uint32_t index = list_get_index(listaDeSegmentos, es_el_segmento_por_BASE, aux1);
+    Segmento* aux2 = list_get(listaDeSegmentos, index);
+    free(aux1);
+    return aux2;
+}
+
+void modificarSegmento(uint32_t baseSegmento, Segmento* segNuevo){
+    Segmento* aux1 = crear_segmento(-1);
+    segmento_set_base(aux1, baseSegmento);
+
+    uint32_t index = list_get_index(listaDeSegmentos, es_el_segmento_por_BASE, aux1);
+    list_replace(listaDeSegmentos, index, segNuevo);
+    free(aux1);
 }
 
 Segmento* desencolar_segmento_por_id(int pid_segmento, int id_segmento){
@@ -157,7 +180,23 @@ void encolar_segmento_atomic_en_tablaDada(t_list* tablaDada, Segmento* targetSeg
 void sumar_memoriaRecuperada_a_tamMemoriaActual(uint32_t tamMemorRecuperada){
     pthread_mutex_lock(&mutexTamMemoriaActual);
     tamActualMemoria += tamMemorRecuperada;
+    log_info(memoriaLogger,BOLD CYAN  "TAMAÑO ACTUAL MEMORIA "RESET BOLD GREEN" <%i>", tamActualMemoria);
+
     pthread_mutex_unlock(&mutexTamMemoriaActual);
+}
+
+void restar_a_tamMemoriaActual(uint32_t memoriaARestar){
+    pthread_mutex_lock(&mutexTamMemoriaActual);
+    tamActualMemoria -= memoriaARestar;
+    log_info(memoriaLogger,BOLD CYAN  "TAMAÑO ACTUAL MEMORIA "RESET BOLD RED" <%i>", tamActualMemoria);
+    pthread_mutex_unlock(&mutexTamMemoriaActual);
+}
+
+bool puedo_crear_proceso_o_segmento(uint32_t tamanio){
+    pthread_mutex_lock(&mutexTamMemoriaActual);
+    bool condicion = (tamanio <= tamActualMemoria);
+    pthread_mutex_unlock(&mutexTamMemoriaActual);
+    return condicion;
 }
 
 

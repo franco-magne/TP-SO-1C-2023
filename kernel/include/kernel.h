@@ -33,7 +33,6 @@
 
 
 
-#define KERNEL_CONFIG_UBICACION "config/kernel.config"
 #define KERNEL_LOG_UBICACION "logs/kernel.log"
 #define KERNEL_PROCESS_NAME "Kernel"
 

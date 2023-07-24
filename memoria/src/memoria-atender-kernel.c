@@ -1,134 +1,151 @@
 #include <../include/memoria-atender-kernel.h>
 
 
-pthread_mutex_t mutexMemoriaData = PTHREAD_MUTEX_INITIALIZER; //extern
-pthread_mutex_t mutexTamMemoriaActual = PTHREAD_MUTEX_INITIALIZER; //extern
-
+extern pthread_mutex_t mutexMemoriaData; 
+extern pthread_mutex_t mutexListaDeSegmento;
 extern t_log *memoriaLogger;
 extern t_memoria_config* memoriaConfig;
-extern uint32_t tamActualMemoria;
 extern Segmento* segCompartido;
-
+extern void* memoriaPrincipal;
 
 extern t_list* listaDeSegmentos; //la VERDADERA
-
+int test = 1;
 //t_config *memoriaConfig;
 
-bool puedo_crear_proceso_o_segmento(uint32_t tamanio){ //cambiar, solo puedo crear si tengo algun hueco libre de tamanio > tamanio
-    return tamanio <= 4096;  
-}
+
 
 void atender_peticiones_kernel(int socketKernel) {
     uint8_t header;
-    for (;;) {
+    while (test) {
         header = stream_recv_header(socketKernel);
-        //pthread_mutex_lock(&mutexMemoriaData);
+        pthread_mutex_lock(&mutexMemoriaData);
         t_buffer* buffer = buffer_create();
         stream_recv_buffer(socketKernel, buffer);
 
         switch (header) {
-            case HEADER_iniciar_proceso:{
-                int pid;
-                buffer_unpack(buffer, &pid, sizeof(pid));
-                t_list* tabla_segmentos_solicitada = obtener_tabla_de_segmentos_por_pid(pid);
-
-                if(!puedo_crear_proceso_o_segmento(memoria_config_get_tamanio_segmento_0(memoriaConfig))){ //+sizeof(*tabla_de_segmentos)
-                    log_error(memoriaLogger, "No se pudo crear el proceso, no hay espacio en memoria");
-                }
-                //inicializar_estructuras();
-                //aca dentro deberia restar el tamActualMemoria
-                
-                t_buffer* buffer_rta = buffer_create();
-                buffer_pack(buffer_rta, tabla_segmentos_solicitada, sizeof(tabla_segmentos_solicitada));
-                stream_send_buffer(socketKernel, HEADER_tabla_segmentos, buffer_rta);
-                //list_destroy(tabla_segmentos_solicitada);
-                buffer_destroy(buffer_rta);
-             
-            }
             case HEADER_create_segment: { 
-                //log_info(memoriaLogger,"socket kernel -> 1- <%i> ", socketKernel);
+                log_info(memoriaLogger, "\e[1;93mPETICION DE NUEVO SEGMENTO KERNEL\e[0m");
+
 
                 uint32_t tamanio_de_segmento;  
                 uint32_t id_de_segmento;
                 int pid;
-                
                 buffer_unpack(buffer, &id_de_segmento, sizeof(id_de_segmento));
                 buffer_unpack(buffer, &tamanio_de_segmento, sizeof(tamanio_de_segmento));
                 buffer_unpack(buffer, &pid, sizeof(pid));
 
-                log_info(memoriaLogger,"tamanio de segmento <%i> con id <%i>", tamanio_de_segmento, id_de_segmento);
+                t_list* tabla_segmentos_proceso = obtener_tabla_de_segmentos_por_pid(pid);
 
-                // (!) este if es clave, borrar todos los segments del Proceso que 
-                // se crearon antes si es que uno de sus segments no se puede crear.
+                if(list_is_empty(tabla_segmentos_proceso)){
+                log_info(memoriaLogger, BOLDRED ITALIC UNDERLINE "Creación de Proceso: Creación de Proceso PID: "RESET BOLDYELLOW ITALIC UNDERLINE "<%i>",pid);
+                }
+
                 if(!puedo_crear_proceso_o_segmento(tamanio_de_segmento)){//si no puedo crear otro segmento de ese proceso tengo que avisar a kernel y hacer un deleteSegment del resto
 
                     liberar_tabla_segmentos(pid);
                     log_error(memoriaLogger, "No se puede crear el segmento, el tamanio supera espacio libre, liberamos la tabla de segmentos");
 
-                    stream_send_empty_buffer(socketKernel, HANDSHAKE_seg_muy_grande); //(!) hay que avisarle a kernel que no se puede
+                    stream_send_empty_buffer(socketKernel, HEADER_memoria_insuficiente); //(!) hay que avisarle a kernel que no se puede
                     break;
                 }
+                
+                restar_a_tamMemoriaActual(tamanio_de_segmento);
 
                 Segmento* unSegmento = crear_segmento(tamanio_de_segmento);
                 segmento_set_id(unSegmento, id_de_segmento);
                 segmento_set_pid(unSegmento, pid);
-                log_info(memoriaLogger, "\e[1;93mSe crea nuevo segmento con id [%i] y tamanio [%i]\e[0m", id_de_segmento, tamanio_de_segmento);
-                pthread_mutex_lock(&mutexTamMemoriaActual);
-                //tamActualMemoria -= tamanio_de_segmento;
-                administrar_nuevo_segmento(unSegmento);
-                pthread_mutex_unlock(&mutexTamMemoriaActual);
 
-                //log_info(memoriaLogger, "\e[1;93mSe crea nuevo segmento con id [%i] y tamanio [%i]\e[0m", id_de_segmento, tamanio_de_segmento);
+                uint32_t retardoInstruccion = memoria_config_get_retardo_memoria(memoriaConfig);
+                intervalo_de_pausa(retardoInstruccion);
 
-                stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
+                pthread_mutex_lock(&mutexListaDeSegmento);
+                uint8_t memoriaRespuesta = administrar_nuevo_segmento(unSegmento);
+                pthread_mutex_unlock(&mutexListaDeSegmento);
+
+                if(memoriaRespuesta == HEADER_Compactacion){
+                    sumar_memoriaRecuperada_a_tamMemoriaActual(tamanio_de_segmento);
+                    stream_send_empty_buffer(socketKernel,HEADER_Compactacion);
+                    uint8_t respuestaDeKernel = stream_recv_header(socketKernel);
+                    stream_recv_empty_buffer(socketKernel);
+                    if(respuestaDeKernel == HANDSHAKE_ok_continue){
+                        log_info(memoriaLogger, MAGENTA ITALIC "SE INICIA LA COMPACTACION DE LA MEMORIA");
+                        iniciar_compactacion();
+                        log_info(memoriaLogger, MAGENTA ITALIC "SE FINALIZA LA COMPACTACION DE LA MEMORIA");
+                        pthread_mutex_lock(&mutexListaDeSegmento);
+                        mostrar_lista_segmentos_actualizados_por_compactacion();
+                        pthread_mutex_unlock(&mutexListaDeSegmento);
+                        stream_send_empty_buffer(socketKernel, HEADER_Compactacion_finalizada);
+                    }
+                } 
+                else {
+                    pthread_mutex_lock(&mutexListaDeSegmento);
+                    t_list* tablaDeSegmentoActualizada = listaDeSegmentos;
+                    tablaDeSegmentoActualizada = list_filter(tablaDeSegmentoActualizada,segmentos_validez_1);
+                    tablaDeSegmentoActualizada = list_map(tablaDeSegmentoActualizada,adapter_segmento_memoria_kernel);
+                    pthread_mutex_unlock(&mutexListaDeSegmento);
+
+                    t_buffer* bufferTablaDeSegmentoActualizada = buffer_create();
+                    buffer_pack_segmento_list(bufferTablaDeSegmentoActualizada, tablaDeSegmentoActualizada);
+                    stream_send_buffer(socketKernel, HANDSHAKE_ok_continue,bufferTablaDeSegmentoActualizada);
+                    buffer_destroy(bufferTablaDeSegmentoActualizada);
+               
                 
-                t_list* tablaDeSegmentoSolic = obtener_tabla_de_segmentos_por_pid(pid);
+                }
 
-                mostrar_tabla(tablaDeSegmentoSolic);
+                mostrar_lista_segmentos(listaDeSegmentos);
                 break;
             }
             case HEADER_delete_segment:{
-                //en caso de que tenga huecos libres aledaños, los deberá CONSOLIDAR actualizando sus estructuras administrativas.
+                log_info(memoriaLogger, "\e[1;93mPETICION DE BORRALR SEGMENTO KERNEL\e[0m");
                 uint32_t id_de_segmento;
                 int pid;
                 buffer_unpack(buffer, &id_de_segmento, sizeof(id_de_segmento));
                 buffer_unpack(buffer, &pid, sizeof(pid));
-
-                t_list* tabla_segmentos_solic = obtener_tabla_de_segmentos_por_pid(pid);
-                log_info(memoriaLogger,"Tabla de Segmentos con PID<%d> ", pid);
-                mostrar_tabla(tabla_segmentos_solic);
-
-                log_info(memoriaLogger,"Segmento a eliminar <%i> ", id_de_segmento);
-
+                
                 Segmento* segABorrar = crear_segmento(-1);
                 segmento_set_id(segABorrar, id_de_segmento);
                 segmento_set_pid(segABorrar, pid);
-                //sumar_memoriaRecuperada_a_tamMemoriaActual(segABorrar->tamanio); 
+            
+                uint32_t retardoInstruccion = memoria_config_get_retardo_memoria(memoriaConfig);
+                intervalo_de_pausa(retardoInstruccion);
+
+                pthread_mutex_lock(&mutexListaDeSegmento);
                 eliminar_segmento_memoria(segABorrar);
-                log_info(memoriaLogger, "Borramos el segmento <%i> del proceos <%i>", id_de_segmento, pid);
+                pthread_mutex_unlock(&mutexListaDeSegmento);
 
-                t_list* tabla_segmentos_solic_actualizada = obtener_tabla_de_segmentos_por_pid(pid);
-                log_info(memoriaLogger,"Tabla de Segmentos con PID <%d> actualizada ", pid);
-                mostrar_tabla(tabla_segmentos_solic_actualizada);
+                pthread_mutex_lock(&mutexListaDeSegmento);
+                t_list* tablaDeSegmentoActualizada = listaDeSegmentos;
+                tablaDeSegmentoActualizada = list_filter(tablaDeSegmentoActualizada,segmentos_validez_1);
+                tablaDeSegmentoActualizada = list_map(tablaDeSegmentoActualizada,adapter_segmento_memoria_kernel);
+                mostrar_lista_segmentos(listaDeSegmentos);
+                pthread_mutex_unlock(&mutexListaDeSegmento);
 
-                t_buffer* buffer_rta = buffer_create();
-                buffer_pack(buffer_rta, tabla_segmentos_solic_actualizada, sizeof(tabla_segmentos_solic_actualizada)); //tablaDeSegmentos Actualizada
-                stream_send_buffer(socketKernel, HEADER_tabla_segmentos, buffer_rta);
 
-                buffer_destroy(buffer_rta);
+                t_buffer* bufferTablaDeSegmentoActualizada = buffer_create();
+                buffer_pack_segmento_list(bufferTablaDeSegmentoActualizada, tablaDeSegmentoActualizada);
+                stream_send_buffer(socketKernel, HANDSHAKE_ok_continue,bufferTablaDeSegmentoActualizada);
+                buffer_destroy(bufferTablaDeSegmentoActualizada);
+
+
                 break;
             }
-            /*case HEADER_proceso_terminado: {
-                int pid;
+            case HEADER_proceso_terminado: {
+                uint32_t pid;
                 buffer_unpack(buffer, &pid, sizeof(pid));
+                pthread_mutex_lock(&mutexListaDeSegmento);
                 liberar_tabla_segmentos(pid);
-                stream_send_empty_buffer(socketKernel, HEADER_proceso_terminado);
-            }*/
+                pthread_mutex_unlock(&mutexListaDeSegmento);
+                stream_send_empty_buffer(socketKernel, HANDSHAKE_ok_continue);
+                log_info(memoriaLogger,RED STRIKETHROUGH "SE ELIMINA EL PROCESO CON PID: <%i>", pid);
+                mostrar_lista_segmentos(listaDeSegmentos);
+                break;
+            }
             default:
-                //exit(-1);
+                test = 0;
                 break;
         }
-        //pthread_mutex_unlock(&mutexMemoriaData);
+        pthread_mutex_unlock(&mutexMemoriaData);
+        buffer_destroy(buffer);
     }
-}
 
+}
