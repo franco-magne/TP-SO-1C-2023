@@ -18,7 +18,7 @@ int main() {
    fs->logger = fs_logger;
    imprimir_file_system();
    
-	char* ipMemoria = readline(BOLD WHITE "ESCRIBIR LA IP DE MEMORIA -> " RESET);
+	/*char* ipMemoria = readline(BOLD WHITE "ESCRIBIR LA IP DE MEMORIA -> " RESET);
    strcpy(fs->ip_memoria, ipMemoria);
    free(ipMemoria);
    
@@ -26,7 +26,7 @@ int main() {
    printf(BOLD WHITE "IP DE FS: %s\n" RESET, ipFS);
    strcpy(fs->ip_escucha, ipFS);
    free(ipFS);
-   
+*/
 /*
    RUTAS DEL CONFIG PARA LA ENTREGA FINAL
 

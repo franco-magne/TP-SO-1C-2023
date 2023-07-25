@@ -17,9 +17,9 @@ int main(int argc, char *argv[]) {
     char *kernelPort = config_get_string_value(consolaConfig,"PUERTO");
     
     
-    char* ipKernel = readline(RED BOLD "ESCRIBIR LA IP DE KERNEL -> ");
+    /*char* ipKernel = readline(RED BOLD "ESCRIBIR LA IP DE KERNEL -> ");
     strcpy(kernelIP, ipKernel);
-    free(ipKernel);
+    free(ipKernel);*/
 
 
     const int kernelSocket = conectar_a_servidor(kernelIP, kernelPort);

@@ -48,12 +48,12 @@ int main(int argc, char *argv[]) {
     log_info(memoriaLogger,BOLDRED "ALGORITMO DE ASIGNACION "RESET BOLDGREEN "<%s>", memoria_config_get_algoritmo_asignacion(memoriaConfig));
    //tabla_segmentos = estado_create();
     
-    char* ipAddress = getIPAddress();
+    /*char* ipAddress = getIPAddress();
     printf(RED BOLD  "IP DE MEMORIA: %s\n", ipAddress);
 
     strcpy( memoriaConfig->IP_ESCUCHA , ipAddress);
 
-    free(ipAddress);
+    free(ipAddress);*/
 
     int serverMemoria = iniciar_servidor(memoria_config_get_ip_escucha(memoriaConfig), memoria_config_get_puerto_escucha(memoriaConfig) );
     log_info(memoriaLogger,ITALIC YELLOW "MODULO MEMORIA "RESET GREEN "ACTIVADO "RESET ITALIC YELLOW"ESPERANDO PARA RECIBIR A LOS OTROS MODULO\n");

@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
     kernelConfig = kernel_config_initializer(kernelConfigPath);
     cantidad_de_recursos = size_recurso_list(kernel_config_get_recurso(kernelConfig));
     recursoConfig = iniciar_estructuras_de_recursos(cantidad_de_recursos, kernel_config_get_instancias(kernelConfig), kernel_config_get_recurso(kernelConfig));
-    
+    /*
    char* ipMemoria = readline(RED BOLD "ESCRIBIR LA IP DE "RESET GREEN BOLD"MEMORIA "RESET BOLD RED" -> " RESET);
    strcpy(kernelConfig->IP_MEMORIA, ipMemoria);
    free(ipMemoria);
@@ -102,7 +102,7 @@ int main(int argc, char* argv[]) {
     strcpy( kernelConfig->IP_ESCUCHA , ipAddress);
     free(ipAddress);
 
-
+    */
 
 
    /////////////////////////////// CONEXION CON CPU /////////////////////////////

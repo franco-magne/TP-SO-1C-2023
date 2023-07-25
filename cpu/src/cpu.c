@@ -14,9 +14,9 @@ int main(int argc, char *argv[]) {
   cpuConfig = cpu_config_initializer(configIncial);
   inicio_cpu();
 
-  char* ipMemoria = readline(RED BOLD "ESCRIBIR LA IP DE MEMORIA -> ");
+  /*char* ipMemoria = readline(RED BOLD "ESCRIBIR LA IP DE MEMORIA -> ");
   strcpy(cpuConfig->IP_MEMORIA , ipMemoria);
-  free(ipMemoria);
+  free(ipMemoria);*/
   
   ///////////////////////////////// CONECTARSE A MEMORIA //////////////////////////////
     
@@ -36,10 +36,10 @@ int main(int argc, char *argv[]) {
   ///////////////////////////////// CREA SERVIDOR PARA KERNEL /////////////////////////
 
   
-  char* ipCPU = getIPAddress();
+  /*char* ipCPU = getIPAddress();
   printf(RED BOLD  "IP DE CPU: %s\n", ipCPU);
   strcpy( cpuConfig->IP_ESCUCHA , ipCPU);
-  free(ipCPU);
+  free(ipCPU);*/
 
   int serverCpu = inicializar_servidor_cpu_dispatch(cpuConfig,cpuLogger);
   aceptar_conexion_dispatch(serverCpu, &cliente, &len);
